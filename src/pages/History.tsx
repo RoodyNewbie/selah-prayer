@@ -1,23 +1,101 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { prayerPhases } from '@/lib/prayerData';
 import { usePrayerSessions, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { FilterPill } from '@/components/ui/filter-pill';
+import { DateRangeDialog } from '@/components/history/DateRangeDialog';
+import { format, subDays, subMonths } from 'date-fns';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PrayerSession } from '@/lib/prayerData';
 
+type FilterType = 'all' | 'week' | 'month' | 'generated' | 'custom';
+
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+function escapeRegex(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightMatch(text: string, query: string): React.ReactNode {
+  if (!query.trim()) return text;
+  
+  const parts = text.split(new RegExp(`(${escapeRegex(query)})`, 'gi'));
+  return parts.map((part, i) => 
+    part.toLowerCase() === query.toLowerCase() 
+      ? <mark key={i} className="bg-primary/20 text-foreground rounded px-0.5">{part}</mark>
+      : part
+  );
+}
+
+function formatDateRange(range: DateRange): string {
+  return `${format(range.start, 'MMM d')} - ${format(range.end, 'MMM d')}`;
+}
+
 export default function History() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const { data: sessions = [], isLoading, error, refetch } = usePrayerSessions();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
+
+  const filteredSessions = useMemo(() => {
+    let result = sessions;
+    
+    // Apply date filter
+    const now = new Date();
+    switch (filter) {
+      case 'week': {
+        const weekAgo = subDays(now, 7);
+        result = result.filter(s => new Date(s.timestamp) >= weekAgo);
+        break;
+      }
+      case 'month': {
+        const monthAgo = subMonths(now, 1);
+        result = result.filter(s => new Date(s.timestamp) >= monthAgo);
+        break;
+      }
+      case 'generated':
+        result = result.filter(s => s.generatedPrayer);
+        break;
+      case 'custom':
+        if (customDateRange) {
+          result = result.filter(s => {
+            const date = new Date(s.timestamp);
+            return date >= customDateRange.start && date <= customDateRange.end;
+          });
+        }
+        break;
+    }
+    
+    // Apply search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s => {
+        // Search in generated prayer
+        if (s.generatedPrayer?.toLowerCase().includes(query)) return true;
+        // Search in phase contents
+        return Object.values(s.phases).some(content => 
+          content?.toLowerCase().includes(query)
+        );
+      });
+    }
+    
+    return result;
+  }, [sessions, filter, customDateRange, searchQuery]);
 
   const toggleExpanded = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -63,6 +141,26 @@ export default function History() {
     }
   };
 
+  const handleFilterClick = (newFilter: FilterType) => {
+    if (newFilter === 'custom') {
+      setDatePickerOpen(true);
+    } else {
+      setFilter(newFilter);
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleDateRangeApply = (range: DateRange) => {
+    setCustomDateRange(range);
+    setFilter('custom');
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setFilter('all');
+    setCustomDateRange(null);
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="p-4 pt-6 border-b border-border">
@@ -71,6 +169,47 @@ export default function History() {
           Your prayer journey over time
         </p>
       </header>
+
+      {/* Search and Filter Bar */}
+      <div className="px-4 py-3 space-y-3 border-b border-border">
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search your prayers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10"
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')} 
+              className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+        
+        {/* Filter Pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+          <FilterPill active={filter === 'all'} onClick={() => handleFilterClick('all')}>
+            All
+          </FilterPill>
+          <FilterPill active={filter === 'week'} onClick={() => handleFilterClick('week')}>
+            This Week
+          </FilterPill>
+          <FilterPill active={filter === 'month'} onClick={() => handleFilterClick('month')}>
+            This Month
+          </FilterPill>
+          <FilterPill active={filter === 'generated'} onClick={() => handleFilterClick('generated')}>
+            With Prayer
+          </FilterPill>
+          <FilterPill active={filter === 'custom'} onClick={() => handleFilterClick('custom')}>
+            {customDateRange ? formatDateRange(customDateRange) : 'Custom'}
+          </FilterPill>
+        </div>
+      </div>
 
       <main className="px-4 py-4 space-y-3">
         {/* Error State */}
@@ -86,6 +225,13 @@ export default function History() {
           </div>
         )}
 
+        {/* Results Count */}
+        {!isLoading && !error && filteredSessions.length !== sessions.length && sessions.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredSessions.length} of {sessions.length} sessions
+          </p>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -99,8 +245,17 @@ export default function History() {
               Your prayer sessions will appear here
             </p>
           </div>
+        ) : !error && filteredSessions.length === 0 && sessions.length > 0 ? (
+          /* No Results from Search/Filter */
+          <div className="text-center py-12">
+            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground font-body">No prayers match your search</p>
+            <Button variant="ghost" onClick={clearFilters} className="mt-2">
+              Clear filters
+            </Button>
+          </div>
         ) : !error && (
-          sessions.map((session) => {
+          filteredSessions.map((session) => {
             const hasContent = Object.values(session.phases).some((v) => v && v.trim());
             const isExpanded = expandedId === session.id;
             const isRegenerating = regeneratingId === session.id;
@@ -166,7 +321,7 @@ export default function History() {
                           </div>
                         </div>
                         <p className="text-sm text-foreground font-body whitespace-pre-wrap leading-relaxed">
-                          {session.generatedPrayer}
+                          {highlightMatch(session.generatedPrayer, searchQuery)}
                         </p>
                       </div>
                     )}
@@ -210,7 +365,7 @@ export default function History() {
                               {getPhaseLabel(phaseId)}
                             </p>
                             <p className="text-sm text-foreground font-body whitespace-pre-wrap">
-                              {content}
+                              {highlightMatch(content!, searchQuery)}
                             </p>
                           </div>
                         ))}
@@ -222,6 +377,13 @@ export default function History() {
           })
         )}
       </main>
+
+      <DateRangeDialog
+        open={datePickerOpen}
+        onOpenChange={setDatePickerOpen}
+        onApply={handleDateRangeApply}
+        currentRange={customDateRange}
+      />
 
       <BottomNav />
     </div>
