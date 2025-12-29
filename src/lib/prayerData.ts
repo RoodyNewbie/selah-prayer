@@ -107,6 +107,8 @@ export const prayerPhases: PrayerPhase[] = [
 
 export type RequestTag = 'family' | 'work' | 'health' | 'finances' | 'spiritual' | 'others';
 
+export type AnswerType = 'fully' | 'differently' | 'partially' | 'peace';
+
 export const requestTags: { id: RequestTag; label: string; color: string }[] = [
   { id: 'family', label: 'Family', color: 'bg-phase-praise' },
   { id: 'work', label: 'Work', color: 'bg-phase-will' },
@@ -115,6 +117,13 @@ export const requestTags: { id: RequestTag; label: string; color: string }[] = [
   { id: 'spiritual', label: 'Spiritual', color: 'bg-phase-protect' },
   { id: 'others', label: 'Others', color: 'bg-phase-worship' },
 ];
+
+export const answerTypeLabels: Record<AnswerType, string> = {
+  fully: 'Fully Answered',
+  differently: 'Answered Differently',
+  partially: 'Partially Answered',
+  peace: 'Peace Received',
+};
 
 export interface PrayerRequest {
   id: string;
@@ -125,6 +134,9 @@ export interface PrayerRequest {
   isAnswered: boolean;
   answeredNote?: string;
   answeredDate?: string;
+  testimony?: string;
+  answerType?: AnswerType;
+  gratitudeNote?: string;
   createdAt: string;
 }
 

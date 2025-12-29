@@ -6,10 +6,11 @@ import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
+import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, BookHeart, LogOut, Settings } from 'lucide-react';
+import { Plus, BookHeart, LogOut, Settings, Heart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,6 +18,14 @@ const Index = () => {
   const [showAddRequest, setShowAddRequest] = useState(false);
 
   const { data: lastPrayed } = useLastPrayed();
+  const { data: answeredRequests = [] } = useAnsweredRequests();
+
+  // Random testimony for "Testimony of the Day"
+  const randomTestimony = useMemo(() => {
+    if (answeredRequests.length === 0) return null;
+    const index = Math.floor(Math.random() * answeredRequests.length);
+    return answeredRequests[index];
+  }, [answeredRequests]);
 
   useEffect(() => {
     storage.initDarkMode();
@@ -98,6 +107,29 @@ const Index = () => {
             <Plus className="w-5 h-5" />
           </Button>
         </Card>
+
+        {/* Testimony of the Day */}
+        {randomTestimony && (
+          <Card 
+            className="p-4 bg-primary/5 border-primary/20 cursor-pointer hover:shadow-lifted transition-all"
+            onClick={() => navigate('/answered')}
+          >
+            <div className="flex items-start gap-3">
+              <Heart className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs text-primary font-medium mb-1">God's Faithfulness</p>
+                <p className="font-body text-sm text-foreground line-clamp-2">
+                  "{randomTestimony.title}"
+                </p>
+                {randomTestimony.answeredDate && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Answered {formatDistanceToNow(new Date(randomTestimony.answeredDate), { addSuffix: true })}
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Scripture of encouragement */}
         <section className="text-center py-6 px-4">

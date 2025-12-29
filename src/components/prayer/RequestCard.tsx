@@ -9,26 +9,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MarkAnsweredDialog, AnsweredData } from './MarkAnsweredDialog';
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 
 interface RequestCardProps {
   request: PrayerRequest;
-  onMarkAnswered: (id: string, note: string) => void;
+  onMarkAnswered: (id: string, data: AnsweredData) => void;
   onDelete: (id: string) => void;
 }
 
 export function RequestCard({ request, onMarkAnswered, onDelete }: RequestCardProps) {
   const [showAnswerDialog, setShowAnswerDialog] = useState(false);
-  const [answerNote, setAnswerNote] = useState('');
 
   const tagInfo = requestTags.find((t) => t.id === request.tag);
 
-  const handleMarkAnswered = () => {
-    onMarkAnswered(request.id, answerNote);
+  const handleAnswerComplete = (data: AnsweredData) => {
+    onMarkAnswered(request.id, data);
     setShowAnswerDialog(false);
-    setAnswerNote('');
   };
 
   return (
@@ -85,27 +82,12 @@ export function RequestCard({ request, onMarkAnswered, onDelete }: RequestCardPr
         </div>
       </Card>
 
-      <Dialog open={showAnswerDialog} onOpenChange={setShowAnswerDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl">Prayer Answered! 🙏</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-muted-foreground font-body text-sm">
-              Add a note about how this prayer was answered (optional).
-            </p>
-            <Textarea
-              placeholder="How did God answer this prayer?"
-              value={answerNote}
-              onChange={(e) => setAnswerNote(e.target.value)}
-              className="min-h-[100px]"
-            />
-            <Button onClick={handleMarkAnswered} className="w-full">
-              Save to Answered Prayers
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MarkAnsweredDialog
+        open={showAnswerDialog}
+        onOpenChange={setShowAnswerDialog}
+        request={request}
+        onComplete={handleAnswerComplete}
+      />
     </>
   );
 }

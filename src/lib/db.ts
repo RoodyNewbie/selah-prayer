@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PrayerRequest, PrayerSession, RequestTag } from './prayerData';
+import { PrayerRequest, PrayerSession, RequestTag, AnswerType } from './prayerData';
 import type { Tables } from '@/integrations/supabase/types';
 
 type PrayerRequestRow = Tables<'prayer_requests'>;
@@ -23,6 +23,9 @@ const toRequest = (row: PrayerRequestRow): PrayerRequest => ({
   isAnswered: row.is_answered,
   answeredNote: row.answered_note || undefined,
   answeredDate: row.answered_date || undefined,
+  testimony: row.testimony || undefined,
+  answerType: row.answer_type as AnswerType | undefined,
+  gratitudeNote: row.gratitude_note || undefined,
   createdAt: row.created_at,
 });
 
@@ -78,17 +81,22 @@ export const db = {
   },
 
   async updateRequest(id: string, updates: Partial<PrayerRequest>): Promise<void> {
+    const updateData: Record<string, unknown> = {};
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.tag !== undefined) updateData.tag = updates.tag;
+    if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
+    if (updates.isAnswered !== undefined) updateData.is_answered = updates.isAnswered;
+    if (updates.answeredNote !== undefined) updateData.answered_note = updates.answeredNote;
+    if (updates.answeredDate !== undefined) updateData.answered_date = updates.answeredDate;
+    if (updates.testimony !== undefined) updateData.testimony = updates.testimony;
+    if (updates.answerType !== undefined) updateData.answer_type = updates.answerType;
+    if (updates.gratitudeNote !== undefined) updateData.gratitude_note = updates.gratitudeNote;
+
     const { error } = await supabase
       .from('prayer_requests')
-      .update({
-        title: updates.title,
-        description: updates.description,
-        tag: updates.tag,
-        is_recurring: updates.isRecurring,
-        is_answered: updates.isAnswered,
-        answered_note: updates.answeredNote,
-        answered_date: updates.answeredDate,
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (error) {
