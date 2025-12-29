@@ -44,3 +44,15 @@ export function useUpdateSessionPrayer() {
     },
   });
 }
+
+export function useDeleteSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sessionId: string) => db.deleteSession(sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prayer-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['last-prayed'] });
+    },
+  });
+}
