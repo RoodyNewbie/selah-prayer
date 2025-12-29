@@ -3,14 +3,19 @@ import { PrayerSession, prayerPhases } from '@/lib/prayerData';
 import { db } from '@/lib/db';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function History() {
   const [sessions, setSessions] = useState<PrayerSession[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadSessions();
@@ -29,6 +34,41 @@ export default function History() {
 
   const getPhaseLabel = (phaseId: string) => {
     return prayerPhases.find((p) => p.id === phaseId)?.name || phaseId;
+  };
+
+  const regeneratePrayer = async (session: PrayerSession) => {
+    setRegeneratingId(session.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-prayer', {
+        body: { phases: session.phases },
+      });
+
+      if (error) throw error;
+
+      const prayer = data.prayer;
+      await db.updateSessionPrayer(session.id, prayer);
+      
+      setSessions(prev => 
+        prev.map(s => s.id === session.id ? { ...s, generatedPrayer: prayer } : s)
+      );
+      toast.success('Prayer regenerated');
+    } catch (error) {
+      console.error('Error regenerating prayer:', error);
+      toast.error('Failed to regenerate prayer');
+    } finally {
+      setRegeneratingId(null);
+    }
+  };
+
+  const copyPrayer = async (prayer: string, sessionId: string) => {
+    try {
+      await navigator.clipboard.writeText(prayer);
+      setCopiedId(sessionId);
+      toast.success('Prayer copied to clipboard');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy prayer');
+    }
   };
 
   return (
@@ -58,6 +98,7 @@ export default function History() {
           sessions.map((session) => {
             const hasContent = Object.values(session.phases).some((v) => v && v.trim());
             const isExpanded = expandedId === session.id;
+            const isRegenerating = regeneratingId === session.id;
 
             return (
               <Card
@@ -89,19 +130,86 @@ export default function History() {
                 </button>
 
                 {isExpanded && hasContent && (
-                  <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
-                    {Object.entries(session.phases)
-                      .filter(([_, content]) => content && content.trim())
-                      .map(([phaseId, content]) => (
-                        <div key={phaseId}>
-                          <p className="text-xs text-primary font-body font-medium mb-1">
-                            {getPhaseLabel(phaseId)}
-                          </p>
-                          <p className="text-sm text-foreground font-body whitespace-pre-wrap">
-                            {content}
-                          </p>
+                  <div className="px-4 pb-4 space-y-4 border-t border-border pt-3">
+                    {/* Generated Prayer Section */}
+                    {session.generatedPrayer && (
+                      <div className="bg-primary/5 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-primary font-body">Generated Prayer</p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyPrayer(session.generatedPrayer!, session.id)}
+                              className="h-8 px-2"
+                            >
+                              {copiedId === session.id ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => regeneratePrayer(session)}
+                              disabled={isRegenerating}
+                              className="h-8 px-2"
+                            >
+                              <RefreshCw className={cn("w-4 h-4", isRegenerating && "animate-spin")} />
+                            </Button>
+                          </div>
                         </div>
-                      ))}
+                        <p className="text-sm text-foreground font-body whitespace-pre-wrap leading-relaxed">
+                          {session.generatedPrayer}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* No generated prayer - offer to generate */}
+                    {!session.generatedPrayer && (
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground font-body">No generated prayer</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => regeneratePrayer(session)}
+                            disabled={isRegenerating}
+                            className="h-8"
+                          >
+                            {isRegenerating ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Generate Prayer
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Prayer Phases */}
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground font-body uppercase tracking-wide">Prayer Notes</p>
+                      {Object.entries(session.phases)
+                        .filter(([_, content]) => content && content.trim())
+                        .map(([phaseId, content]) => (
+                          <div key={phaseId}>
+                            <p className="text-xs text-primary font-body font-medium mb-1">
+                              {getPhaseLabel(phaseId)}
+                            </p>
+                            <p className="text-sm text-foreground font-body whitespace-pre-wrap">
+                              {content}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 )}
               </Card>
