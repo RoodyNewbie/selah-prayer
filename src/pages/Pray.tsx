@@ -2,18 +2,24 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { prayerPhases, PrayerRequest } from '@/lib/prayerData';
 import { db } from '@/lib/db';
+import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, CheckCircle, Repeat, Loader2 } from 'lucide-react';
+import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Pray() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
   const [isComplete, setIsComplete] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [recurringRequests, setRecurringRequests] = useState<PrayerRequest[]>([]);
 
   useEffect(() => {
@@ -44,11 +50,51 @@ export default function Pray() {
     }
   };
 
+  const generatePrayer = async (phases: Record<string, string>) => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-prayer', {
+        body: { phases },
+      });
+
+      if (error) {
+        console.error('Error generating prayer:', error);
+        toast({
+          title: 'Could not generate prayer',
+          description: 'Your session was saved, but we couldn\'t create a flowing prayer.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (data?.error) {
+        toast({
+          title: 'Prayer generation issue',
+          description: data.error,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setGeneratedPrayer(data.prayer);
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleComplete = async () => {
     setIsSaving(true);
     await db.saveSession(phaseContent);
     setIsSaving(false);
     setIsComplete(true);
+    
+    // Generate the flowing prayer
+    const hasContent = Object.values(phaseContent).some((v) => v && v.trim());
+    if (hasContent) {
+      generatePrayer(phaseContent);
+    }
   };
 
   const handleContentChange = (value: string) => {
@@ -58,10 +104,22 @@ export default function Pray() {
     }));
   };
 
+  const handleCopy = async () => {
+    if (generatedPrayer) {
+      await navigator.clipboard.writeText(generatedPrayer);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: 'Prayer copied',
+        description: 'The prayer has been copied to your clipboard.',
+      });
+    }
+  };
+
   if (isComplete) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center space-y-6 max-w-md w-full animate-fade-in">
+        <Card className="p-6 md:p-8 text-center space-y-6 max-w-lg w-full animate-fade-in">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
             <CheckCircle className="w-8 h-8 text-primary" />
           </div>
@@ -71,6 +129,45 @@ export default function Pray() {
               Your prayer has been saved. May peace be with you.
             </p>
           </div>
+
+          {/* Generated Prayer Section */}
+          {isGenerating && (
+            <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+              <Sparkles className="w-5 h-5 animate-pulse text-primary" />
+              <span className="font-body text-sm">Crafting your prayer...</span>
+            </div>
+          )}
+
+          {generatedPrayer && !isGenerating && (
+            <div className="text-left space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-body font-medium text-foreground">
+                    Your Prayer
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="text-muted-foreground"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50 max-h-64 overflow-y-auto">
+                <p className="font-body text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                  {generatedPrayer}
+                </p>
+              </div>
+            </div>
+          )}
+
           <Button onClick={() => navigate('/')} size="lg" className="w-full">
             Return Home
           </Button>

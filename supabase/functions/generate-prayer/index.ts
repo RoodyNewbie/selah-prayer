@@ -1,0 +1,124 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface PrayerPhases {
+  praise?: string;
+  will?: string;
+  needs?: string;
+  forgiveness?: string;
+  protection?: string;
+  worship?: string;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { phases } = await req.json() as { phases: PrayerPhases };
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    // Build the context from the prayer phases
+    const phaseLabels: Record<string, string> = {
+      praise: "Praise & Gratitude",
+      will: "Surrendering to God's Will",
+      needs: "Practical Needs & Requests",
+      forgiveness: "Confession & Forgiveness",
+      protection: "Seeking Protection",
+      worship: "Closing Worship"
+    };
+
+    const prayerContext = Object.entries(phases)
+      .filter(([_, content]) => content && content.trim())
+      .map(([phase, content]) => `${phaseLabels[phase] || phase}: ${content}`)
+      .join("\n\n");
+
+    if (!prayerContext.trim()) {
+      return new Response(
+        JSON.stringify({ prayer: "Lord, thank You for this moment of quiet reflection. Be with me in all that I do. Amen." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const systemPrompt = `You are a gentle, reverent prayer writer who crafts beautiful, heartfelt prayers in a warm, conversational tone with God. 
+
+Your task is to take the user's prayer notes from different phases of their prayer time and weave them into one cohesive, flowing prayer.
+
+Guidelines:
+- Write in first person, addressing God directly (Dear Lord, Heavenly Father, etc.)
+- Maintain a reverent but intimate tone - like speaking to a loving Father
+- Naturally incorporate their specific thoughts and concerns
+- Use simple, sincere language - avoid overly formal religious jargon
+- The prayer should feel personal and genuine, not generic
+- Include appropriate transitions between themes
+- End with "Amen."
+- Keep the prayer focused and meaningful, typically 150-300 words
+- Honor the emotional weight of what they shared (especially in confession/forgiveness sections)`;
+
+    const userPrompt = `Please transform these prayer notes into a beautiful, flowing prayer:
+
+${prayerContext}`;
+
+    console.log("Generating prayer from phases:", Object.keys(phases).filter(k => phases[k as keyof PrayerPhases]?.trim()));
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      throw new Error("Failed to generate prayer");
+    }
+
+    const data = await response.json();
+    const generatedPrayer = data.choices?.[0]?.message?.content || "Lord, hear my prayer. Amen.";
+
+    console.log("Prayer generated successfully");
+
+    return new Response(
+      JSON.stringify({ prayer: generatedPrayer }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error in generate-prayer:", error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
