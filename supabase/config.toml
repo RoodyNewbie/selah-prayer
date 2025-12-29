@@ -1,4 +1,4 @@
 project_id = "tuvsuimucjyunwnxpeap"
 
 [functions.generate-prayer]
-verify_jwt = true
+verify_jwt = false
