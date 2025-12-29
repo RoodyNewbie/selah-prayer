@@ -7,7 +7,7 @@ import { RequestTag, requestTags } from '@/lib/prayerData';
 import { useCreateRequest } from '@/hooks/usePrayerRequests';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface AddRequestDialogProps {
   open: boolean;
@@ -15,7 +15,6 @@ interface AddRequestDialogProps {
 }
 
 export function AddRequestDialog({ open, onOpenChange }: AddRequestDialogProps) {
-  const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState<RequestTag>('others');
@@ -41,11 +40,7 @@ export function AddRequestDialog({ open, onOpenChange }: AddRequestDialogProps) 
       setIsRecurring(false);
       onOpenChange(false);
     } catch (err) {
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to save prayer request',
-        variant: 'destructive',
-      });
+      toast.error(err instanceof Error ? err.message : 'Failed to save prayer request');
     }
   };
 

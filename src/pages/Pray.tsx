@@ -11,11 +11,10 @@ import { FormatSelector } from '@/components/prayer/FormatSelector';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export default function Pray() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [selectedFormat, setSelectedFormat] = useState<PrayerFormat | null>(null);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
@@ -61,20 +60,12 @@ export default function Pray() {
 
       if (error) {
         console.error('Error generating prayer:', error);
-        toast({
-          title: 'Could not generate prayer',
-          description: 'Your session was saved, but we couldn\'t create a flowing prayer.',
-          variant: 'destructive',
-        });
+        toast.error('Your session was saved, but we couldn\'t create a flowing prayer.');
         return;
       }
 
       if (data?.error) {
-        toast({
-          title: 'Prayer generation issue',
-          description: data.error,
-          variant: 'destructive',
-        });
+        toast.error(data.error);
         return;
       }
 
@@ -116,11 +107,7 @@ export default function Pray() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save your prayer session';
       setSaveError(message);
-      toast({
-        title: 'Error saving prayer',
-        description: message,
-        variant: 'destructive',
-      });
+      toast.error(message);
     }
   };
 
@@ -140,10 +127,7 @@ export default function Pray() {
       await navigator.clipboard.writeText(generatedPrayer);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: 'Prayer copied',
-        description: 'The prayer has been copied to your clipboard.',
-      });
+      toast.success('Prayer copied to clipboard');
     }
   };
 

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookHeart, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,7 +27,6 @@ const passwordSchema = z.object({
 export default function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp, resetPassword, user } = useAuth();
-  const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -60,11 +59,7 @@ export default function Auth() {
     // Validate input
     const result = authSchema.safeParse({ email, password });
     if (!result.success) {
-      toast({
-        title: 'Validation Error',
-        description: result.error.errors[0].message,
-        variant: 'destructive',
-      });
+      toast.error(result.error.errors[0].message);
       return;
     }
 
@@ -77,16 +72,9 @@ export default function Auth() {
         if (message.includes('already registered')) {
           message = 'This email is already registered. Try signing in instead.';
         }
-        toast({
-          title: 'Sign up failed',
-          description: message,
-          variant: 'destructive',
-        });
+        toast.error(message);
       } else {
-        toast({
-          title: 'Welcome to Selah',
-          description: 'Your account has been created.',
-        });
+        toast.success('Welcome to Selah! Your account has been created.');
         navigate('/');
       }
     } else {
@@ -96,11 +84,7 @@ export default function Auth() {
         if (message.includes('Invalid login')) {
           message = 'Invalid email or password. Please try again.';
         }
-        toast({
-          title: 'Sign in failed',
-          description: message,
-          variant: 'destructive',
-        });
+        toast.error(message);
       } else {
         navigate('/');
       }
@@ -114,11 +98,7 @@ export default function Auth() {
 
     const result = emailSchema.safeParse(email);
     if (!result.success) {
-      toast({
-        title: 'Invalid email',
-        description: 'Please enter a valid email address.',
-        variant: 'destructive',
-      });
+      toast.error('Please enter a valid email address.');
       return;
     }
 
@@ -127,16 +107,9 @@ export default function Auth() {
     setLoading(false);
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send reset email. Please try again.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to send reset email. Please try again.');
     } else {
-      toast({
-        title: 'Check your email',
-        description: 'We sent you a password reset link.',
-      });
+      toast.success('Check your email - we sent you a password reset link.');
       setShowForgotPassword(false);
       setEmail('');
     }
@@ -147,11 +120,7 @@ export default function Auth() {
 
     const result = passwordSchema.safeParse({ password: newPassword, confirmPassword });
     if (!result.success) {
-      toast({
-        title: 'Validation Error',
-        description: result.error.errors[0].message,
-        variant: 'destructive',
-      });
+      toast.error(result.error.errors[0].message);
       return;
     }
 
@@ -160,16 +129,9 @@ export default function Auth() {
     setLoading(false);
 
     if (error) {
-      toast({
-        title: 'Failed to update password',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message);
     } else {
-      toast({
-        title: 'Password updated',
-        description: 'You can now sign in with your new password.',
-      });
+      toast.success('Password updated! You can now sign in with your new password.');
       // Clear URL params and show login
       window.history.replaceState({}, '', '/auth');
       setShowNewPasswordForm(false);
