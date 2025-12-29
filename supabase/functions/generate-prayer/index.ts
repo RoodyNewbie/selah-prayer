@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,33 @@ serve(async (req) => {
   }
 
   try {
+    // Verify user authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error("Auth error:", authError?.message || "No user found");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Authenticated user:", user.id);
+
     const { phases } = await req.json() as { phases: PrayerPhases };
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
@@ -68,7 +96,7 @@ Guidelines:
 
 ${prayerContext}`;
 
-    console.log("Generating prayer from phases:", Object.keys(phases).filter(k => phases[k as keyof PrayerPhases]?.trim()));
+    console.log("Generating prayer for user:", user.id, "- phases:", Object.keys(phases).filter(k => phases[k as keyof PrayerPhases]?.trim()));
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -108,7 +136,7 @@ ${prayerContext}`;
     const data = await response.json();
     const generatedPrayer = data.choices?.[0]?.message?.content || "Lord, hear my prayer. Amen.";
 
-    console.log("Prayer generated successfully");
+    console.log("Prayer generated successfully for user:", user.id);
 
     return new Response(
       JSON.stringify({ prayer: generatedPrayer }),
