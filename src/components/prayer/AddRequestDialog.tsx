@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { PrayerRequest, RequestTag, requestTags } from '@/lib/prayerData';
-import { storage } from '@/lib/storage';
+import { RequestTag, requestTags } from '@/lib/prayerData';
+import { db } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 interface AddRequestDialogProps {
   open: boolean;
@@ -18,25 +19,25 @@ export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequ
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState<RequestTag>('others');
   const [isRecurring, setIsRecurring] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) return;
 
-    const request: PrayerRequest = {
-      id: crypto.randomUUID(),
+    setSaving(true);
+    await db.saveRequest({
       title: title.trim(),
       description: description.trim(),
       tag,
       isRecurring,
       isAnswered: false,
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    storage.saveRequest(request);
     setTitle('');
     setDescription('');
     setTag('others');
     setIsRecurring(false);
+    setSaving(false);
     onOpenChange(false);
     onRequestAdded?.();
   };
@@ -106,8 +107,15 @@ export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequ
             </span>
           </div>
 
-          <Button onClick={handleSubmit} className="w-full" disabled={!title.trim()}>
-            Add Request
+          <Button onClick={handleSubmit} className="w-full" disabled={!title.trim() || saving}>
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Saving...
+              </>
+            ) : (
+              'Add Request'
+            )}
           </Button>
         </div>
       </DialogContent>

@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
 import { PrayerSession, prayerPhases } from '@/lib/prayerData';
-import { storage } from '@/lib/storage';
+import { db } from '@/lib/db';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon } from 'lucide-react';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function History() {
   const [sessions, setSessions] = useState<PrayerSession[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setSessions(storage.getSessions());
+    loadSessions();
   }, []);
+
+  const loadSessions = async () => {
+    setLoading(true);
+    const data = await db.getSessions();
+    setSessions(data);
+    setLoading(false);
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -33,7 +41,11 @@ export default function History() {
       </header>
 
       <main className="px-4 py-4 space-y-3">
-        {sessions.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : sessions.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <HistoryIcon className="w-8 h-8 text-muted-foreground" />
@@ -44,7 +56,7 @@ export default function History() {
           </div>
         ) : (
           sessions.map((session) => {
-            const hasContent = Object.values(session.phases).some((v) => v.trim());
+            const hasContent = Object.values(session.phases).some((v) => v && v.trim());
             const isExpanded = expandedId === session.id;
 
             return (
@@ -79,7 +91,7 @@ export default function History() {
                 {isExpanded && hasContent && (
                   <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
                     {Object.entries(session.phases)
-                      .filter(([_, content]) => content.trim())
+                      .filter(([_, content]) => content && content.trim())
                       .map(([phaseId, content]) => (
                         <div key={phaseId}>
                           <p className="text-xs text-primary font-body font-medium mb-1">

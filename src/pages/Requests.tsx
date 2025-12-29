@@ -1,21 +1,24 @@
 import { useEffect, useState } from 'react';
 import { PrayerRequest, RequestTag, requestTags } from '@/lib/prayerData';
-import { storage } from '@/lib/storage';
+import { db } from '@/lib/db';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { RequestCard } from '@/components/prayer/RequestCard';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Requests() {
   const [requests, setRequests] = useState<PrayerRequest[]>([]);
   const [selectedTag, setSelectedTag] = useState<RequestTag | 'all'>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const loadRequests = () => {
-    const allRequests = storage.getRequests().filter((r) => !r.isAnswered);
-    setRequests(allRequests);
+  const loadRequests = async () => {
+    setLoading(true);
+    const allRequests = await db.getRequests();
+    setRequests(allRequests.filter((r) => !r.isAnswered));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -27,19 +30,17 @@ export default function Requests() {
       ? requests
       : requests.filter((r) => r.tag === selectedTag);
 
-  const handleMarkAnswered = (id: string, note: string) => {
-    const request = requests.find((r) => r.id === id);
-    if (request) {
-      request.isAnswered = true;
-      request.answeredNote = note;
-      request.answeredDate = new Date().toISOString();
-      storage.saveRequest(request);
-      loadRequests();
-    }
+  const handleMarkAnswered = async (id: string, note: string) => {
+    await db.updateRequest(id, {
+      isAnswered: true,
+      answeredNote: note,
+      answeredDate: new Date().toISOString(),
+    });
+    loadRequests();
   };
 
-  const handleDelete = (id: string) => {
-    storage.deleteRequest(id);
+  const handleDelete = async (id: string) => {
+    await db.deleteRequest(id);
     loadRequests();
   };
 
@@ -87,7 +88,11 @@ export default function Requests() {
 
       {/* Requests List */}
       <main className="px-4 space-y-3">
-        {filteredRequests.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : filteredRequests.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground font-body">
               No prayer requests yet. Add one to get started.

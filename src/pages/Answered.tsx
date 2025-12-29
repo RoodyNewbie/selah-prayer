@@ -1,24 +1,32 @@
 import { useEffect, useState } from 'react';
 import { PrayerRequest } from '@/lib/prayerData';
-import { storage } from '@/lib/storage';
+import { db } from '@/lib/db';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function Answered() {
   const [answeredRequests, setAnsweredRequests] = useState<PrayerRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const allRequests = storage.getRequests().filter((r) => r.isAnswered);
+    loadAnsweredRequests();
+  }, []);
+
+  const loadAnsweredRequests = async () => {
+    setLoading(true);
+    const allRequests = await db.getRequests();
+    const answered = allRequests.filter((r) => r.isAnswered);
     // Sort by answered date, most recent first
-    allRequests.sort((a, b) => {
+    answered.sort((a, b) => {
       const dateA = a.answeredDate ? new Date(a.answeredDate).getTime() : 0;
       const dateB = b.answeredDate ? new Date(b.answeredDate).getTime() : 0;
       return dateB - dateA;
     });
-    setAnsweredRequests(allRequests);
-  }, []);
+    setAnsweredRequests(answered);
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -30,7 +38,11 @@ export default function Answered() {
       </header>
 
       <main className="px-4 py-4 space-y-3">
-        {answeredRequests.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : answeredRequests.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8 text-muted-foreground" />
