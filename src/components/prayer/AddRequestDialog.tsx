@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RequestTag, requestTags } from '@/lib/prayerData';
-import { db } from '@/lib/db';
+import { useCreateRequest } from '@/hooks/usePrayerRequests';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -12,23 +12,22 @@ import { useToast } from '@/hooks/use-toast';
 interface AddRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onRequestAdded?: () => void;
 }
 
-export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequestDialogProps) {
+export function AddRequestDialog({ open, onOpenChange }: AddRequestDialogProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState<RequestTag>('others');
   const [isRecurring, setIsRecurring] = useState(false);
-  const [saving, setSaving] = useState(false);
+
+  const createRequestMutation = useCreateRequest();
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
 
-    setSaving(true);
     try {
-      await db.saveRequest({
+      await createRequestMutation.mutateAsync({
         title: title.trim(),
         description: description.trim(),
         tag,
@@ -41,15 +40,12 @@ export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequ
       setTag('others');
       setIsRecurring(false);
       onOpenChange(false);
-      onRequestAdded?.();
     } catch (err) {
       toast({
         title: 'Error',
         description: err instanceof Error ? err.message : 'Failed to save prayer request',
         variant: 'destructive',
       });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -118,8 +114,12 @@ export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequ
             </span>
           </div>
 
-          <Button onClick={handleSubmit} className="w-full" disabled={!title.trim() || saving}>
-            {saving ? (
+          <Button 
+            onClick={handleSubmit} 
+            className="w-full" 
+            disabled={!title.trim() || createRequestMutation.isPending}
+          >
+            {createRequestMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 Saving...

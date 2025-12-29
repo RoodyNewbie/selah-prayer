@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { PrayerSession, prayerPhases } from '@/lib/prayerData';
-import { db, DatabaseError } from '@/lib/db';
+import { useState } from 'react';
+import { prayerPhases } from '@/lib/prayerData';
+import { usePrayerSessions, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,32 +9,15 @@ import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Cop
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PrayerSession } from '@/lib/prayerData';
 
 export default function History() {
-  const [sessions, setSessions] = useState<PrayerSession[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
-  const loadSessions = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await db.getSessions();
-      setSessions(data);
-    } catch (err) {
-      const message = err instanceof DatabaseError ? err.message : 'Failed to load prayer history';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: sessions = [], isLoading, error, refetch } = usePrayerSessions();
+  const updateSessionPrayerMutation = useUpdateSessionPrayer();
 
   const toggleExpanded = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -55,20 +38,15 @@ export default function History() {
 
       const prayer = data.prayer;
       
-      try {
-        await db.updateSessionPrayer(session.id, prayer);
-      } catch (saveError) {
-        toast.error(saveError instanceof Error ? saveError.message : 'Failed to save prayer');
-        return;
-      }
+      await updateSessionPrayerMutation.mutateAsync({
+        sessionId: session.id,
+        generatedPrayer: prayer,
+      });
       
-      setSessions(prev => 
-        prev.map(s => s.id === session.id ? { ...s, generatedPrayer: prayer } : s)
-      );
       toast.success('Prayer regenerated');
     } catch (err) {
       console.error('Error regenerating prayer:', err);
-      toast.error('Failed to regenerate prayer. Please try again.');
+      toast.error(err instanceof Error ? err.message : 'Failed to regenerate prayer');
     } finally {
       setRegeneratingId(null);
     }
@@ -98,15 +76,17 @@ export default function History() {
         {/* Error State */}
         {error && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-            <p className="text-destructive font-body text-sm">{error}</p>
-            <Button variant="outline" size="sm" onClick={loadSessions} className="mt-2">
+            <p className="text-destructive font-body text-sm">
+              {error instanceof Error ? error.message : 'Failed to load prayer history'}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
             </Button>
           </div>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
