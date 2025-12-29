@@ -21,8 +21,11 @@ export function useCreateSession() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ phases, generatedPrayer }: { phases: Record<string, string>; generatedPrayer?: string }) =>
-      db.saveSession(phases, generatedPrayer),
+    mutationFn: ({ phases, generatedPrayer, formatId }: { 
+      phases: Record<string, string>; 
+      generatedPrayer?: string;
+      formatId?: string;
+    }) => db.saveSession(phases, generatedPrayer, formatId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prayer-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['last-prayed'] });

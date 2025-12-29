@@ -11,6 +11,7 @@ import Pray from "./pages/Pray";
 import Requests from "./pages/Requests";
 import Answered from "./pages/Answered";
 import History from "./pages/History";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -92,6 +93,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <History />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Settings />
               </ErrorBoundary>
             </ProtectedRoute>
           }

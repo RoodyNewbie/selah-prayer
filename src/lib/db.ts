@@ -121,7 +121,7 @@ export const db = {
     return (data || []).map(toSession);
   },
 
-  async saveSession(phases: Record<string, string>, generatedPrayer?: string): Promise<PrayerSession> {
+  async saveSession(phases: Record<string, string>, generatedPrayer?: string, formatId?: string): Promise<PrayerSession> {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) {
       throw new DatabaseError('Please sign in to save your prayer session.');
@@ -133,6 +133,7 @@ export const db = {
         user_id: userData.user.id,
         phases,
         generated_prayer: generatedPrayer || null,
+        format_id: formatId || null,
       })
       .select()
       .single();
