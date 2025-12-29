@@ -5,6 +5,14 @@ import type { Tables } from '@/integrations/supabase/types';
 type PrayerRequestRow = Tables<'prayer_requests'>;
 type PrayerSessionRow = Tables<'prayer_sessions'>;
 
+// Custom error class for database operations
+export class DatabaseError extends Error {
+  constructor(message: string, public originalError?: unknown) {
+    super(message);
+    this.name = 'DatabaseError';
+  }
+}
+
 // Transform database row to PrayerRequest
 const toRequest = (row: PrayerRequestRow): PrayerRequest => ({
   id: row.id,
@@ -35,16 +43,17 @@ export const db = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching requests:', error);
-      return [];
+      throw new DatabaseError('Failed to load your prayer requests. Please check your connection and try again.', error);
     }
 
     return (data || []).map(toRequest);
   },
 
-  async saveRequest(request: Omit<PrayerRequest, 'id' | 'createdAt'>): Promise<PrayerRequest | null> {
+  async saveRequest(request: Omit<PrayerRequest, 'id' | 'createdAt'>): Promise<PrayerRequest> {
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return null;
+    if (!userData.user) {
+      throw new DatabaseError('Please sign in to save prayer requests.');
+    }
 
     const { data, error } = await supabase
       .from('prayer_requests')
@@ -62,14 +71,13 @@ export const db = {
       .single();
 
     if (error) {
-      console.error('Error saving request:', error);
-      return null;
+      throw new DatabaseError('Failed to save your prayer request. Please try again.', error);
     }
 
     return toRequest(data);
   },
 
-  async updateRequest(id: string, updates: Partial<PrayerRequest>): Promise<boolean> {
+  async updateRequest(id: string, updates: Partial<PrayerRequest>): Promise<void> {
     const { error } = await supabase
       .from('prayer_requests')
       .update({
@@ -84,25 +92,19 @@ export const db = {
       .eq('id', id);
 
     if (error) {
-      console.error('Error updating request:', error);
-      return false;
+      throw new DatabaseError('Failed to update your prayer request. Please try again.', error);
     }
-
-    return true;
   },
 
-  async deleteRequest(id: string): Promise<boolean> {
+  async deleteRequest(id: string): Promise<void> {
     const { error } = await supabase
       .from('prayer_requests')
       .delete()
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting request:', error);
-      return false;
+      throw new DatabaseError('Failed to delete the prayer request. Please try again.', error);
     }
-
-    return true;
   },
 
   // Prayer Sessions
@@ -113,16 +115,17 @@ export const db = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching sessions:', error);
-      return [];
+      throw new DatabaseError('Failed to load your prayer history. Please try again.', error);
     }
 
     return (data || []).map(toSession);
   },
 
-  async saveSession(phases: Record<string, string>, generatedPrayer?: string): Promise<PrayerSession | null> {
+  async saveSession(phases: Record<string, string>, generatedPrayer?: string): Promise<PrayerSession> {
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return null;
+    if (!userData.user) {
+      throw new DatabaseError('Please sign in to save your prayer session.');
+    }
 
     const { data, error } = await supabase
       .from('prayer_sessions')
@@ -135,25 +138,21 @@ export const db = {
       .single();
 
     if (error) {
-      console.error('Error saving session:', error);
-      return null;
+      throw new DatabaseError('Failed to save your prayer session. Please try again.', error);
     }
 
     return toSession(data);
   },
 
-  async updateSessionPrayer(sessionId: string, generatedPrayer: string): Promise<boolean> {
+  async updateSessionPrayer(sessionId: string, generatedPrayer: string): Promise<void> {
     const { error } = await supabase
       .from('prayer_sessions')
       .update({ generated_prayer: generatedPrayer })
       .eq('id', sessionId);
 
     if (error) {
-      console.error('Error updating session prayer:', error);
-      return false;
+      throw new DatabaseError('Failed to save the generated prayer. Please try again.', error);
     }
-
-    return true;
   },
 
   async getLastPrayed(): Promise<string | null> {
@@ -164,10 +163,12 @@ export const db = {
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      // Silently fail for last prayed - not critical
+      console.error('Error fetching last prayed:', error);
       return null;
     }
 
-    return data.created_at;
+    return data?.created_at ?? null;
   },
 };

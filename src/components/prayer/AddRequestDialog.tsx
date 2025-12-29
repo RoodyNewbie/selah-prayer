@@ -7,6 +7,7 @@ import { RequestTag, requestTags } from '@/lib/prayerData';
 import { db } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddRequestDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface AddRequestDialogProps {
 }
 
 export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequestDialogProps) {
+  const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tag, setTag] = useState<RequestTag>('others');
@@ -25,21 +27,30 @@ export function AddRequestDialog({ open, onOpenChange, onRequestAdded }: AddRequ
     if (!title.trim()) return;
 
     setSaving(true);
-    await db.saveRequest({
-      title: title.trim(),
-      description: description.trim(),
-      tag,
-      isRecurring,
-      isAnswered: false,
-    });
+    try {
+      await db.saveRequest({
+        title: title.trim(),
+        description: description.trim(),
+        tag,
+        isRecurring,
+        isAnswered: false,
+      });
 
-    setTitle('');
-    setDescription('');
-    setTag('others');
-    setIsRecurring(false);
-    setSaving(false);
-    onOpenChange(false);
-    onRequestAdded?.();
+      setTitle('');
+      setDescription('');
+      setTag('others');
+      setIsRecurring(false);
+      onOpenChange(false);
+      onRequestAdded?.();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to save prayer request',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
