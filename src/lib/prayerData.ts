@@ -148,3 +148,24 @@ export interface PrayerSession {
   };
   generatedPrayer?: string;
 }
+
+// Journal entries types
+export type JournalEntryType = 'dream' | 'word';
+export type JournalStatus = 'active' | 'fulfilled';
+
+export interface JournalEntry {
+  id: string;
+  title: string;
+  description: string;
+  entryType: JournalEntryType;
+  status: JournalStatus;
+  scriptureReference?: string;
+  fulfilledDate?: string;
+  fulfilledNote?: string;
+  createdAt: string;
+}
+
+export const journalTypeLabels: Record<JournalEntryType, string> = {
+  dream: 'Dream',
+  word: 'Word from God',
+};

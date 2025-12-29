@@ -1,9 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PrayerRequest, PrayerSession, RequestTag, AnswerType } from './prayerData';
+import { PrayerRequest, PrayerSession, RequestTag, AnswerType, JournalEntry, JournalEntryType, JournalStatus } from './prayerData';
 import type { Tables } from '@/integrations/supabase/types';
 
 type PrayerRequestRow = Tables<'prayer_requests'>;
 type PrayerSessionRow = Tables<'prayer_sessions'>;
+type JournalEntryRow = Tables<'journal_entries'>;
 
 // Custom error class for database operations
 export class DatabaseError extends Error {
@@ -35,6 +36,19 @@ const toSession = (row: PrayerSessionRow): PrayerSession => ({
   timestamp: row.created_at,
   phases: row.phases as Record<string, string>,
   generatedPrayer: row.generated_prayer || undefined,
+});
+
+// Transform database row to JournalEntry
+const toJournalEntry = (row: JournalEntryRow): JournalEntry => ({
+  id: row.id,
+  title: row.title,
+  description: row.description || '',
+  entryType: row.entry_type as JournalEntryType,
+  status: row.status as JournalStatus,
+  scriptureReference: row.scripture_reference || undefined,
+  fulfilledDate: row.fulfilled_date || undefined,
+  fulfilledNote: row.fulfilled_note || undefined,
+  createdAt: row.created_at,
 });
 
 export const db = {
@@ -190,5 +204,79 @@ export const db = {
     }
 
     return data?.created_at ?? null;
+  },
+
+  // Journal Entries
+  async getJournalEntries(): Promise<JournalEntry[]> {
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new DatabaseError('Failed to load your journal entries. Please try again.', error);
+    }
+
+    return (data || []).map(toJournalEntry);
+  },
+
+  async saveJournalEntry(entry: Omit<JournalEntry, 'id' | 'createdAt'>): Promise<JournalEntry> {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      throw new DatabaseError('Please sign in to save journal entries.');
+    }
+
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .insert({
+        user_id: userData.user.id,
+        title: entry.title,
+        description: entry.description || null,
+        entry_type: entry.entryType,
+        status: entry.status,
+        scripture_reference: entry.scriptureReference || null,
+        fulfilled_date: entry.fulfilledDate || null,
+        fulfilled_note: entry.fulfilledNote || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new DatabaseError('Failed to save your journal entry. Please try again.', error);
+    }
+
+    return toJournalEntry(data);
+  },
+
+  async updateJournalEntry(id: string, updates: Partial<JournalEntry>): Promise<void> {
+    const updateData: Record<string, unknown> = {};
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.entryType !== undefined) updateData.entry_type = updates.entryType;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.scriptureReference !== undefined) updateData.scripture_reference = updates.scriptureReference;
+    if (updates.fulfilledDate !== undefined) updateData.fulfilled_date = updates.fulfilledDate;
+    if (updates.fulfilledNote !== undefined) updateData.fulfilled_note = updates.fulfilledNote;
+
+    const { error } = await supabase
+      .from('journal_entries')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      throw new DatabaseError('Failed to update your journal entry. Please try again.', error);
+    }
+  },
+
+  async deleteJournalEntry(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('journal_entries')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new DatabaseError('Failed to delete the journal entry. Please try again.', error);
+    }
   },
 };
