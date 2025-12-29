@@ -1,18 +1,24 @@
 import { useState, useMemo } from 'react';
-import { prayerPhases } from '@/lib/prayerData';
-import { usePrayerSessions, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
+import { prayerPhases, PrayerSession } from '@/lib/prayerData';
+import { usePrayerSessions, useUpdateSessionPrayer, useDeleteSession } from '@/hooks/usePrayerSessions';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FilterPill } from '@/components/ui/filter-pill';
 import { DateRangeDialog } from '@/components/history/DateRangeDialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format, subDays, subMonths } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { PrayerSession } from '@/lib/prayerData';
 
 type FilterType = 'all' | 'week' | 'month' | 'generated' | 'custom';
 
@@ -48,9 +54,11 @@ export default function History() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [customDateRange, setCustomDateRange] = useState<DateRange | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<PrayerSession | null>(null);
 
   const { data: sessions = [], isLoading, error, refetch } = usePrayerSessions();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
+  const deleteSessionMutation = useDeleteSession();
 
   const filteredSessions = useMemo(() => {
     let result = sessions;
@@ -161,6 +169,18 @@ export default function History() {
     setCustomDateRange(null);
   };
 
+  const handleDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    
+    try {
+      await deleteSessionMutation.mutateAsync(sessionToDelete.id);
+      toast.success('Prayer session deleted');
+      setSessionToDelete(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete session');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="p-4 pt-6 border-b border-border">
@@ -268,26 +288,44 @@ export default function History() {
                   isExpanded && "shadow-lifted"
                 )}
               >
-                <button
-                  className="w-full p-4 flex items-center justify-between text-left"
-                  onClick={() => toggleExpanded(session.id)}
-                >
-                  <div>
-                    <p className="font-display text-base text-foreground">
-                      {format(new Date(session.timestamp), 'EEEE, MMMM d')}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-body">
-                      {format(new Date(session.timestamp), 'h:mm a')}
-                    </p>
-                  </div>
-                  {hasContent && (
-                    isExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    )
-                  )}
-                </button>
+                <div className="w-full p-4 flex items-center justify-between">
+                  <button
+                    className="flex-1 flex items-center justify-between text-left"
+                    onClick={() => toggleExpanded(session.id)}
+                  >
+                    <div>
+                      <p className="font-display text-base text-foreground">
+                        {format(new Date(session.timestamp), 'EEEE, MMMM d')}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-body">
+                        {format(new Date(session.timestamp), 'h:mm a')}
+                      </p>
+                    </div>
+                    {hasContent && (
+                      isExpanded ? (
+                        <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      )
+                    )}
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 ml-2">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        onClick={() => setSessionToDelete(session)} 
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
                 {isExpanded && hasContent && (
                   <div className="px-4 pb-4 space-y-4 border-t border-border pt-3">
@@ -377,6 +415,16 @@ export default function History() {
           })
         )}
       </main>
+
+      <ConfirmDialog
+        open={!!sessionToDelete}
+        onOpenChange={(open) => !open && setSessionToDelete(null)}
+        title="Delete Prayer Session?"
+        description={`This will permanently delete your prayer session from ${sessionToDelete ? format(new Date(sessionToDelete.timestamp), 'MMMM d, yyyy') : ''}. This includes all your prayer notes and the generated prayer. This action cannot be undone.`}
+        confirmLabel="Delete Session"
+        onConfirm={handleDeleteSession}
+        loading={deleteSessionMutation.isPending}
+      />
 
       <DateRangeDialog
         open={datePickerOpen}

@@ -164,6 +164,17 @@ export const db = {
     }
   },
 
+  async deleteSession(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('prayer_sessions')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new DatabaseError('Failed to delete the prayer session. Please try again.', error);
+    }
+  },
+
   async getLastPrayed(): Promise<string | null> {
     const { data, error } = await supabase
       .from('prayer_sessions')

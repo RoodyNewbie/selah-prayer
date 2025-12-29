@@ -1,8 +1,15 @@
 import { useState } from 'react';
-import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
+import { useAnsweredRequests, useDeleteRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format, formatDistanceToNow, differenceInDays } from 'date-fns';
 import { answerTypeLabels, PrayerRequest } from '@/lib/prayerData';
 import { 
@@ -16,17 +23,21 @@ import {
   AlignLeft,
   ChevronDown,
   ChevronUp,
-  Quote
+  Quote,
+  MoreVertical,
+  Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type ViewMode = 'cards' | 'timeline';
 type SortMode = 'newest' | 'oldest' | 'longest';
 
-function TestimonyCard({ request, expanded, onToggle }: { 
+function TestimonyCard({ request, expanded, onToggle, onDelete }: { 
   request: PrayerRequest; 
   expanded: boolean;
   onToggle: () => void;
+  onDelete: () => void;
 }) {
   const daysToAnswer = request.answeredDate && request.createdAt
     ? differenceInDays(new Date(request.answeredDate), new Date(request.createdAt))
@@ -56,11 +67,29 @@ function TestimonyCard({ request, expanded, onToggle }: {
           </div>
         </div>
         
-        {request.answerType && (
-          <span className="px-2.5 py-1 rounded-full text-xs font-body bg-primary/10 text-primary whitespace-nowrap">
-            {answerTypeLabels[request.answerType]}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {request.answerType && (
+            <span className="px-2.5 py-1 rounded-full text-xs font-body bg-primary/10 text-primary whitespace-nowrap">
+              {answerTypeLabels[request.answerType]}
+            </span>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Testimony */}
@@ -190,9 +219,11 @@ function TimelineView({ requests }: { requests: PrayerRequest[] }) {
 
 export default function Answered() {
   const { data: answeredRequests, isLoading, error, refetch } = useAnsweredRequests();
+  const deleteRequestMutation = useDeleteRequest();
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [requestToDelete, setRequestToDelete] = useState<PrayerRequest | null>(null);
 
   // Sort requests
   const sortedRequests = [...(answeredRequests || [])].sort((a, b) => {
@@ -221,6 +252,18 @@ export default function Answered() {
     return answeredDate.getMonth() === now.getMonth() && 
            answeredDate.getFullYear() === now.getFullYear();
   }).length || 0;
+
+  const handleDeleteAnswered = async () => {
+    if (!requestToDelete) return;
+    
+    try {
+      await deleteRequestMutation.mutateAsync(requestToDelete.id);
+      toast.success('Answered prayer deleted');
+      setRequestToDelete(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -335,12 +378,23 @@ export default function Answered() {
               request={request}
               expanded={expandedId === request.id}
               onToggle={() => setExpandedId(expandedId === request.id ? null : request.id)}
+              onDelete={() => setRequestToDelete(request)}
             />
           ))
         ) : !error && viewMode === 'timeline' ? (
           <TimelineView requests={sortedRequests} />
         ) : null}
       </main>
+
+      <ConfirmDialog
+        open={!!requestToDelete}
+        onOpenChange={(open) => !open && setRequestToDelete(null)}
+        title="Delete Answered Prayer?"
+        description={`This will permanently delete "${requestToDelete?.title}" from your answered prayers. This testimony of God's faithfulness will be lost. This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDeleteAnswered}
+        loading={deleteRequestMutation.isPending}
+      />
 
       <BottomNav />
     </div>
