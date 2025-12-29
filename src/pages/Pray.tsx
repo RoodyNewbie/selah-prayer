@@ -21,6 +21,7 @@ export default function Pray() {
   const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [recurringRequests, setRecurringRequests] = useState<PrayerRequest[]>([]);
+  const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     loadRecurringRequests();
@@ -50,7 +51,7 @@ export default function Pray() {
     }
   };
 
-  const generatePrayer = async (phases: Record<string, string>) => {
+  const generatePrayer = async (phases: Record<string, string>, sessionId: string) => {
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-prayer', {
@@ -77,6 +78,9 @@ export default function Pray() {
       }
 
       setGeneratedPrayer(data.prayer);
+      
+      // Save the generated prayer to the session
+      await db.updateSessionPrayer(sessionId, data.prayer);
     } catch (err) {
       console.error('Error:', err);
     } finally {
@@ -86,14 +90,17 @@ export default function Pray() {
 
   const handleComplete = async () => {
     setIsSaving(true);
-    await db.saveSession(phaseContent);
+    const session = await db.saveSession(phaseContent);
     setIsSaving(false);
     setIsComplete(true);
     
-    // Generate the flowing prayer
-    const hasContent = Object.values(phaseContent).some((v) => v && v.trim());
-    if (hasContent) {
-      generatePrayer(phaseContent);
+    if (session) {
+      setSavedSessionId(session.id);
+      // Generate the flowing prayer
+      const hasContent = Object.values(phaseContent).some((v) => v && v.trim());
+      if (hasContent) {
+        generatePrayer(phaseContent, session.id);
+      }
     }
   };
 
