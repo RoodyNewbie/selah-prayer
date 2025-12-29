@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PrayerSession, prayerPhases } from '@/lib/prayerData';
-import { db } from '@/lib/db';
+import { db, DatabaseError } from '@/lib/db';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ export default function History() {
   const [sessions, setSessions] = useState<PrayerSession[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -23,9 +24,16 @@ export default function History() {
 
   const loadSessions = async () => {
     setLoading(true);
-    const data = await db.getSessions();
-    setSessions(data);
-    setLoading(false);
+    setError(null);
+    try {
+      const data = await db.getSessions();
+      setSessions(data);
+    } catch (err) {
+      const message = err instanceof DatabaseError ? err.message : 'Failed to load prayer history';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleExpanded = (id: string) => {
@@ -46,15 +54,21 @@ export default function History() {
       if (error) throw error;
 
       const prayer = data.prayer;
-      await db.updateSessionPrayer(session.id, prayer);
+      
+      try {
+        await db.updateSessionPrayer(session.id, prayer);
+      } catch (saveError) {
+        toast.error(saveError instanceof Error ? saveError.message : 'Failed to save prayer');
+        return;
+      }
       
       setSessions(prev => 
         prev.map(s => s.id === session.id ? { ...s, generatedPrayer: prayer } : s)
       );
       toast.success('Prayer regenerated');
-    } catch (error) {
-      console.error('Error regenerating prayer:', error);
-      toast.error('Failed to regenerate prayer');
+    } catch (err) {
+      console.error('Error regenerating prayer:', err);
+      toast.error('Failed to regenerate prayer. Please try again.');
     } finally {
       setRegeneratingId(null);
     }
@@ -66,7 +80,7 @@ export default function History() {
       setCopiedId(sessionId);
       toast.success('Prayer copied to clipboard');
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy prayer');
     }
   };
@@ -81,11 +95,22 @@ export default function History() {
       </header>
 
       <main className="px-4 py-4 space-y-3">
+        {/* Error State */}
+        {error && (
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+            <p className="text-destructive font-body text-sm">{error}</p>
+            <Button variant="outline" size="sm" onClick={loadSessions} className="mt-2">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : sessions.length === 0 ? (
+        ) : !error && sessions.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <HistoryIcon className="w-8 h-8 text-muted-foreground" />
@@ -94,7 +119,7 @@ export default function History() {
               Your prayer sessions will appear here
             </p>
           </div>
-        ) : (
+        ) : !error && (
           sessions.map((session) => {
             const hasContent = Object.values(session.phases).some((v) => v && v.trim());
             const isExpanded = expandedId === session.id;

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { prayerPhases, PrayerRequest } from '@/lib/prayerData';
-import { db } from '@/lib/db';
+import { db, DatabaseError } from '@/lib/db';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check } from 'lucide-react';
+import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Pray() {
@@ -17,6 +17,7 @@ export default function Pray() {
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
   const [isComplete, setIsComplete] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -28,8 +29,13 @@ export default function Pray() {
   }, []);
 
   const loadRecurringRequests = async () => {
-    const requests = await db.getRequests();
-    setRecurringRequests(requests.filter((r) => r.isRecurring && !r.isAnswered));
+    try {
+      const requests = await db.getRequests();
+      setRecurringRequests(requests.filter((r) => r.isRecurring && !r.isAnswered));
+    } catch (err) {
+      // Non-critical, just log
+      console.error('Error loading recurring requests:', err);
+    }
   };
 
   const currentPhase = prayerPhases[currentPhaseIndex];
@@ -80,7 +86,12 @@ export default function Pray() {
       setGeneratedPrayer(data.prayer);
       
       // Save the generated prayer to the session
-      await db.updateSessionPrayer(sessionId, data.prayer);
+      try {
+        await db.updateSessionPrayer(sessionId, data.prayer);
+      } catch (saveErr) {
+        console.error('Error saving generated prayer:', saveErr);
+        // Non-critical - prayer is displayed, just not persisted
+      }
     } catch (err) {
       console.error('Error:', err);
     } finally {
@@ -90,18 +101,33 @@ export default function Pray() {
 
   const handleComplete = async () => {
     setIsSaving(true);
-    const session = await db.saveSession(phaseContent);
-    setIsSaving(false);
-    setIsComplete(true);
+    setSaveError(null);
     
-    if (session) {
+    try {
+      const session = await db.saveSession(phaseContent);
       setSavedSessionId(session.id);
+      setIsComplete(true);
+      
       // Generate the flowing prayer
       const hasContent = Object.values(phaseContent).some((v) => v && v.trim());
       if (hasContent) {
         generatePrayer(phaseContent, session.id);
       }
+    } catch (err) {
+      const message = err instanceof DatabaseError ? err.message : 'Failed to save your prayer session';
+      setSaveError(message);
+      toast({
+        title: 'Error saving prayer',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleRetry = () => {
+    handleComplete();
   };
 
   const handleContentChange = (value: string) => {
@@ -178,6 +204,35 @@ export default function Pray() {
           <Button onClick={() => navigate('/')} size="lg" className="w-full">
             Return Home
           </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Save error state - show retry option
+  if (saveError && !isSaving) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-6 md:p-8 text-center space-y-6 max-w-lg w-full animate-fade-in">
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+            <AlertCircle className="w-8 h-8 text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="font-display text-2xl text-foreground">Unable to Save</h2>
+            <p className="text-muted-foreground font-body">
+              {saveError}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleRetry} size="lg" className="w-full">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/')} size="lg" className="w-full">
+              Return Home
+            </Button>
+          </div>
         </Card>
       </div>
     );
