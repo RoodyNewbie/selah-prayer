@@ -4,11 +4,22 @@ const REQUESTS_KEY = 'selah_requests';
 const SESSIONS_KEY = 'selah_sessions';
 const LAST_PRAYED_KEY = 'selah_last_prayed';
 
+function safeParseJSON<T>(key: string, fallback: T): T {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return fallback;
+    return JSON.parse(item) as T;
+  } catch {
+    // Clear corrupted data and return fallback
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
 export const storage = {
   // Prayer Requests
   getRequests: (): PrayerRequest[] => {
-    const data = localStorage.getItem(REQUESTS_KEY);
-    return data ? JSON.parse(data) : [];
+    return safeParseJSON<PrayerRequest[]>(REQUESTS_KEY, []);
   },
 
   saveRequest: (request: PrayerRequest): void => {
@@ -29,8 +40,7 @@ export const storage = {
 
   // Prayer Sessions
   getSessions: (): PrayerSession[] => {
-    const data = localStorage.getItem(SESSIONS_KEY);
-    return data ? JSON.parse(data) : [];
+    return safeParseJSON<PrayerSession[]>(SESSIONS_KEY, []);
   },
 
   saveSession: (session: PrayerSession): void => {
