@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { prayerPhases, PrayerRequest } from '@/lib/prayerData';
-import { db, DatabaseError } from '@/lib/db';
+import { prayerPhases } from '@/lib/prayerData';
+import { useRecurringRequests } from '@/hooks/usePrayerRequests';
+import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
@@ -16,27 +17,15 @@ export default function Pray() {
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
   const [isComplete, setIsComplete] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [recurringRequests, setRecurringRequests] = useState<PrayerRequest[]>([]);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRecurringRequests();
-  }, []);
-
-  const loadRecurringRequests = async () => {
-    try {
-      const requests = await db.getRequests();
-      setRecurringRequests(requests.filter((r) => r.isRecurring && !r.isAnswered));
-    } catch (err) {
-      // Non-critical, just log
-      console.error('Error loading recurring requests:', err);
-    }
-  };
+  const { data: recurringRequests = [] } = useRecurringRequests();
+  const createSessionMutation = useCreateSession();
+  const updateSessionPrayerMutation = useUpdateSessionPrayer();
 
   const currentPhase = prayerPhases[currentPhaseIndex];
   const phaseNames = prayerPhases.map((p) => p.name);
@@ -87,7 +76,10 @@ export default function Pray() {
       
       // Save the generated prayer to the session
       try {
-        await db.updateSessionPrayer(sessionId, data.prayer);
+        await updateSessionPrayerMutation.mutateAsync({
+          sessionId,
+          generatedPrayer: data.prayer,
+        });
       } catch (saveErr) {
         console.error('Error saving generated prayer:', saveErr);
         // Non-critical - prayer is displayed, just not persisted
@@ -100,11 +92,10 @@ export default function Pray() {
   };
 
   const handleComplete = async () => {
-    setIsSaving(true);
     setSaveError(null);
     
     try {
-      const session = await db.saveSession(phaseContent);
+      const session = await createSessionMutation.mutateAsync({ phases: phaseContent });
       setSavedSessionId(session.id);
       setIsComplete(true);
       
@@ -114,15 +105,13 @@ export default function Pray() {
         generatePrayer(phaseContent, session.id);
       }
     } catch (err) {
-      const message = err instanceof DatabaseError ? err.message : 'Failed to save your prayer session';
+      const message = err instanceof Error ? err.message : 'Failed to save your prayer session';
       setSaveError(message);
       toast({
         title: 'Error saving prayer',
         description: message,
         variant: 'destructive',
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -210,7 +199,7 @@ export default function Pray() {
   }
 
   // Save error state - show retry option
-  if (saveError && !isSaving) {
+  if (saveError && !createSessionMutation.isPending) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-6 md:p-8 text-center space-y-6 max-w-lg w-full animate-fade-in">
@@ -289,7 +278,7 @@ export default function Pray() {
           isLast={currentPhaseIndex === prayerPhases.length - 1}
         />
 
-        {isSaving && (
+        {createSessionMutation.isPending && (
           <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="text-sm font-body">Saving your prayer...</span>

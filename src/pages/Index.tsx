@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -6,26 +5,22 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { storage } from '@/lib/storage';
-import { db } from '@/lib/db';
+import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAuth } from '@/hooks/useAuth';
 import { Plus, BookHeart, LogOut } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
-  const [lastPrayed, setLastPrayed] = useState<string | null>(null);
+  const { signOut } = useAuth();
   const [showAddRequest, setShowAddRequest] = useState(false);
+
+  const { data: lastPrayed } = useLastPrayed();
 
   useEffect(() => {
     storage.initDarkMode();
-    loadLastPrayed();
   }, []);
-
-  const loadLastPrayed = async () => {
-    const date = await db.getLastPrayed();
-    setLastPrayed(date);
-  };
 
   const getLastPrayedText = () => {
     if (!lastPrayed) return 'Begin your prayer journey';
@@ -113,7 +108,6 @@ const Index = () => {
       <AddRequestDialog
         open={showAddRequest}
         onOpenChange={setShowAddRequest}
-        onRequestAdded={loadLastPrayed}
       />
       <BottomNav />
     </div>

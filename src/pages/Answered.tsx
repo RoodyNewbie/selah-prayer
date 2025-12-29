@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import { PrayerRequest } from '@/lib/prayerData';
-import { db, DatabaseError } from '@/lib/db';
+import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,34 +6,7 @@ import { format } from 'date-fns';
 import { CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 
 export default function Answered() {
-  const [answeredRequests, setAnsweredRequests] = useState<PrayerRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadAnsweredRequests();
-  }, []);
-
-  const loadAnsweredRequests = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const allRequests = await db.getRequests();
-      const answered = allRequests.filter((r) => r.isAnswered);
-      // Sort by answered date, most recent first
-      answered.sort((a, b) => {
-        const dateA = a.answeredDate ? new Date(a.answeredDate).getTime() : 0;
-        const dateB = b.answeredDate ? new Date(b.answeredDate).getTime() : 0;
-        return dateB - dateA;
-      });
-      setAnsweredRequests(answered);
-    } catch (err) {
-      const message = err instanceof DatabaseError ? err.message : 'Failed to load answered prayers';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: answeredRequests, isLoading, error, refetch } = useAnsweredRequests();
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -50,15 +21,17 @@ export default function Answered() {
         {/* Error State */}
         {error && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-            <p className="text-destructive font-body text-sm">{error}</p>
-            <Button variant="outline" size="sm" onClick={loadAnsweredRequests} className="mt-2">
+            <p className="text-destructive font-body text-sm">
+              {error instanceof Error ? error.message : 'Failed to load answered prayers'}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2">
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
             </Button>
           </div>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
