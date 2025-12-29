@@ -52,40 +52,49 @@ export type Database = {
       }
       prayer_requests: {
         Row: {
+          answer_type: string | null
           answered_date: string | null
           answered_note: string | null
           created_at: string
           description: string | null
+          gratitude_note: string | null
           id: string
           is_answered: boolean
           is_recurring: boolean
           tag: string
+          testimony: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          answer_type?: string | null
           answered_date?: string | null
           answered_note?: string | null
           created_at?: string
           description?: string | null
+          gratitude_note?: string | null
           id?: string
           is_answered?: boolean
           is_recurring?: boolean
           tag?: string
+          testimony?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          answer_type?: string | null
           answered_date?: string | null
           answered_note?: string | null
           created_at?: string
           description?: string | null
+          gratitude_note?: string | null
           id?: string
           is_answered?: boolean
           is_recurring?: boolean
           tag?: string
+          testimony?: string | null
           title?: string
           updated_at?: string
           user_id?: string

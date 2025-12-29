@@ -3,6 +3,7 @@ import { useActiveRequests, useMarkAnswered, useDeleteRequest } from '@/hooks/us
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { RequestCard } from '@/components/prayer/RequestCard';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
+import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,9 +24,18 @@ export default function Requests() {
       ? requests
       : requests.filter((r) => r.tag === selectedTag);
 
-  const handleMarkAnswered = async (id: string, note: string) => {
+  const handleMarkAnswered = async (id: string, data: AnsweredData) => {
     try {
-      await markAnsweredMutation.mutateAsync({ id, note });
+      await markAnsweredMutation.mutateAsync({ 
+        id, 
+        testimony: data.testimony,
+        answerType: data.answerType,
+        gratitudeNote: data.gratitudeNote,
+      });
+      toast({
+        title: 'Praise God!',
+        description: 'Prayer marked as answered.',
+      });
     } catch (err) {
       toast({
         title: 'Error',

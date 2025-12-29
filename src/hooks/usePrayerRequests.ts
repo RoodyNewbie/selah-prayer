@@ -79,11 +79,26 @@ export function useMarkAnswered() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, note }: { id: string; note: string }) =>
+    mutationFn: ({ 
+      id, 
+      note,
+      testimony,
+      answerType,
+      gratitudeNote,
+    }: { 
+      id: string; 
+      note?: string;
+      testimony?: string;
+      answerType?: string;
+      gratitudeNote?: string;
+    }) =>
       db.updateRequest(id, {
         isAnswered: true,
         answeredNote: note,
         answeredDate: new Date().toISOString(),
+        testimony,
+        answerType: answerType as PrayerRequest['answerType'],
+        gratitudeNote,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prayer-requests'] });
