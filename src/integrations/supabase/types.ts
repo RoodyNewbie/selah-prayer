@@ -59,18 +59,21 @@ export type Database = {
       prayer_sessions: {
         Row: {
           created_at: string
+          generated_prayer: string | null
           id: string
           phases: Json
           user_id: string
         }
         Insert: {
           created_at?: string
+          generated_prayer?: string | null
           id?: string
           phases?: Json
           user_id: string
         }
         Update: {
           created_at?: string
+          generated_prayer?: string | null
           id?: string
           phases?: Json
           user_id?: string

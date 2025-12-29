@@ -134,4 +134,5 @@ export interface PrayerSession {
   phases: {
     [key: string]: string;
   };
+  generatedPrayer?: string;
 }

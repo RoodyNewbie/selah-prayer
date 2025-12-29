@@ -19,6 +19,7 @@ const toSession = (row: any): PrayerSession => ({
   id: row.id,
   timestamp: row.created_at,
   phases: row.phases || {},
+  generatedPrayer: row.generated_prayer || undefined,
 });
 
 export const db = {
@@ -115,7 +116,7 @@ export const db = {
     return (data || []).map(toSession);
   },
 
-  async saveSession(phases: Record<string, string>): Promise<PrayerSession | null> {
+  async saveSession(phases: Record<string, string>, generatedPrayer?: string): Promise<PrayerSession | null> {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return null;
 
@@ -124,6 +125,7 @@ export const db = {
       .insert({
         user_id: userData.user.id,
         phases,
+        generated_prayer: generatedPrayer || null,
       })
       .select()
       .single();
@@ -134,6 +136,20 @@ export const db = {
     }
 
     return toSession(data);
+  },
+
+  async updateSessionPrayer(sessionId: string, generatedPrayer: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('prayer_sessions')
+      .update({ generated_prayer: generatedPrayer })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Error updating session prayer:', error);
+      return false;
+    }
+
+    return true;
   },
 
   async getLastPrayed(): Promise<string | null> {
