@@ -3,20 +3,20 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Confetti } from '@/components/ui/confetti';
-import { PrayerRequest } from '@/lib/prayerData';
+import { PrayerRequest, AnswerType } from '@/lib/prayerData';
 import { cn } from '@/lib/utils';
-import { 
-  CheckCircle2, 
-  Heart, 
-  Sparkles, 
-  ArrowRight, 
+import {
+  CheckCircle2,
+  Heart,
+  Sparkles,
+  ArrowRight,
   ArrowLeft,
   RefreshCw,
   HandHeart,
   Lightbulb
 } from 'lucide-react';
 
-export type AnswerType = 'fully' | 'differently' | 'partially' | 'peace';
+export type { AnswerType };
 
 export interface AnsweredData {
   answerType: AnswerType;

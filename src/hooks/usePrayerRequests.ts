@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/db';
-import { PrayerRequest } from '@/lib/prayerData';
+import { PrayerRequest, AnswerType } from '@/lib/prayerData';
 
 export function usePrayerRequests() {
   return useQuery({
@@ -79,17 +79,17 @@ export function useMarkAnswered() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      id, 
+    mutationFn: ({
+      id,
       note,
       testimony,
       answerType,
       gratitudeNote,
-    }: { 
-      id: string; 
+    }: {
+      id: string;
       note?: string;
       testimony?: string;
-      answerType?: string;
+      answerType?: AnswerType;
       gratitudeNote?: string;
     }) =>
       db.updateRequest(id, {
@@ -97,7 +97,7 @@ export function useMarkAnswered() {
         answeredNote: note,
         answeredDate: new Date().toISOString(),
         testimony,
-        answerType: answerType as PrayerRequest['answerType'],
+        answerType,
         gratitudeNote,
       }),
     onSuccess: () => {

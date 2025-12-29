@@ -1,6 +1,7 @@
 import { PrayerRequest, requestTags } from '@/lib/prayerData';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Check, MoreVertical, Repeat, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -20,6 +21,7 @@ interface RequestCardProps {
 
 export function RequestCard({ request, onMarkAnswered, onDelete }: RequestCardProps) {
   const [showAnswerDialog, setShowAnswerDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const tagInfo = requestTags.find((t) => t.id === request.tag);
 
@@ -71,7 +73,7 @@ export function RequestCard({ request, onMarkAnswered, onDelete }: RequestCardPr
                 Mark as Answered
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDelete(request.id)}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -87,6 +89,18 @@ export function RequestCard({ request, onMarkAnswered, onDelete }: RequestCardPr
         onOpenChange={setShowAnswerDialog}
         request={request}
         onComplete={handleAnswerComplete}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Prayer Request?"
+        description={`This will permanently delete "${request.title}". This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          onDelete(request.id);
+          setShowDeleteConfirm(false);
+        }}
       />
     </>
   );

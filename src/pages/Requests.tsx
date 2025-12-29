@@ -7,11 +7,10 @@ import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useState } from 'react';
 
 export default function Requests() {
-  const { toast } = useToast();
   const [selectedTag, setSelectedTag] = useState<RequestTag | 'all'>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -26,34 +25,24 @@ export default function Requests() {
 
   const handleMarkAnswered = async (id: string, data: AnsweredData) => {
     try {
-      await markAnsweredMutation.mutateAsync({ 
-        id, 
+      await markAnsweredMutation.mutateAsync({
+        id,
         testimony: data.testimony,
         answerType: data.answerType,
         gratitudeNote: data.gratitudeNote,
       });
-      toast({
-        title: 'Praise God!',
-        description: 'Prayer marked as answered.',
-      });
+      toast.success('Praise God! Prayer marked as answered.');
     } catch (err) {
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to update request',
-        variant: 'destructive',
-      });
+      toast.error(err instanceof Error ? err.message : 'Failed to update request');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteMutation.mutateAsync(id);
+      toast.success('Prayer request deleted');
     } catch (err) {
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to delete request',
-        variant: 'destructive',
-      });
+      toast.error(err instanceof Error ? err.message : 'Failed to delete request');
     }
   };
 

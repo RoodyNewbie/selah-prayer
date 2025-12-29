@@ -154,12 +154,12 @@ function TestimonyCard({ request, expanded, onToggle, onDelete }: {
   );
 }
 
-function TimelineView({ requests }: { requests: PrayerRequest[] }) {
+function TimelineView({ requests, onDelete }: { requests: PrayerRequest[]; onDelete: (request: PrayerRequest) => void }) {
   return (
     <div className="relative">
       {/* Vertical line */}
       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent" />
-      
+
       <div className="space-y-6">
         {requests.map((request, index) => {
           const daysToAnswer = request.answeredDate && request.createdAt
@@ -175,16 +175,34 @@ function TimelineView({ requests }: { requests: PrayerRequest[] }) {
 
               <Card className="p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display text-base text-foreground">
+                  <h3 className="font-display text-base text-foreground flex-1">
                     {request.title}
                   </h3>
-                  {request.answerType && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-body bg-primary/10 text-primary whitespace-nowrap">
-                      {answerTypeLabels[request.answerType]}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {request.answerType && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-body bg-primary/10 text-primary whitespace-nowrap">
+                        {answerTypeLabels[request.answerType]}
+                      </span>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => onDelete(request)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-                
+
                 <div className="flex items-center gap-4 text-xs text-muted-foreground font-body">
                   <span>
                     Created: {format(new Date(request.createdAt), 'MMM d, yyyy')}
@@ -382,7 +400,7 @@ export default function Answered() {
             />
           ))
         ) : !error && viewMode === 'timeline' ? (
-          <TimelineView requests={sortedRequests} />
+          <TimelineView requests={sortedRequests} onDelete={setRequestToDelete} />
         ) : null}
       </main>
 

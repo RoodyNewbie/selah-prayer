@@ -41,12 +41,11 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { data: formats = [], isLoading } = usePrayerFormats();
   const createFormat = useCreateFormat();
   const deleteFormat = useDeleteFormat();
@@ -63,7 +62,12 @@ export default function Settings() {
 
   const handleCreateFormat = async () => {
     if (!newName.trim()) {
-      toast({ title: 'Please enter a name', variant: 'destructive' });
+      toast.error('Please enter a name');
+      return;
+    }
+
+    if (newPhases.length === 0) {
+      toast.error('Please add at least one phase');
       return;
     }
 
@@ -73,20 +77,20 @@ export default function Settings() {
         description: newDescription.trim() || undefined,
         phases: newPhases,
       });
-      toast({ title: 'Format created!' });
+      toast.success('Format created!');
       setShowCreateDialog(false);
       resetForm();
     } catch (err) {
-      toast({ title: 'Failed to create format', variant: 'destructive' });
+      toast.error('Failed to create format');
     }
   };
 
   const handleDeleteFormat = async (id: string) => {
     try {
       await deleteFormat.mutateAsync(id);
-      toast({ title: 'Format deleted' });
+      toast.success('Format deleted');
     } catch (err) {
-      toast({ title: 'Failed to delete format', variant: 'destructive' });
+      toast.error('Failed to delete format');
     }
     setDeleteConfirm(null);
   };
@@ -94,9 +98,9 @@ export default function Settings() {
   const handleSetDefault = async (id: string) => {
     try {
       await setDefaultFormat.mutateAsync(id);
-      toast({ title: 'Default format updated' });
+      toast.success('Default format updated');
     } catch (err) {
-      toast({ title: 'Failed to update default', variant: 'destructive' });
+      toast.error('Failed to update default');
     }
   };
 
