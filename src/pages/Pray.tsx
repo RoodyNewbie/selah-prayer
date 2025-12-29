@@ -1,24 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { prayerPhases, PrayerSession, PrayerRequest } from '@/lib/prayerData';
-import { storage } from '@/lib/storage';
+import { prayerPhases, PrayerRequest } from '@/lib/prayerData';
+import { db } from '@/lib/db';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, CheckCircle, Repeat } from 'lucide-react';
+import { X, CheckCircle, Repeat, Loader2 } from 'lucide-react';
 
 export default function Pray() {
   const navigate = useNavigate();
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
   const [isComplete, setIsComplete] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [recurringRequests, setRecurringRequests] = useState<PrayerRequest[]>([]);
 
   useEffect(() => {
-    const requests = storage.getRequests().filter((r) => r.isRecurring && !r.isAnswered);
-    setRecurringRequests(requests);
+    loadRecurringRequests();
   }, []);
+
+  const loadRecurringRequests = async () => {
+    const requests = await db.getRequests();
+    setRecurringRequests(requests.filter((r) => r.isRecurring && !r.isAnswered));
+  };
 
   const currentPhase = prayerPhases[currentPhaseIndex];
   const phaseNames = prayerPhases.map((p) => p.name);
@@ -39,13 +44,10 @@ export default function Pray() {
     }
   };
 
-  const handleComplete = () => {
-    const session: PrayerSession = {
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      phases: phaseContent,
-    };
-    storage.saveSession(session);
+  const handleComplete = async () => {
+    setIsSaving(true);
+    await db.saveSession(phaseContent);
+    setIsSaving(false);
     setIsComplete(true);
   };
 
@@ -127,6 +129,13 @@ export default function Pray() {
           onSkip={handleSkip}
           isLast={currentPhaseIndex === prayerPhases.length - 1}
         />
+
+        {isSaving && (
+          <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm font-body">Saving your prayer...</span>
+          </div>
+        )}
       </main>
     </div>
   );

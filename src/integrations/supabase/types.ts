@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      prayer_requests: {
+        Row: {
+          answered_date: string | null
+          answered_note: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_answered: boolean
+          is_recurring: boolean
+          tag: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answered_date?: string | null
+          answered_note?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_answered?: boolean
+          is_recurring?: boolean
+          tag?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answered_date?: string | null
+          answered_note?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_answered?: boolean
+          is_recurring?: boolean
+          tag?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prayer_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          phases: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          phases?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          phases?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

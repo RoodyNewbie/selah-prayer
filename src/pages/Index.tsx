@@ -6,18 +6,26 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { storage } from '@/lib/storage';
-import { Plus, BookHeart } from 'lucide-react';
+import { db } from '@/lib/db';
+import { useAuth } from '@/hooks/useAuth';
+import { Plus, BookHeart, LogOut } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
   const [lastPrayed, setLastPrayed] = useState<string | null>(null);
   const [showAddRequest, setShowAddRequest] = useState(false);
 
   useEffect(() => {
     storage.initDarkMode();
-    setLastPrayed(storage.getLastPrayed());
+    loadLastPrayed();
   }, []);
+
+  const loadLastPrayed = async () => {
+    const date = await db.getLastPrayed();
+    setLastPrayed(date);
+  };
 
   const getLastPrayedText = () => {
     if (!lastPrayed) return 'Begin your prayer journey';
@@ -28,6 +36,11 @@ const Index = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -36,7 +49,12 @@ const Index = () => {
           <BookHeart className="w-6 h-6 text-primary" />
           <h1 className="font-display text-2xl text-foreground">Selah</h1>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-muted-foreground">
+            <LogOut className="w-5 h-5" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -95,6 +113,7 @@ const Index = () => {
       <AddRequestDialog
         open={showAddRequest}
         onOpenChange={setShowAddRequest}
+        onRequestAdded={loadLastPrayed}
       />
       <BottomNav />
     </div>
