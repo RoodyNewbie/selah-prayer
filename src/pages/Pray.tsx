@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { prayerPhases } from '@/lib/prayerData';
+import { prayerPhases, PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
+import { usePrayerFormats, PrayerFormat } from '@/hooks/usePrayerFormats';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
+import { FormatSelector } from '@/components/prayer/FormatSelector';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
@@ -14,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function Pray() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [selectedFormat, setSelectedFormat] = useState<PrayerFormat | null>(null);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
   const [isComplete, setIsComplete] = useState(false);
@@ -24,14 +27,17 @@ export default function Pray() {
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
 
   const { data: recurringRequests = [] } = useRecurringRequests();
+  const { data: formats = [] } = usePrayerFormats();
   const createSessionMutation = useCreateSession();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
 
-  const currentPhase = prayerPhases[currentPhaseIndex];
-  const phaseNames = prayerPhases.map((p) => p.name);
+  // Get the active phases - either from selected format or built-in
+  const activePhases: PrayerPhase[] = selectedFormat?.phases || prayerPhases;
+  const currentPhase = activePhases[currentPhaseIndex];
+  const phaseNames = activePhases.map((p) => p.name);
 
   const handleNext = () => {
-    if (currentPhaseIndex < prayerPhases.length - 1) {
+    if (currentPhaseIndex < activePhases.length - 1) {
       setCurrentPhaseIndex((prev) => prev + 1);
     } else {
       handleComplete();
@@ -39,7 +45,7 @@ export default function Pray() {
   };
 
   const handleSkip = () => {
-    if (currentPhaseIndex < prayerPhases.length - 1) {
+    if (currentPhaseIndex < activePhases.length - 1) {
       setCurrentPhaseIndex((prev) => prev + 1);
     } else {
       handleComplete();
@@ -95,7 +101,10 @@ export default function Pray() {
     setSaveError(null);
     
     try {
-      const session = await createSessionMutation.mutateAsync({ phases: phaseContent });
+      const session = await createSessionMutation.mutateAsync({ 
+        phases: phaseContent,
+        formatId: selectedFormat?.id,
+      });
       setSavedSessionId(session.id);
       setIsComplete(true);
       
@@ -234,7 +243,10 @@ export default function Pray() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
           <X className="w-5 h-5" />
         </Button>
-        <span className="font-display text-lg text-foreground">Prayer Session</span>
+        <FormatSelector 
+          selectedFormat={selectedFormat} 
+          onSelectFormat={setSelectedFormat} 
+        />
         <div className="w-10" />
       </header>
 
@@ -242,7 +254,7 @@ export default function Pray() {
       <div className="py-4">
         <PhaseProgress
           currentPhase={currentPhaseIndex}
-          totalPhases={prayerPhases.length}
+          totalPhases={activePhases.length}
           phaseNames={phaseNames}
         />
       </div>
@@ -275,7 +287,7 @@ export default function Pray() {
           onChange={handleContentChange}
           onNext={handleNext}
           onSkip={handleSkip}
-          isLast={currentPhaseIndex === prayerPhases.length - 1}
+          isLast={currentPhaseIndex === activePhases.length - 1}
         />
 
         {createSessionMutation.isPending && (

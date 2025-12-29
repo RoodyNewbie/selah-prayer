@@ -7,7 +7,7 @@ import { BottomNav } from '@/components/navigation/BottomNav';
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, BookHeart, LogOut } from 'lucide-react';
+import { Plus, BookHeart, LogOut, Settings } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 
@@ -46,6 +46,9 @@ const Index = () => {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="text-muted-foreground">
+            <Settings className="w-5 h-5" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-muted-foreground">
             <LogOut className="w-5 h-5" />
           </Button>
