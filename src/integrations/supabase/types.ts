@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      journal_entries: {
+        Row: {
+          created_at: string
+          description: string | null
+          entry_type: string
+          fulfilled_date: string | null
+          fulfilled_note: string | null
+          id: string
+          scripture_reference: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          entry_type?: string
+          fulfilled_date?: string | null
+          fulfilled_note?: string | null
+          id?: string
+          scripture_reference?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          entry_type?: string
+          fulfilled_date?: string | null
+          fulfilled_note?: string | null
+          id?: string
+          scripture_reference?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       prayer_formats: {
         Row: {
           created_at: string

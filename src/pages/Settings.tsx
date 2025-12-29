@@ -40,6 +40,8 @@ import {
   GripVertical,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
+  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -153,6 +155,28 @@ export default function Settings() {
       </header>
 
       <main className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+        {/* Data Section */}
+        <section>
+          <h2 className="font-display text-lg text-foreground mb-4">Data</h2>
+          <Card
+            className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => navigate('/history')}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-body font-medium text-foreground">Prayer History</p>
+                  <p className="text-sm text-muted-foreground">View past prayer sessions</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </Card>
+        </section>
+
         {/* Prayer Formats Section */}
         <section>
           <div className="flex items-center justify-between mb-4">

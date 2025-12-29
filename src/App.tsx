@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Pray from "./pages/Pray";
 import Requests from "./pages/Requests";
+import Journal from "./pages/Journal";
 import Answered from "./pages/Answered";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -72,6 +73,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <Requests />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/journal"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Journal />
               </ErrorBoundary>
             </ProtectedRoute>
           }
