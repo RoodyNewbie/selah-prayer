@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      prayer_formats: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          is_system: boolean
+          name: string
+          phases: Json
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          is_system?: boolean
+          name: string
+          phases?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          is_system?: boolean
+          name?: string
+          phases?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       prayer_requests: {
         Row: {
           answered_date: string | null
@@ -59,6 +95,7 @@ export type Database = {
       prayer_sessions: {
         Row: {
           created_at: string
+          format_id: string | null
           generated_prayer: string | null
           id: string
           phases: Json
@@ -66,6 +103,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          format_id?: string | null
           generated_prayer?: string | null
           id?: string
           phases?: Json
@@ -73,12 +111,21 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          format_id?: string | null
           generated_prayer?: string | null
           id?: string
           phases?: Json
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prayer_sessions_format_id_fkey"
+            columns: ["format_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_formats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
