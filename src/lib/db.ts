@@ -1,8 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PrayerRequest, PrayerSession, RequestTag } from './prayerData';
+import type { Tables } from '@/integrations/supabase/types';
+
+type PrayerRequestRow = Tables<'prayer_requests'>;
+type PrayerSessionRow = Tables<'prayer_sessions'>;
 
 // Transform database row to PrayerRequest
-const toRequest = (row: any): PrayerRequest => ({
+const toRequest = (row: PrayerRequestRow): PrayerRequest => ({
   id: row.id,
   title: row.title,
   description: row.description || '',
@@ -15,10 +19,10 @@ const toRequest = (row: any): PrayerRequest => ({
 });
 
 // Transform database row to PrayerSession
-const toSession = (row: any): PrayerSession => ({
+const toSession = (row: PrayerSessionRow): PrayerSession => ({
   id: row.id,
   timestamp: row.created_at,
-  phases: row.phases || {},
+  phases: row.phases as Record<string, string>,
   generatedPrayer: row.generated_prayer || undefined,
 });
 
