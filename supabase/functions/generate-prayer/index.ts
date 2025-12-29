@@ -15,6 +15,54 @@ interface PrayerPhases {
   worship?: string;
 }
 
+// Input validation constants
+const VALID_PHASE_KEYS = ['praise', 'will', 'needs', 'forgiveness', 'protection', 'worship'];
+const MAX_PHASE_LENGTH = 1000; // Max characters per phase
+const MAX_TOTAL_LENGTH = 5000; // Max total characters across all phases
+
+function validatePrayerPhases(phases: unknown): { valid: boolean; error?: string; sanitized?: PrayerPhases } {
+  if (!phases || typeof phases !== 'object' || Array.isArray(phases)) {
+    return { valid: false, error: 'Invalid phases format: must be an object' };
+  }
+
+  const sanitized: PrayerPhases = {};
+  let totalLength = 0;
+
+  for (const [key, value] of Object.entries(phases)) {
+    // Validate phase key
+    if (!VALID_PHASE_KEYS.includes(key)) {
+      return { valid: false, error: `Invalid phase key: ${key}` };
+    }
+
+    // Skip empty/null values
+    if (value === null || value === undefined || value === '') {
+      continue;
+    }
+
+    // Validate value is a string
+    if (typeof value !== 'string') {
+      return { valid: false, error: `Phase "${key}" must be a string` };
+    }
+
+    // Trim and validate length
+    const trimmedValue = value.trim();
+    if (trimmedValue.length > MAX_PHASE_LENGTH) {
+      return { valid: false, error: `Phase "${key}" exceeds maximum length of ${MAX_PHASE_LENGTH} characters` };
+    }
+
+    totalLength += trimmedValue.length;
+    if (totalLength > MAX_TOTAL_LENGTH) {
+      return { valid: false, error: `Total content exceeds maximum length of ${MAX_TOTAL_LENGTH} characters` };
+    }
+
+    if (trimmedValue) {
+      sanitized[key as keyof PrayerPhases] = trimmedValue;
+    }
+  }
+
+  return { valid: true, sanitized };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -48,7 +96,19 @@ serve(async (req) => {
 
     console.log("Authenticated user:", user.id);
 
-    const { phases } = await req.json() as { phases: PrayerPhases };
+    const body = await req.json();
+    
+    // Validate input phases
+    const validation = validatePrayerPhases(body.phases);
+    if (!validation.valid) {
+      console.error("Input validation failed:", validation.error);
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const phases = validation.sanitized!;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
