@@ -27,7 +27,8 @@ export function FormatSelector({ selectedFormat, onSelectFormat }: FormatSelecto
   const currentFormat = selectedFormat || builtInFormats[0];
 
   const handleSelect = (format: PrayerFormat) => {
-    onSelectFormat(isBuiltInFormat(format.id) ? null : format);
+    // Always pass the full format object so the prayer flow has the phases
+    onSelectFormat(format);
     setOpen(false);
   };
 
