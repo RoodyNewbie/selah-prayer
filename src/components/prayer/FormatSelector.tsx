@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { usePrayerFormats, PrayerFormat } from '@/hooks/usePrayerFormats';
-import { prayerPhases } from '@/lib/prayerData';
+import { builtInFormats, isBuiltInFormat } from '@/lib/builtInFormats';
 import { Check, ChevronDown, Settings2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -22,24 +22,12 @@ export function FormatSelector({ selectedFormat, onSelectFormat }: FormatSelecto
   const { data: formats = [], isLoading } = usePrayerFormats();
   const navigate = useNavigate();
 
-  // Create a "built-in" option from prayerPhases
-  const builtInFormat: PrayerFormat = {
-    id: 'built-in',
-    name: "Lord's Prayer",
-    description: 'The traditional prayer structure based on the Lord\'s Prayer',
-    phases: prayerPhases,
-    isDefault: false,
-    isSystem: true,
-    userId: null,
-    createdAt: '',
-    updatedAt: '',
-  };
-
-  const allFormats = [builtInFormat, ...formats];
-  const currentFormat = selectedFormat || builtInFormat;
+  // Combine built-in formats with user formats
+  const allFormats = [...builtInFormats, ...formats];
+  const currentFormat = selectedFormat || builtInFormats[0];
 
   const handleSelect = (format: PrayerFormat) => {
-    onSelectFormat(format.id === 'built-in' ? null : format);
+    onSelectFormat(isBuiltInFormat(format.id) ? null : format);
     setOpen(false);
   };
 

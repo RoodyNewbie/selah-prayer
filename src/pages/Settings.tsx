@@ -14,6 +14,7 @@ import {
   PrayerFormat,
 } from '@/hooks/usePrayerFormats';
 import { prayerPhases, PrayerPhase } from '@/lib/prayerData';
+import { builtInFormats, isBuiltInFormat } from '@/lib/builtInFormats';
 import {
   Dialog,
   DialogContent,
@@ -191,22 +192,27 @@ export default function Settings() {
           </div>
 
           <div className="space-y-3">
-            {/* Built-in format */}
-            <Card className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-body font-medium text-foreground">
-                      Lord's Prayer
-                    </span>
-                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+            {/* Built-in formats (not deletable) */}
+            {builtInFormats.map((format, index) => (
+              <Card key={format.id} className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-body font-medium text-foreground">
+                        {format.name}
+                      </span>
+                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                      {index === 0 && (
+                        <span className="text-xs text-muted-foreground">(Default)</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {format.description} • {format.phases.length} phases
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Traditional structure • {prayerPhases.length} phases
-                  </p>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            ))}
 
             {isLoading ? (
               <p className="text-muted-foreground text-sm py-4 text-center">
@@ -240,14 +246,17 @@ export default function Settings() {
                           <Star className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteConfirm(format.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {/* Only show delete for user-created formats */}
+                      {!isBuiltInFormat(format.id) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteConfirm(format.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
