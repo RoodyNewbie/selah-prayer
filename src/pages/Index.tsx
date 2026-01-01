@@ -11,13 +11,34 @@ import { Plus, BookHeart, LogOut, Settings, Heart, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState, useMemo } from 'react';
 
+const SCRIPTURE_VERSES = [
+  { text: "Be still, and know that I am God.", reference: "Psalm 46:10" },
+  { text: "The LORD is my shepherd; I shall not want.", reference: "Psalm 23:1" },
+  { text: "You keep him in perfect peace whose mind is stayed on you.", reference: "Isaiah 26:3" },
+  { text: "My presence will go with you, and I will give you rest.", reference: "Exodus 33:14" },
+  { text: "In quietness and trust shall be your strength.", reference: "Isaiah 30:15" },
+  { text: "The LORD is near to all who call on him.", reference: "Psalm 145:18" },
+  { text: "Peace I leave with you; my peace I give to you.", reference: "John 14:27" },
+  { text: "Come to me, all who labor and are heavy laden, and I will give you rest.", reference: "Matthew 11:28" },
+  { text: "Draw near to God, and he will draw near to you.", reference: "James 4:8" },
+  { text: "I am with you always, to the end of the age.", reference: "Matthew 28:20" },
+];
+
 const Index = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const [showAddRequest, setShowAddRequest] = useState(false);
+  const [randomVerse, setRandomVerse] = useState(() => 
+    SCRIPTURE_VERSES[Math.floor(Math.random() * SCRIPTURE_VERSES.length)]
+  );
 
   const { data: lastPrayed } = useLastPrayed();
   const { data: answeredRequests = [] } = useAnsweredRequests();
+
+  // Select a new random verse on every mount/page visit
+  useEffect(() => {
+    setRandomVerse(SCRIPTURE_VERSES[Math.floor(Math.random() * SCRIPTURE_VERSES.length)]);
+  }, []);
 
   // Random testimony for "Testimony of the Day"
   const randomTestimony = useMemo(() => {
@@ -135,9 +156,9 @@ const Index = () => {
         {/* Scripture of encouragement */}
         <section className="text-center py-6 px-4">
           <blockquote className="font-display text-lg text-foreground/80 italic mb-2">
-            "Be still, and know that I am God."
+            "{randomVerse.text}"
           </blockquote>
-          <cite className="text-primary font-body text-sm">— Psalm 46:10</cite>
+          <cite className="text-primary font-body text-sm">— {randomVerse.reference}</cite>
         </section>
       </main>
 
