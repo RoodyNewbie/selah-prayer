@@ -1,14 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, BookHeart, LogOut, Settings, Heart } from 'lucide-react';
+import { Plus, BookHeart, LogOut, Settings, Heart, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState, useMemo } from 'react';
 
@@ -54,7 +53,9 @@ const Index = () => {
           <h1 className="font-display text-2xl text-foreground">Selah</h1>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <Button variant="ghost" size="icon" onClick={() => navigate('/history')} className="text-muted-foreground">
+            <Clock className="w-5 h-5" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="text-muted-foreground">
             <Settings className="w-5 h-5" />
           </Button>

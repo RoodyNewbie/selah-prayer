@@ -40,8 +40,8 @@ import {
   GripVertical,
   ChevronDown,
   ChevronUp,
-  ChevronRight,
-  Clock,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -144,35 +144,33 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 pt-6 border-b border-border">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="font-display text-xl text-foreground">Settings</h1>
-        </div>
-        <ThemeToggle />
+      <header className="flex items-center gap-3 p-4 pt-6 border-b border-border">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <h1 className="font-display text-xl text-foreground">Settings</h1>
       </header>
 
       <main className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        {/* Data Section */}
+        {/* Appearance Section */}
         <section>
-          <h2 className="font-display text-lg text-foreground mb-4">Data</h2>
-          <Card
-            className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => navigate('/history')}
-          >
+          <h2 className="font-display text-lg text-foreground mb-4">Appearance</h2>
+          <Card className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-muted-foreground" />
+                  {document.documentElement.classList.contains('dark') ? (
+                    <Moon className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-muted-foreground" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-body font-medium text-foreground">Prayer History</p>
-                  <p className="text-sm text-muted-foreground">View past prayer sessions</p>
+                  <p className="font-body font-medium text-foreground">Dark Mode</p>
+                  <p className="text-sm text-muted-foreground">Toggle dark/light theme</p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              <ThemeToggle />
             </div>
           </Card>
         </section>
