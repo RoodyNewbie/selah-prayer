@@ -43,10 +43,12 @@ export function usePrayerFormats() {
   return useQuery({
     queryKey: ['prayer-formats'],
     queryFn: async () => {
+      // Only fetch user-created formats (is_system = false)
+      // Built-in formats are now defined in code via builtInFormats
       const { data, error } = await supabase
         .from('prayer_formats')
         .select('*')
-        .order('is_system', { ascending: false })
+        .eq('is_system', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
