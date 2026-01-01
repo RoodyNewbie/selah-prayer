@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { prayerPhases, PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
-import { usePrayerFormats, PrayerFormat } from '@/hooks/usePrayerFormats';
+import { PrayerFormat } from '@/hooks/usePrayerFormats';
+import { builtInFormats } from '@/lib/builtInFormats';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
@@ -26,14 +27,20 @@ export default function Pray() {
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
 
   const { data: recurringRequests = [] } = useRecurringRequests();
-  const { data: formats = [] } = usePrayerFormats();
   const createSessionMutation = useCreateSession();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
 
-  // Get the active phases - either from selected format or built-in
-  const activePhases: PrayerPhase[] = selectedFormat?.phases || prayerPhases;
+  // Get the active phases - from selected format or default to Lord's Prayer (first built-in)
+  const activePhases: PrayerPhase[] = selectedFormat?.phases || builtInFormats[0].phases;
   const currentPhase = activePhases[currentPhaseIndex];
   const phaseNames = activePhases.map((p) => p.name);
+
+  // Handle format change - reset phase index and content when format changes
+  const handleFormatChange = (format: PrayerFormat | null) => {
+    setSelectedFormat(format);
+    setCurrentPhaseIndex(0);
+    setPhaseContent({});
+  };
 
   const handleNext = () => {
     if (currentPhaseIndex < activePhases.length - 1) {
@@ -229,7 +236,7 @@ export default function Pray() {
         </Button>
         <FormatSelector 
           selectedFormat={selectedFormat} 
-          onSelectFormat={setSelectedFormat} 
+          onSelectFormat={handleFormatChange} 
         />
         <div className="w-10" />
       </header>
