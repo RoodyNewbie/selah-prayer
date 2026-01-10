@@ -37,11 +37,14 @@ export function PrayerMemoryCard({
   onDismiss,
   className,
 }: PrayerMemoryCardProps) {
+  // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
   const [isVisible, setIsVisible] = useState(true);
   const [showAnsweredDialog, setShowAnsweredDialog] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<PrayerTopic | null>(null);
   const [testimonyNote, setTestimonyNote] = useState('');
   
+  // Always call hooks, even if we won't use the data
+  const isMemoryPhase = MEMORY_PHASES.includes(phaseId);
   const { data: topics = [], isLoading } = useRecentTopics(phaseId);
   const markAnswered = useMarkTopicAnswered();
   const markReleased = useMarkTopicReleased();
@@ -52,8 +55,9 @@ export function PrayerMemoryCard({
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
     : false;
 
+  // Now we can have early returns - ALL hooks are already called above
   // Don't render for non-memory phases
-  if (!MEMORY_PHASES.includes(phaseId)) return null;
+  if (!isMemoryPhase) return null;
   
   // Don't render while loading or if no topics
   if (isLoading || topics.length === 0) return null;
