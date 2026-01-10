@@ -33,6 +33,9 @@ export default function Pray() {
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(true);
 
+  // Track if transition is in progress to prevent double-clicks
+  const isTransitioning = useRef(false);
+
   // Ambient audio - only active during the prayer session phases
   const {
     settings: audioSettings,
@@ -47,26 +50,45 @@ export default function Pray() {
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
   const saveTopicsMutation = useSaveSessionTopics();
 
+  // Check for reduced motion preference
+  const prefersReducedMotion = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+    : false;
+
   // Get the active phases - from selected format or default to Lord's Prayer (first built-in)
   const activePhases: PrayerPhase[] = selectedFormat?.phases || builtInFormats[0].phases;
   const currentPhase = activePhases[currentPhaseIndex];
   const phaseNames = activePhases.map((p) => p.name);
 
   // Handle format change - reset phase index and content when format changes
-  const handleFormatChange = (format: PrayerFormat | null) => {
+  const handleFormatChange = useCallback((format: PrayerFormat | null) => {
     setSelectedFormat(format);
     setCurrentPhaseIndex(0);
     setPhaseContent({});
     setSkippedPhases(new Set());
-  };
+  }, []);
 
-  // Track if transition is in progress to prevent double-clicks
-  const isTransitioning = useRef(false);
-  
-  // Check for reduced motion preference
-  const prefersReducedMotion = typeof window !== 'undefined' 
-    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
-    : false;
+  // Handle exit to stop audio - MUST be defined before any early returns
+  const handleExit = useCallback(() => {
+    setIsSessionActive(false);
+    navigate('/');
+  }, [navigate]);
+
+  const handleContentChange = useCallback((value: string) => {
+    setPhaseContent((prev) => ({
+      ...prev,
+      [currentPhase.id]: value,
+    }));
+  }, [currentPhase.id]);
+
+  const handleCopy = useCallback(async () => {
+    if (generatedPrayer) {
+      await navigator.clipboard.writeText(generatedPrayer);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success('Prayer copied to clipboard');
+    }
+  }, [generatedPrayer]);
 
   const handleNext = useCallback(() => {
     if (isTransitioning.current) return;
@@ -79,9 +101,8 @@ export default function Pray() {
       setTimeout(() => {
         isTransitioning.current = false;
       }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
-    } else {
-      handleComplete();
     }
+    // Note: handleComplete is called separately, not from here to avoid stale closure issues
   }, [currentPhaseIndex, activePhases.length, prefersReducedMotion]);
 
   const handleSkip = useCallback(() => {
@@ -98,9 +119,8 @@ export default function Pray() {
       setTimeout(() => {
         isTransitioning.current = false;
       }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
-    } else {
-      handleComplete();
     }
+    // Note: handleComplete is called separately, not from here to avoid stale closure issues
   }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, currentPhase.id]);
 
   const generatePrayer = async (phases: Record<string, string>, sessionId: string) => {
@@ -174,25 +194,26 @@ export default function Pray() {
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     handleComplete();
-  };
+  }, [phaseContent, selectedFormat, createSessionMutation, saveTopicsMutation]);
 
-  const handleContentChange = (value: string) => {
-    setPhaseContent((prev) => ({
-      ...prev,
-      [currentPhase.id]: value,
-    }));
-  };
-
-  const handleCopy = async () => {
-    if (generatedPrayer) {
-      await navigator.clipboard.writeText(generatedPrayer);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast.success('Prayer copied to clipboard');
+  // Wrapper functions for PhaseCard that handle the complete case
+  const handleNextOrComplete = useCallback(() => {
+    if (currentPhaseIndex >= activePhases.length - 1) {
+      handleComplete();
+    } else {
+      handleNext();
     }
-  };
+  }, [currentPhaseIndex, activePhases.length, handleNext, phaseContent, selectedFormat]);
+
+  const handleSkipOrComplete = useCallback(() => {
+    if (currentPhaseIndex >= activePhases.length - 1) {
+      handleComplete();
+    } else {
+      handleSkip();
+    }
+  }, [currentPhaseIndex, activePhases.length, handleSkip, phaseContent, selectedFormat]);
 
   if (isComplete) {
     return (
@@ -283,11 +304,6 @@ export default function Pray() {
     );
   }
 
-  // Handle exit to stop audio
-  const handleExit = useCallback(() => {
-    setIsSessionActive(false);
-    navigate('/');
-  }, [navigate]);
 
   return (
     <div 
@@ -351,8 +367,8 @@ export default function Pray() {
           phase={currentPhase}
           value={phaseContent[currentPhase.id] || ''}
           onChange={handleContentChange}
-          onNext={handleNext}
-          onSkip={handleSkip}
+          onNext={handleNextOrComplete}
+          onSkip={handleSkipOrComplete}
           isLast={currentPhaseIndex === activePhases.length - 1}
           wasSkipped={skippedPhases.has(currentPhase.id)}
         />
