@@ -17,6 +17,7 @@ import {
   useMarkTopicReleased,
   useUpdateTopicLastPrayed,
 } from '@/hooks/usePrayerTopics';
+import { stripContinuingPrefix } from '@/lib/topicUtils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
@@ -71,7 +72,9 @@ export function PrayerMemoryCard({
   };
 
   const handleContinuePraying = (topic: PrayerTopic) => {
-    const prefillText = `Continuing to lift up: ${topic.summary}\n\n`;
+    // Use clean summary (strip any legacy prefixes) for display
+    const cleanSummary = stripContinuingPrefix(topic.summary);
+    const prefillText = `Continuing to lift up: ${cleanSummary}\n\n`;
     updateLastPrayed.mutate(topic.id);
     onContinuePraying(prefillText, topic.id);
     setIsVisible(false);
@@ -148,17 +151,20 @@ export function PrayerMemoryCard({
         </div>
 
         <div className="space-y-2">
-          {topics.map((topic) => (
-            <div 
-              key={topic.id} 
-              className="bg-background/50 rounded-lg p-3 space-y-2"
-            >
-              <p className="text-sm text-foreground font-body line-clamp-2">
-                {topic.summary}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(topic.lastPrayedAt), { addSuffix: true })}
-              </p>
+          {topics.map((topic) => {
+            // Strip any legacy prefixes for display
+            const displaySummary = stripContinuingPrefix(topic.summary);
+            return (
+              <div 
+                key={topic.id} 
+                className="bg-background/50 rounded-lg p-3 space-y-2"
+              >
+                <p className="text-sm text-foreground font-body line-clamp-2">
+                  {displaySummary}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(topic.lastPrayedAt), { addSuffix: true })}
+                </p>
               
               <div className="flex items-center gap-2 flex-wrap">
                 <Button
@@ -207,8 +213,9 @@ export function PrayerMemoryCard({
                   </Button>
                 )}
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         <button
