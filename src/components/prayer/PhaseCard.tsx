@@ -6,6 +6,7 @@ import { ChevronRight, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TRANSITION_TIMINGS } from '@/lib/transitionTimings';
 import { PhaseScriptureCard } from './PhaseScriptureCard';
+import { PrayerMemoryCard } from './PrayerMemoryCard';
 
 interface PhaseCardProps {
   phase: PrayerPhase;
@@ -14,6 +15,7 @@ interface PhaseCardProps {
   onNext: () => void;
   onSkip: () => void;
   isLast: boolean;
+  wasSkipped?: boolean; // Track if this phase was reached via skip
 }
 
 const phaseColors: Record<string, string> = {
@@ -25,6 +27,9 @@ const phaseColors: Record<string, string> = {
   worship: 'bg-phase-worship',
 };
 
+// Phases that support memory
+const MEMORY_PHASES = ['needs', 'forgiveness', 'protection'];
+
 type TransitionState = 'visible' | 'fading-out' | 'paused' | 'fading-in';
 
 export function PhaseCard({
@@ -34,6 +39,7 @@ export function PhaseCard({
   onNext,
   onSkip,
   isLast,
+  wasSkipped = false,
 }: PhaseCardProps) {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [transitionState, setTransitionState] = useState<TransitionState>('fading-in');
@@ -41,6 +47,8 @@ export function PhaseCard({
   const [showPrompt, setShowPrompt] = useState(false);
   const [showScripture, setShowScripture] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [showMemoryCard, setShowMemoryCard] = useState(true);
+  const [continuingTopicId, setContinuingTopicId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pendingAction = useRef<'next' | 'skip' | null>(null);
   
@@ -92,6 +100,8 @@ export function PhaseCard({
     setShowPrompt(false);
     setShowScripture(false);
     setShowContent(false);
+    setShowMemoryCard(true); // Show memory card for new phase
+    setContinuingTopicId(null);
     
     if (prefersReducedMotion) {
       staggerIn();
@@ -145,6 +155,28 @@ export function PhaseCard({
   const handleNext = () => handleTransition('next');
   const handleSkipClick = () => handleTransition('skip');
 
+  // Handle continue praying from memory card
+  const handleContinuePraying = (prefillText: string, topicId: string) => {
+    onChange(prefillText);
+    setContinuingTopicId(topicId);
+    setShowMemoryCard(false);
+    // Focus textarea after a brief delay
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        // Move cursor to end
+        textareaRef.current.setSelectionRange(
+          prefillText.length,
+          prefillText.length
+        );
+      }
+    }, 100);
+  };
+
+  const handleDismissMemory = () => {
+    setShowMemoryCard(false);
+  };
+
   // Opacity and transform based on transition state
   const getContentStyles = (isVisible: boolean, translateY = true) => {
     const base = 'transition-all ease-out';
@@ -161,8 +193,22 @@ export function PhaseCard({
     return cn(base, duration, 'opacity-100 translate-y-0');
   };
 
+  // Check if this phase supports memory and wasn't skipped
+  const supportsMemory = MEMORY_PHASES.includes(phase.id) && !wasSkipped;
+
   return (
     <div className="space-y-6">
+      {/* Prayer Memory Card - only show for memory phases, if not dismissed */}
+      {supportsMemory && showMemoryCard && (
+        <div className={getContentStyles(showHeader)}>
+          <PrayerMemoryCard
+            phaseId={phase.id}
+            onContinuePraying={handleContinuePraying}
+            onDismiss={handleDismissMemory}
+          />
+        </div>
+      )}
+
       {/* Phase Header */}
       <div className={cn("text-center space-y-3", getContentStyles(showHeader))}>
         <div className="flex items-center justify-center gap-3">
