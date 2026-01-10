@@ -197,12 +197,13 @@ export function useMarkTopicReleased() {
     },
   });
 }
-
 /**
  * Extract and save topics from a completed prayer session
+ * Note: This directly uses Supabase instead of calling useCreateTopic
+ * to avoid violating React's hooks rules (calling a hook inside another hook's mutation)
  */
 export function useSaveSessionTopics() {
-  const createTopic = useCreateTopic();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
@@ -212,6 +213,11 @@ export function useSaveSessionTopics() {
       sessionId: string;
       phases: Record<string, string>;
     }) => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        throw new Error('Not authenticated');
+      }
+
       const topicPhases: Array<'needs' | 'forgiveness' | 'protection'> = [
         'needs',
         'forgiveness', 
@@ -220,15 +226,31 @@ export function useSaveSessionTopics() {
 
       const promises = topicPhases
         .filter(phase => phases[phase] && phases[phase].trim().length > 0)
-        .map(phase => 
-          createTopic.mutateAsync({
-            sessionId,
-            phase,
-            content: phases[phase],
-          })
-        );
+        .map(async phase => {
+          const content = phases[phase];
+          // Create summary from first 100 characters
+          const summary = content.length > 100 
+            ? content.substring(0, 100).trim() + '...'
+            : content.trim();
+
+          const { error } = await supabase
+            .from('prayer_topics')
+            .insert({
+              user_id: userData.user.id,
+              session_id: sessionId,
+              phase,
+              content,
+              summary,
+            });
+
+          if (error) throw error;
+        });
 
       return Promise.allSettled(promises);
+    },
+    onSuccess: () => {
+      // Invalidate all prayer topics queries
+      queryClient.invalidateQueries({ queryKey: ['prayer-topics'] });
     },
   });
 }
