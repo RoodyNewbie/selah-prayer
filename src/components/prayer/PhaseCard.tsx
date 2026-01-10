@@ -198,17 +198,6 @@ export function PhaseCard({
 
   return (
     <div className="space-y-6">
-      {/* Prayer Memory Card - only show for memory phases, if not dismissed */}
-      {supportsMemory && showMemoryCard && (
-        <div className={getContentStyles(showHeader)}>
-          <PrayerMemoryCard
-            phaseId={phase.id}
-            onContinuePraying={handleContinuePraying}
-            onDismiss={handleDismissMemory}
-          />
-        </div>
-      )}
-
       {/* Phase Header */}
       <div className={cn("text-center space-y-3", getContentStyles(showHeader))}>
         <div className="flex items-center justify-center gap-3">
@@ -253,6 +242,17 @@ export function PhaseCard({
           disabled={transitionState !== 'visible'}
         />
       </div>
+
+      {/* Prayer Memory Card - BELOW text area for secondary placement */}
+      {supportsMemory && showMemoryCard && (
+        <div className={getContentStyles(showContent, false)}>
+          <PrayerMemoryCard
+            phaseId={phase.id}
+            onContinuePraying={handleContinuePraying}
+            onDismiss={handleDismissMemory}
+          />
+        </div>
+      )}
 
       {/* Actions */}
       <div className={cn(

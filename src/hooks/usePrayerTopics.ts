@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { stripContinuingPrefix, isSimilarTopic } from '@/lib/topicUtils';
 
 export interface PrayerTopic {
   id: string;
@@ -46,7 +47,7 @@ function mapDbToTopic(row: DbPrayerTopic): PrayerTopic {
 }
 
 /**
- * Fetch recent active topics for a specific phase (last 14 days, limit 3)
+ * Fetch recent active topics for a specific phase (last 14 days, limit 2)
  */
 export function useRecentTopics(phase: string) {
   return useQuery({
@@ -62,7 +63,7 @@ export function useRecentTopics(phase: string) {
         .eq('status', 'active')
         .gte('last_prayed_at', fourteenDaysAgo.toISOString())
         .order('last_prayed_at', { ascending: false })
-        .limit(3);
+        .limit(2); // Reduced from 3 to 2 for less visual clutter
 
       if (error) {
         console.error('Error fetching prayer topics:', error);
@@ -96,10 +97,13 @@ export function useCreateTopic() {
         throw new Error('Not authenticated');
       }
 
-      // Create summary from first 100 characters
-      const summary = content.length > 100 
-        ? content.substring(0, 100).trim() + '...'
-        : content.trim();
+      // Strip prefix before saving
+      const cleanContent = stripContinuingPrefix(content);
+      
+      // Create summary from first 100 characters of clean content
+      const summary = cleanContent.length > 100 
+        ? cleanContent.substring(0, 100).trim() + '...'
+        : cleanContent.trim();
 
       const { data, error } = await supabase
         .from('prayer_topics')
@@ -107,7 +111,7 @@ export function useCreateTopic() {
           user_id: userData.user.id,
           session_id: sessionId,
           phase,
-          content,
+          content: cleanContent,
           summary,
         })
         .select()
@@ -197,10 +201,10 @@ export function useMarkTopicReleased() {
     },
   });
 }
+
 /**
  * Extract and save topics from a completed prayer session
- * Note: This directly uses Supabase instead of calling useCreateTopic
- * to avoid violating React's hooks rules (calling a hook inside another hook's mutation)
+ * Implements deduplication: updates existing similar topics instead of creating duplicates
  */
 export function useSaveSessionTopics() {
   const queryClient = useQueryClient();
@@ -218,6 +222,10 @@ export function useSaveSessionTopics() {
         throw new Error('Not authenticated');
       }
 
+      const userId = userData.user.id;
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
       const topicPhases: Array<'needs' | 'forgiveness' | 'protection'> = [
         'needs',
         'forgiveness', 
@@ -227,23 +235,63 @@ export function useSaveSessionTopics() {
       const promises = topicPhases
         .filter(phase => phases[phase] && phases[phase].trim().length > 0)
         .map(async phase => {
-          const content = phases[phase];
-          // Create summary from first 100 characters
-          const summary = content.length > 100 
-            ? content.substring(0, 100).trim() + '...'
-            : content.trim();
+          const rawContent = phases[phase];
+          
+          // Strip prefix before saving - never store the prefix
+          const cleanContent = stripContinuingPrefix(rawContent);
+          
+          // Skip if content is empty after stripping
+          if (!cleanContent.trim()) return;
+          
+          // Create summary from first 100 characters of clean content
+          const summary = cleanContent.length > 100 
+            ? cleanContent.substring(0, 100).trim() + '...'
+            : cleanContent.trim();
 
-          const { error } = await supabase
+          // Check for existing similar topics in this phase from last 14 days
+          const { data: existingTopics, error: fetchError } = await supabase
             .from('prayer_topics')
-            .insert({
-              user_id: userData.user.id,
-              session_id: sessionId,
-              phase,
-              content,
-              summary,
-            });
+            .select('id, summary')
+            .eq('user_id', userId)
+            .eq('phase', phase)
+            .eq('status', 'active')
+            .gte('last_prayed_at', fourteenDaysAgo.toISOString());
 
-          if (error) throw error;
+          if (fetchError) {
+            console.error('Error fetching existing topics for dedup:', fetchError);
+            // Continue with insert if fetch fails
+          }
+
+          // Find a similar existing topic
+          const similarTopic = existingTopics?.find(existing => 
+            isSimilarTopic(cleanContent, existing.summary)
+          );
+
+          if (similarTopic) {
+            // Update existing topic's last_prayed_at instead of creating duplicate
+            const { error: updateError } = await supabase
+              .from('prayer_topics')
+              .update({ 
+                last_prayed_at: new Date().toISOString(),
+                session_id: sessionId, // Link to most recent session
+              })
+              .eq('id', similarTopic.id);
+
+            if (updateError) throw updateError;
+          } else {
+            // No similar topic found - create new one
+            const { error: insertError } = await supabase
+              .from('prayer_topics')
+              .insert({
+                user_id: userId,
+                session_id: sessionId,
+                phase,
+                content: cleanContent,
+                summary,
+              });
+
+            if (insertError) throw insertError;
+          }
         });
 
       return Promise.allSettled(promises);
