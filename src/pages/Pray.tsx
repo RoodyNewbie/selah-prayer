@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
+import { useSaveSessionTopics } from '@/hooks/usePrayerTopics';
 import { PrayerFormat } from '@/hooks/usePrayerFormats';
 import { builtInFormats } from '@/lib/builtInFormats';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ export default function Pray() {
   const [selectedFormat, setSelectedFormat] = useState<PrayerFormat | null>(null);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
+  const [skippedPhases, setSkippedPhases] = useState<Set<string>>(new Set());
   const [isComplete, setIsComplete] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -31,6 +33,7 @@ export default function Pray() {
   const { data: recurringRequests = [] } = useRecurringRequests();
   const createSessionMutation = useCreateSession();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
+  const saveTopicsMutation = useSaveSessionTopics();
 
   // Get the active phases - from selected format or default to Lord's Prayer (first built-in)
   const activePhases: PrayerPhase[] = selectedFormat?.phases || builtInFormats[0].phases;
@@ -42,6 +45,7 @@ export default function Pray() {
     setSelectedFormat(format);
     setCurrentPhaseIndex(0);
     setPhaseContent({});
+    setSkippedPhases(new Set());
   };
 
   // Track if transition is in progress to prevent double-clicks
@@ -71,6 +75,9 @@ export default function Pray() {
   const handleSkip = useCallback(() => {
     if (isTransitioning.current) return;
     
+    // Mark current phase as skipped
+    setSkippedPhases(prev => new Set(prev).add(currentPhase.id));
+    
     if (currentPhaseIndex < activePhases.length - 1) {
       isTransitioning.current = true;
       setCurrentPhaseIndex((prev) => prev + 1);
@@ -82,7 +89,7 @@ export default function Pray() {
     } else {
       handleComplete();
     }
-  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion]);
+  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, currentPhase.id]);
 
   const generatePrayer = async (phases: Record<string, string>, sessionId: string) => {
     setIsGenerating(true);
@@ -131,6 +138,17 @@ export default function Pray() {
       });
       setSavedSessionId(session.id);
       setIsComplete(true);
+      
+      // Save prayer topics for session memory (non-blocking)
+      saveTopicsMutation.mutate(
+        { sessionId: session.id, phases: phaseContent },
+        {
+          onError: (err) => {
+            console.error('Failed to save prayer topics:', err);
+            // Non-critical - don't show error to user
+          },
+        }
+      );
       
       // Generate the flowing prayer
       const hasContent = Object.values(phaseContent).some((v) => v && v.trim());
@@ -309,6 +327,7 @@ export default function Pray() {
           onNext={handleNext}
           onSkip={handleSkip}
           isLast={currentPhaseIndex === activePhases.length - 1}
+          wasSkipped={skippedPhases.has(currentPhase.id)}
         />
 
         {createSessionMutation.isPending && (

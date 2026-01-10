@@ -178,6 +178,56 @@ export type Database = {
           },
         ]
       }
+      prayer_topics: {
+        Row: {
+          answered_date: string | null
+          answered_note: string | null
+          content: string
+          created_at: string
+          id: string
+          last_prayed_at: string
+          phase: string
+          session_id: string | null
+          status: string
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          answered_date?: string | null
+          answered_note?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          last_prayed_at?: string
+          phase: string
+          session_id?: string | null
+          status?: string
+          summary: string
+          user_id: string
+        }
+        Update: {
+          answered_date?: string | null
+          answered_note?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          last_prayed_at?: string
+          phase?: string
+          session_id?: string | null
+          status?: string
+          summary?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_topics_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
