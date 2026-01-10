@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAnsweredRequests, useDeleteRequest, useUpdateRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -575,27 +576,30 @@ export default function Answered() {
             </p>
           </div>
 
-          {/* View Toggle */}
-          <div className="flex gap-1 bg-muted rounded-lg p-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn('h-8 w-8', viewMode === 'cards' && 'bg-background shadow-sm')}
-              onClick={() => setViewMode('cards')}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                'h-8 w-8',
-                viewMode === 'timeline' && 'bg-background shadow-sm'
-              )}
-              onClick={() => setViewMode('timeline')}
-            >
-              <AlignLeft className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-2">
+            <GlobalAudioButton />
+            {/* View Toggle */}
+            <div className="flex gap-1 bg-muted rounded-lg p-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn('h-8 w-8', viewMode === 'cards' && 'bg-background shadow-sm')}
+                onClick={() => setViewMode('cards')}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'h-8 w-8',
+                  viewMode === 'timeline' && 'bg-background shadow-sm'
+                )}
+                onClick={() => setViewMode('timeline')}
+              >
+                <AlignLeft className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
