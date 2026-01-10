@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { prayerPhases, PrayerPhase } from '@/lib/prayerData';
+import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { PrayerFormat } from '@/hooks/usePrayerFormats';
@@ -12,6 +12,8 @@ import { FormatSelector } from '@/components/prayer/FormatSelector';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function Pray() {
@@ -42,21 +44,45 @@ export default function Pray() {
     setPhaseContent({});
   };
 
-  const handleNext = () => {
-    if (currentPhaseIndex < activePhases.length - 1) {
-      setCurrentPhaseIndex((prev) => prev + 1);
-    } else {
-      handleComplete();
-    }
-  };
+  // Track if transition is in progress to prevent double-clicks
+  const isTransitioning = useRef(false);
+  
+  // Check for reduced motion preference
+  const prefersReducedMotion = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+    : false;
 
-  const handleSkip = () => {
+  const handleNext = useCallback(() => {
+    if (isTransitioning.current) return;
+    
     if (currentPhaseIndex < activePhases.length - 1) {
+      isTransitioning.current = true;
       setCurrentPhaseIndex((prev) => prev + 1);
+      
+      // Reset transition lock after animation completes
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
     } else {
       handleComplete();
     }
-  };
+  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion]);
+
+  const handleSkip = useCallback(() => {
+    if (isTransitioning.current) return;
+    
+    if (currentPhaseIndex < activePhases.length - 1) {
+      isTransitioning.current = true;
+      setCurrentPhaseIndex((prev) => prev + 1);
+      
+      // Reset transition lock after animation completes
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
+    } else {
+      handleComplete();
+    }
+  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion]);
 
   const generatePrayer = async (phases: Record<string, string>, sessionId: string) => {
     setIsGenerating(true);
@@ -254,7 +280,11 @@ export default function Pray() {
       <main className="px-4 py-6 max-w-lg mx-auto">
         {/* Show recurring requests in the Practical Needs phase */}
         {currentPhase.id === 'needs' && recurringRequests.length > 0 && (
-          <div className="mb-6 p-4 bg-muted/50 rounded-xl border border-border/50">
+          <div className={cn(
+            "mb-6 p-4 bg-muted/50 rounded-xl border border-border/50",
+            "transition-opacity duration-300",
+            prefersReducedMotion ? "duration-0" : "duration-300"
+          )}>
             <div className="flex items-center gap-2 mb-3">
               <Repeat className="w-4 h-4 text-primary" />
               <span className="text-sm font-body text-foreground font-medium">
