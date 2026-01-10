@@ -1,6 +1,7 @@
 import { RequestTag, requestTags } from '@/lib/prayerData';
 import { useActiveRequests, useMarkAnswered, useDeleteRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { RequestCard } from '@/components/prayer/RequestCard';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
@@ -51,9 +52,12 @@ export default function Requests() {
       <header className="p-4 pt-6 border-b border-border">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-2xl text-foreground">Prayer Requests</h1>
-          <Button variant="warm" size="icon" onClick={() => setShowAddDialog(true)}>
-            <Plus className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <GlobalAudioButton />
+            <Button variant="warm" size="icon" onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </header>
 

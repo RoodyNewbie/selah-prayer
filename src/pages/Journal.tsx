@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { AddJournalEntryDialog } from '@/components/journal/AddJournalEntryDialog';
 import { MarkFulfilledDialog } from '@/components/journal/MarkFulfilledDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -86,7 +86,7 @@ export default function Journal() {
             {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
           </p>
         </div>
-        <ThemeToggle />
+        <GlobalAudioButton />
       </header>
 
       {/* Filter Pills */}

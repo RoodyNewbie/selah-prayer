@@ -4,8 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
+import { useGlobalAudio, AudioTrack } from '@/contexts/AudioContext';
 import {
   usePrayerFormats,
   useCreateFormat,
@@ -43,9 +47,16 @@ import {
   ChevronUp,
   Moon,
   Sun,
+  Volume2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
+  { value: 'silence', label: 'Silence' },
+  { value: 'rain', label: 'Rain and Thunder' },
+  { value: 'piano', label: 'Soft Ambience' },
+];
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -53,6 +64,7 @@ export default function Settings() {
   const createFormat = useCreateFormat();
   const deleteFormat = useDeleteFormat();
   const setDefaultFormat = useSetDefaultFormat();
+  const { settings: audioSettings, changeTrack, changeVolume, toggleEnabled } = useGlobalAudio();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -145,11 +157,14 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="flex items-center gap-3 p-4 pt-6 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="font-display text-xl text-foreground">Settings</h1>
+      <header className="flex items-center justify-between p-4 pt-6 border-b border-border">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="font-display text-xl text-foreground">Settings</h1>
+        </div>
+        <GlobalAudioButton />
       </header>
 
       <main className="px-4 py-6 space-y-6 max-w-lg mx-auto">
@@ -172,6 +187,91 @@ export default function Settings() {
                 </div>
               </div>
               <ThemeToggle />
+            </div>
+          </Card>
+        </section>
+
+        {/* Audio Section */}
+        <section>
+          <h2 className="font-display text-lg text-foreground mb-4">Background Audio</h2>
+          <Card className="p-4 space-y-4">
+            {/* Enable/Disable */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  <Volume2 className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-body font-medium text-foreground">Enable Audio</p>
+                  <p className="text-sm text-muted-foreground">Play ambient sounds on all screens</p>
+                </div>
+              </div>
+              <Switch
+                checked={audioSettings.enabled}
+                onCheckedChange={toggleEnabled}
+                aria-label="Toggle background audio"
+              />
+            </div>
+
+            {/* Track Selection */}
+            <div className={cn(
+              "pt-4 border-t border-border space-y-2",
+              !audioSettings.enabled && "opacity-50 pointer-events-none"
+            )}>
+              <p className="text-sm font-medium text-foreground">Sound Track</p>
+              <div className="space-y-1">
+                {TRACK_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => changeTrack(option.value)}
+                    disabled={!audioSettings.enabled}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
+                      "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                      audioSettings.track === option.value
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground"
+                    )}
+                  >
+                    <span>{option.label}</span>
+                    {audioSettings.track === option.value && (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Volume Slider */}
+            <div className={cn(
+              "pt-4 border-t border-border space-y-2",
+              (!audioSettings.enabled || audioSettings.track === 'silence') && "opacity-50 pointer-events-none"
+            )}>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Volume</span>
+                <span className="text-sm text-muted-foreground">{audioSettings.volume}%</span>
+              </div>
+              <Slider
+                value={[audioSettings.volume]}
+                onValueChange={(value) => changeVolume(value[0])}
+                max={100}
+                min={0}
+                step={1}
+                className="w-full"
+                disabled={!audioSettings.enabled || audioSettings.track === 'silence'}
+              />
             </div>
           </Card>
         </section>

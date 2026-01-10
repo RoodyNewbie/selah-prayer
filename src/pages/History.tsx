@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { prayerPhases, PrayerSession } from '@/lib/prayerData';
 import { usePrayerSessions, useUpdateSessionPrayer, useDeleteSession } from '@/hooks/usePrayerSessions';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -183,11 +184,14 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="p-4 pt-6 border-b border-border">
-        <h1 className="font-display text-2xl text-foreground">Prayer History</h1>
-        <p className="text-muted-foreground font-body text-sm mt-1">
-          Your prayer journey over time
-        </p>
+      <header className="flex items-center justify-between p-4 pt-6 border-b border-border">
+        <div>
+          <h1 className="font-display text-2xl text-foreground">Prayer History</h1>
+          <p className="text-muted-foreground font-body text-sm mt-1">
+            Your prayer journey over time
+          </p>
+        </div>
+        <GlobalAudioButton />
       </header>
 
       {/* Search and Filter Bar */}

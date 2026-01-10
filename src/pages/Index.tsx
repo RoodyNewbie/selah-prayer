@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
@@ -73,7 +74,8 @@ const Index = () => {
           <BookHeart className="w-6 h-6 text-primary" />
           <h1 className="font-display text-2xl text-foreground">Selah</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <GlobalAudioButton />
           <Button variant="ghost" size="icon" onClick={() => navigate('/history')} className="text-muted-foreground">
             <Clock className="w-5 h-5" />
           </Button>

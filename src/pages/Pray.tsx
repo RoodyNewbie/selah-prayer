@@ -1,17 +1,17 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { useSaveSessionTopics } from '@/hooks/usePrayerTopics';
-import { useAmbientAudio } from '@/hooks/useAmbientAudio';
+import { useGlobalAudio } from '@/contexts/AudioContext';
 import { PrayerFormat } from '@/hooks/usePrayerFormats';
 import { builtInFormats } from '@/lib/builtInFormats';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { FormatSelector } from '@/components/prayer/FormatSelector';
-import { AudioControlButton } from '@/components/prayer/AudioControlButton';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
@@ -31,19 +31,12 @@ export default function Pray() {
   const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
-  const [isSessionActive, setIsSessionActive] = useState(true);
 
   // Track if transition is in progress to prevent double-clicks
   const isTransitioning = useRef(false);
 
-  // Ambient audio - only active during the prayer session phases
-  const {
-    settings: audioSettings,
-    isPlaying: isAudioPlaying,
-    changeTrack,
-    changeVolume,
-    handleUserInteraction,
-  } = useAmbientAudio(isSessionActive && !isComplete);
+  // Global audio - just for user interaction handling
+  const { handleUserInteraction } = useGlobalAudio();
 
   const { data: recurringRequests = [] } = useRecurringRequests();
   const createSessionMutation = useCreateSession();
@@ -68,9 +61,8 @@ export default function Pray() {
     setSkippedPhases(new Set());
   }, []);
 
-  // Handle exit to stop audio - MUST be defined before any early returns
+  // Handle exit - MUST be defined before any early returns
   const handleExit = useCallback(() => {
-    setIsSessionActive(false);
     navigate('/');
   }, [navigate]);
 
@@ -320,12 +312,7 @@ export default function Pray() {
           selectedFormat={selectedFormat} 
           onSelectFormat={handleFormatChange} 
         />
-        <AudioControlButton
-          settings={audioSettings}
-          isPlaying={isAudioPlaying}
-          onTrackChange={changeTrack}
-          onVolumeChange={changeVolume}
-        />
+        <GlobalAudioButton />
       </header>
 
       {/* Progress */}
