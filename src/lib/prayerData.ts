@@ -1,3 +1,6 @@
+// Stones of Remembrance - renamed from Answered Prayers (Joshua 4:7)
+// A sacred record of testimonies remembering God's faithfulness
+
 export interface PrayerPhase {
   id: string;
   name: string;
@@ -137,6 +140,7 @@ export interface PrayerRequest {
   testimony?: string;
   answerType?: AnswerType;
   gratitudeNote?: string;
+  isFavorite?: boolean;
   createdAt: string;
 }
 

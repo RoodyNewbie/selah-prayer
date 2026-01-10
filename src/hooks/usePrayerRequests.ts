@@ -85,17 +85,19 @@ export function useMarkAnswered() {
       testimony,
       answerType,
       gratitudeNote,
+      answeredDate,
     }: {
       id: string;
       note?: string;
       testimony?: string;
       answerType?: AnswerType;
       gratitudeNote?: string;
+      answeredDate?: Date;
     }) =>
       db.updateRequest(id, {
         isAnswered: true,
         answeredNote: note,
-        answeredDate: new Date().toISOString(),
+        answeredDate: answeredDate?.toISOString() || new Date().toISOString(),
         testimony,
         answerType,
         gratitudeNote,

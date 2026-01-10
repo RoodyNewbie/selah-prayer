@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Confetti } from '@/components/ui/confetti';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -9,83 +16,90 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Label } from '@/components/ui/label';
 import { PrayerRequest, AnswerType } from '@/lib/prayerData';
+import { PrayerTopic } from '@/hooks/usePrayerTopics';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import {
-  CheckCircle2,
-  Heart,
+  CalendarIcon,
   Sparkles,
-  ArrowRight,
-  ArrowLeft,
+  CheckCircle2,
+  Lightbulb,
   RefreshCw,
   HandHeart,
-  Lightbulb,
-  CalendarIcon,
-  Milestone,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 
-export type { AnswerType };
-
-export interface AnsweredData {
+export interface TestimonyData {
   answerType: AnswerType;
   testimony: string;
   gratitudeNote: string;
-  answeredDate?: Date;
+  answeredDate: Date;
 }
 
-interface MarkAnsweredDialogProps {
+interface RecordTestimonyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  request: PrayerRequest | null;
-  onComplete: (data: AnsweredData) => void;
+  request?: PrayerRequest | null;
+  topic?: PrayerTopic | null;
+  onComplete: (data: TestimonyData) => void;
 }
 
-const ANSWER_TYPES: { 
-  type: AnswerType; 
-  label: string; 
-  description: string; 
+const ANSWER_TYPES: {
+  type: AnswerType;
+  label: string;
+  description: string;
   icon: typeof CheckCircle2;
 }[] = [
-  { 
-    type: 'fully', 
-    label: 'Fully Answered', 
+  {
+    type: 'fully',
+    label: 'Fully Answered',
     description: 'God gave exactly what I asked',
     icon: CheckCircle2,
   },
-  { 
-    type: 'differently', 
-    label: 'Answered Differently', 
+  {
+    type: 'differently',
+    label: 'Answered Differently',
     description: 'God answered in an unexpected way',
     icon: Lightbulb,
   },
-  { 
-    type: 'partially', 
-    label: 'Partially Answered', 
+  {
+    type: 'partially',
+    label: 'Partially Answered',
     description: 'Still in progress but seeing movement',
     icon: RefreshCw,
   },
-  { 
-    type: 'peace', 
-    label: 'Peace Received', 
+  {
+    type: 'peace',
+    label: 'Peace Received',
     description: 'God gave peace even if circumstances did not change',
     icon: HandHeart,
   },
 ];
 
-export function MarkAnsweredDialog({ 
-  open, 
-  onOpenChange, 
+export function RecordTestimonyDialog({
+  open,
+  onOpenChange,
   request,
-  onComplete 
-}: MarkAnsweredDialogProps) {
+  topic,
+  onComplete,
+}: RecordTestimonyDialogProps) {
   const [step, setStep] = useState(1);
   const [answerType, setAnswerType] = useState<AnswerType | null>(null);
   const [testimony, setTestimony] = useState('');
   const [gratitudeNote, setGratitudeNote] = useState('');
   const [answeredDate, setAnsweredDate] = useState<Date>(new Date());
   const [showConfetti, setShowConfetti] = useState(false);
+
+  const originalPrayer = request?.title || topic?.summary || '';
+  const originalDescription = request?.description || topic?.content || '';
+
+  useEffect(() => {
+    if (open) {
+      setShowConfetti(true);
+    }
+  }, [open]);
 
   const resetForm = () => {
     setStep(1);
@@ -99,16 +113,13 @@ export function MarkAnsweredDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       resetForm();
-    } else {
-      // Trigger confetti when opening
-      setShowConfetti(true);
     }
     onOpenChange(newOpen);
   };
 
   const handleComplete = () => {
     if (!answerType) return;
-    
+
     onComplete({
       answerType,
       testimony,
@@ -118,19 +129,15 @@ export function MarkAnsweredDialog({
     resetForm();
   };
 
-  const canProceed = () => {
-    if (step === 2) return answerType !== null;
-    if (step === 3) return testimony.trim().length >= 20;
-    return true;
-  };
+  const isTestimonyValid = testimony.trim().length >= 20;
 
-  if (!request) return null;
+  if (!request && !topic) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <Confetti active={showConfetti && step === 1} />
-        
+
         {/* Step 1: Celebrate */}
         {step === 1 && (
           <div className="text-center py-6 space-y-6 animate-fade-in">
@@ -140,7 +147,7 @@ export function MarkAnsweredDialog({
               </div>
               <div className="absolute inset-0 w-20 h-20 mx-auto bg-gradient-to-br from-amber-400 to-orange-500 rounded-full animate-ping opacity-20" />
             </div>
-            
+
             <div className="space-y-2">
               <h2 className="font-display text-2xl text-foreground">
                 Record God's Faithfulness
@@ -154,12 +161,10 @@ export function MarkAnsweredDialog({
               <p className="text-xs text-muted-foreground font-body mb-1">
                 Original Prayer
               </p>
-              <p className="font-display text-foreground">
-                {request.title}
-              </p>
-              {request.description && (
+              <p className="font-display text-foreground">{originalPrayer}</p>
+              {originalDescription && (
                 <p className="text-sm text-muted-foreground font-body mt-2 line-clamp-2">
-                  {request.description}
+                  {originalDescription}
                 </p>
               )}
             </div>
@@ -187,32 +192,38 @@ export function MarkAnsweredDialog({
               {ANSWER_TYPES.map((option) => {
                 const Icon = option.icon;
                 const isSelected = answerType === option.type;
-                
+
                 return (
                   <button
                     key={option.type}
                     onClick={() => setAnswerType(option.type)}
                     className={cn(
                       'w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all border',
-                      isSelected 
-                        ? 'border-primary bg-primary/5 shadow-sm' 
+                      isSelected
+                        ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-border hover:border-primary/50 hover:bg-muted/50'
                     )}
                   >
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-                      isSelected ? 'bg-primary/10' : 'bg-muted'
-                    )}>
-                      <Icon className={cn(
-                        'w-5 h-5',
-                        isSelected ? 'text-primary' : 'text-muted-foreground'
-                      )} />
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                        isSelected ? 'bg-primary/10' : 'bg-muted'
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          'w-5 h-5',
+                          isSelected ? 'text-primary' : 'text-muted-foreground'
+                        )}
+                      />
                     </div>
                     <div>
-                      <p className={cn(
-                        'font-body font-medium',
-                        isSelected ? 'text-foreground' : 'text-foreground/80'
-                      )}>
+                      <p
+                        className={cn(
+                          'font-body font-medium',
+                          isSelected ? 'text-foreground' : 'text-foreground/80'
+                        )}
+                      >
                         {option.label}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -225,17 +236,17 @@ export function MarkAnsweredDialog({
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setStep(1)} 
+              <Button
+                variant="outline"
+                onClick={() => setStep(1)}
                 className="flex-1 gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
-              <Button 
-                onClick={() => setStep(3)} 
-                disabled={!canProceed()}
+              <Button
+                onClick={() => setStep(3)}
+                disabled={!answerType}
                 className="flex-1 gap-2"
               >
                 Continue
@@ -245,17 +256,17 @@ export function MarkAnsweredDialog({
           </div>
         )}
 
-        {/* Step 3: Reflect & Give Thanks */}
+        {/* Step 3: Record testimony */}
         {step === 3 && (
           <div className="py-4 space-y-5 animate-fade-in">
-            <div className="text-center">
-              <h2 className="font-display text-xl text-foreground">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl text-center">
                 Record Your Testimony
-              </h2>
-              <p className="text-sm text-muted-foreground font-body mt-1">
-                This will be saved to your Stones of Remembrance
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground font-body text-center mt-1">
+                Describe how God moved in this situation
               </p>
-            </div>
+            </DialogHeader>
 
             <div className="space-y-4">
               <div className="space-y-2">
@@ -287,15 +298,15 @@ export function MarkAnsweredDialog({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  How did God answer this prayer? <span className="text-destructive">*</span>
-                </label>
+                <Label htmlFor="testimony">
+                  How did God answer? <span className="text-destructive">*</span>
+                </Label>
                 <Textarea
+                  id="testimony"
                   placeholder="Describe how God moved in this situation..."
                   value={testimony}
                   onChange={(e) => setTestimony(e.target.value)}
-                  className="min-h-[100px] resize-none"
+                  className="min-h-[120px] resize-none"
                 />
                 <p className="text-xs text-muted-foreground">
                   {testimony.length < 20
@@ -305,11 +316,9 @@ export function MarkAnsweredDialog({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-primary" />
-                  What are you grateful for?
-                </label>
+                <Label htmlFor="gratitude">What are you grateful for?</Label>
                 <Textarea
+                  id="gratitude"
                   placeholder="Express your thankfulness..."
                   value={gratitudeNote}
                   onChange={(e) => setGratitudeNote(e.target.value)}
@@ -319,75 +328,22 @@ export function MarkAnsweredDialog({
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setStep(2)} 
+              <Button
+                variant="outline"
+                onClick={() => setStep(2)}
                 className="flex-1 gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
-              <Button 
-                onClick={() => setStep(4)}
-                disabled={!canProceed()}
-                className="flex-1 gap-2"
+              <Button
+                onClick={handleComplete}
+                disabled={!isTestimonyValid}
+                className="flex-1"
               >
-                Continue
-                <ArrowRight className="w-4 h-4" />
+                Save Testimony
               </Button>
             </div>
-          </div>
-        )}
-
-        {/* Step 4: Complete */}
-        {step === 4 && (
-          <div className="py-6 space-y-6 animate-fade-in text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-              <Milestone className="w-8 h-8 text-primary" />
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="font-display text-xl text-foreground">
-                Stone of Remembrance Set
-              </h2>
-              <p className="text-sm text-muted-foreground font-body">
-                This testimony will be saved to remember God's faithfulness
-              </p>
-            </div>
-
-            <div className="bg-muted/50 rounded-xl p-4 text-left space-y-3 border border-border/50">
-              <div>
-                <p className="text-xs text-muted-foreground font-body">Prayer</p>
-                <p className="font-body text-foreground text-sm">{request.title}</p>
-              </div>
-              
-              {answerType && (
-                <div>
-                  <p className="text-xs text-muted-foreground font-body">How Answered</p>
-                  <p className="font-body text-foreground text-sm">
-                    {ANSWER_TYPES.find(a => a.type === answerType)?.label}
-                  </p>
-                </div>
-              )}
-
-              {testimony && (
-                <div>
-                  <p className="text-xs text-muted-foreground font-body">Testimony</p>
-                  <p className="font-body text-foreground text-sm line-clamp-2">{testimony}</p>
-                </div>
-              )}
-
-              {gratitudeNote && (
-                <div>
-                  <p className="text-xs text-muted-foreground font-body">Gratitude</p>
-                  <p className="font-body text-foreground text-sm line-clamp-2">{gratitudeNote}</p>
-                </div>
-              )}
-            </div>
-
-            <Button onClick={handleComplete} size="lg" className="w-full">
-              Complete
-            </Button>
           </div>
         )}
       </DialogContent>

@@ -1,4 +1,4 @@
-import { Home, ListChecks, CheckCircle2, BookOpen } from 'lucide-react';
+import { Home, ListChecks, Milestone, BookOpen } from 'lucide-react';
 import { BottomNavItem } from './BottomNavItem';
 
 export function BottomNav() {
@@ -8,7 +8,7 @@ export function BottomNav() {
         <BottomNavItem to="/" icon={Home} label="Home" />
         <BottomNavItem to="/requests" icon={ListChecks} label="Requests" />
         <BottomNavItem to="/journal" icon={BookOpen} label="Journal" />
-        <BottomNavItem to="/answered" icon={CheckCircle2} label="Answered" />
+        <BottomNavItem to="/answered" icon={Milestone} label="Stones" />
       </div>
     </nav>
   );
