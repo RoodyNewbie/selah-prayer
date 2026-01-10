@@ -1,15 +1,17 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { useSaveSessionTopics } from '@/hooks/usePrayerTopics';
+import { useAmbientAudio } from '@/hooks/useAmbientAudio';
 import { PrayerFormat } from '@/hooks/usePrayerFormats';
 import { builtInFormats } from '@/lib/builtInFormats';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { FormatSelector } from '@/components/prayer/FormatSelector';
+import { AudioControlButton } from '@/components/prayer/AudioControlButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
@@ -29,6 +31,16 @@ export default function Pray() {
   const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  const [isSessionActive, setIsSessionActive] = useState(true);
+
+  // Ambient audio - only active during the prayer session phases
+  const {
+    settings: audioSettings,
+    isPlaying: isAudioPlaying,
+    changeTrack,
+    changeVolume,
+    handleUserInteraction,
+  } = useAmbientAudio(isSessionActive && !isComplete);
 
   const { data: recurringRequests = [] } = useRecurringRequests();
   const createSessionMutation = useCreateSession();
@@ -271,18 +283,33 @@ export default function Pray() {
     );
   }
 
+  // Handle exit to stop audio
+  const handleExit = useCallback(() => {
+    setIsSessionActive(false);
+    navigate('/');
+  }, [navigate]);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="min-h-screen bg-background"
+      onClick={handleUserInteraction}
+      onKeyDown={handleUserInteraction}
+    >
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+        <Button variant="ghost" size="icon" onClick={handleExit}>
           <X className="w-5 h-5" />
         </Button>
         <FormatSelector 
           selectedFormat={selectedFormat} 
           onSelectFormat={handleFormatChange} 
         />
-        <div className="w-10" />
+        <AudioControlButton
+          settings={audioSettings}
+          isPlaying={isAudioPlaying}
+          onTrackChange={changeTrack}
+          onVolumeChange={changeVolume}
+        />
       </header>
 
       {/* Progress */}
