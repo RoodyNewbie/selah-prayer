@@ -102,6 +102,7 @@ export type Database = {
           gratitude_note: string | null
           id: string
           is_answered: boolean
+          is_favorite: boolean
           is_recurring: boolean
           tag: string
           testimony: string | null
@@ -118,6 +119,7 @@ export type Database = {
           gratitude_note?: string | null
           id?: string
           is_answered?: boolean
+          is_favorite?: boolean
           is_recurring?: boolean
           tag?: string
           testimony?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           gratitude_note?: string | null
           id?: string
           is_answered?: boolean
+          is_favorite?: boolean
           is_recurring?: boolean
           tag?: string
           testimony?: string | null

@@ -27,6 +27,7 @@ const toRequest = (row: PrayerRequestRow): PrayerRequest => ({
   testimony: row.testimony || undefined,
   answerType: row.answer_type as AnswerType | undefined,
   gratitudeNote: row.gratitude_note || undefined,
+  isFavorite: row.is_favorite || false,
   createdAt: row.created_at,
 });
 
@@ -107,6 +108,7 @@ export const db = {
     if (updates.testimony !== undefined) updateData.testimony = updates.testimony;
     if (updates.answerType !== undefined) updateData.answer_type = updates.answerType;
     if (updates.gratitudeNote !== undefined) updateData.gratitude_note = updates.gratitudeNote;
+    if (updates.isFavorite !== undefined) updateData.is_favorite = updates.isFavorite;
 
     const { error } = await supabase
       .from('prayer_requests')

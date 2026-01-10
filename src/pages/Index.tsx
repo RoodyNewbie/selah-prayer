@@ -130,7 +130,7 @@ const Index = () => {
           </Button>
         </Card>
 
-        {/* Testimony of the Day */}
+        {/* Testimony of the Day - Stones of Remembrance */}
         {randomTestimony && (
           <Card 
             className="p-4 bg-primary/5 border-primary/20 cursor-pointer hover:shadow-lifted transition-all"
@@ -139,7 +139,7 @@ const Index = () => {
             <div className="flex items-start gap-3">
               <Heart className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs text-primary font-medium mb-1">God's Faithfulness</p>
+                <p className="text-xs text-primary font-medium mb-1">Stone of Remembrance</p>
                 <p className="font-body text-sm text-foreground line-clamp-2">
                   "{randomTestimony.title}"
                 </p>
