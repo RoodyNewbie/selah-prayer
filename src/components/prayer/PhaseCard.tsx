@@ -4,7 +4,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TRANSITION_TIMINGS, TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
+import { TRANSITION_TIMINGS } from '@/lib/transitionTimings';
+import { PhaseScriptureCard } from './PhaseScriptureCard';
 
 interface PhaseCardProps {
   phase: PrayerPhase;
@@ -190,17 +191,10 @@ export function PhaseCard({
         </p>
       </div>
 
-      {/* Scripture */}
-      {phase.scripture && (
-        <div className={cn("text-center space-y-1", getContentStyles(showScripture))}>
-          <p className="text-muted-foreground font-body text-sm leading-relaxed">
-            {phase.scripture.verse}
-          </p>
-          <p className="text-primary font-body text-xs font-medium">
-            — {phase.scripture.reference}
-          </p>
-        </div>
-      )}
+      {/* Scripture - Using curated scriptures from phaseScriptures */}
+      <div className={getContentStyles(showScripture)}>
+        <PhaseScriptureCard phaseId={phase.id} />
+      </div>
 
       {/* Text Area */}
       <div className={getContentStyles(showContent, false)}>
