@@ -4,6 +4,7 @@ import { BookHeart, Cross, LayoutGrid, Flame, Compass, ClipboardList, Heart, Boo
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { AnimateOnScroll } from '@/components/landing/AnimateOnScroll';
 import { HeroIllustration } from '@/components/landing/HeroIllustration';
 import { useAuth } from '@/hooks/useAuth';
@@ -92,11 +93,12 @@ export default function Landing() {
             <BookHeart className="h-7 w-7 text-primary" />
             <span className="font-display text-xl font-semibold">Selah</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <GlobalAudioButton />
             <ThemeToggle />
             <Link
               to="/auth"
-              className="text-muted-foreground hover:text-foreground transition-colors font-body text-sm"
+              className="text-muted-foreground hover:text-foreground transition-colors font-body text-sm px-2"
             >
               Log In
             </Link>
