@@ -39,17 +39,20 @@ export default function Auth() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Check for reset mode in URL
+  // Check for reset mode or signup mode in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('mode') === 'reset') {
       setShowNewPasswordForm(true);
     }
+    if (params.get('signup') === 'true') {
+      setIsSignUp(true);
+    }
   }, []);
 
   // Redirect if already logged in
   if (user) {
-    navigate('/');
+    navigate('/home');
     return null;
   }
 
@@ -75,7 +78,7 @@ export default function Auth() {
         toast.error(message);
       } else {
         toast.success('Welcome to Selah! Your account has been created.');
-        navigate('/');
+        navigate('/home');
       }
     } else {
       const { error } = await signIn(email, password);
@@ -86,7 +89,7 @@ export default function Auth() {
         }
         toast.error(message);
       } else {
-        navigate('/');
+        navigate('/home');
       }
     }
 

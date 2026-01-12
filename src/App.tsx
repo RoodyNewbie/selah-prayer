@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AudioProvider } from "@/contexts/AudioContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Pray from "./pages/Pray";
@@ -47,9 +48,10 @@ function AppRoutes() {
   return (
     <ErrorBoundary>
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
         <Route
-          path="/"
+          path="/home"
           element={
             <ProtectedRoute>
               <ErrorBoundary>
