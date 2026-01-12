@@ -6,96 +6,99 @@
 
 @layer base {
   :root {
-    /* Warm, calming palette */
-    --background: 35 30% 96%;
-    --foreground: 25 20% 15%;
+    /* Light mode: Soft blues and cream - airy, peaceful, daytime feel */
+    --background: 40 30% 97%;
+    --foreground: 220 25% 20%;
 
-    --card: 35 25% 93%;
-    --card-foreground: 25 20% 15%;
+    --card: 40 25% 95%;
+    --card-foreground: 220 25% 20%;
 
-    --popover: 35 25% 93%;
-    --popover-foreground: 25 20% 15%;
+    --popover: 40 25% 95%;
+    --popover-foreground: 220 25% 20%;
 
-    /* Terracotta primary */
-    --primary: 15 45% 45%;
-    --primary-foreground: 35 30% 96%;
+    /* Soft blue primary */
+    --primary: 215 55% 45%;
+    --primary-foreground: 40 30% 97%;
 
-    /* Sage secondary */
-    --secondary: 85 15% 85%;
-    --secondary-foreground: 25 20% 25%;
+    /* Light sage secondary */
+    --secondary: 180 15% 90%;
+    --secondary-foreground: 220 20% 30%;
 
-    /* Muted sand */
-    --muted: 35 20% 90%;
-    --muted-foreground: 25 15% 45%;
+    /* Cream muted */
+    --muted: 40 20% 92%;
+    --muted-foreground: 220 15% 45%;
 
-    /* Warm olive accent */
-    --accent: 45 25% 80%;
-    --accent-foreground: 25 20% 20%;
+    /* Warm cream accent */
+    --accent: 45 30% 88%;
+    --accent-foreground: 220 20% 25%;
 
     --destructive: 0 55% 50%;
-    --destructive-foreground: 35 30% 96%;
+    --destructive-foreground: 40 30% 97%;
 
-    --border: 35 20% 85%;
-    --input: 35 20% 88%;
-    --ring: 15 45% 45%;
+    --border: 40 15% 88%;
+    --input: 40 20% 90%;
+    --ring: 215 55% 45%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --phase-praise: 45 60% 70%;
-    --phase-will: 85 30% 70%;
-    --phase-needs: 200 35% 70%;
-    --phase-forgive: 320 25% 75%;
-    --phase-protect: 260 25% 70%;
-    --phase-worship: 15 45% 70%;
+    /* Phase colors for light mode */
+    --phase-praise: 45 70% 65%;
+    --phase-will: 150 35% 55%;
+    --phase-needs: 200 50% 55%;
+    --phase-forgive: 320 35% 65%;
+    --phase-protect: 260 35% 60%;
+    --phase-worship: 25 55% 60%;
 
-    --shadow-soft: 0 2px 8px -2px hsl(25 20% 15% / 0.08),
-                   0 4px 16px -4px hsl(25 20% 15% / 0.06);
-    --shadow-lifted: 0 4px 12px -3px hsl(25 20% 15% / 0.1),
-                     0 8px 24px -6px hsl(25 20% 15% / 0.08);
+    --shadow-soft: 0 2px 8px -2px hsl(220 25% 20% / 0.06),
+                   0 4px 16px -4px hsl(220 25% 20% / 0.04);
+    --shadow-lifted: 0 4px 12px -3px hsl(220 25% 20% / 0.08),
+                     0 8px 24px -6px hsl(220 25% 20% / 0.06);
 
-    --sidebar-background: 35 25% 93%;
-    --sidebar-foreground: 25 20% 15%;
-    --sidebar-primary: 15 45% 45%;
-    --sidebar-primary-foreground: 35 30% 96%;
-    --sidebar-accent: 45 25% 85%;
-    --sidebar-accent-foreground: 25 20% 20%;
-    --sidebar-border: 35 20% 85%;
-    --sidebar-ring: 15 45% 45%;
+    --sidebar-background: 40 25% 95%;
+    --sidebar-foreground: 220 25% 20%;
+    --sidebar-primary: 215 55% 45%;
+    --sidebar-primary-foreground: 40 30% 97%;
+    --sidebar-accent: 45 30% 90%;
+    --sidebar-accent-foreground: 220 20% 25%;
+    --sidebar-border: 40 15% 88%;
+    --sidebar-ring: 215 55% 45%;
   }
 
   .dark {
-    /* Warm dark palette */
+    /* Dark mode: Warm browns and terracotta - cozy, intimate, evening feel */
     --background: 25 20% 10%;
-    --foreground: 35 20% 90%;
+    --foreground: 35 20% 92%;
 
     --card: 25 18% 14%;
-    --card-foreground: 35 20% 90%;
+    --card-foreground: 35 20% 92%;
 
     --popover: 25 18% 14%;
-    --popover-foreground: 35 20% 90%;
+    --popover-foreground: 35 20% 92%;
 
-    /* Warm terracotta */
+    /* Warm terracotta primary */
     --primary: 18 50% 55%;
     --primary-foreground: 25 20% 10%;
 
-    /* Muted sage */
+    /* Muted sage secondary */
     --secondary: 85 10% 22%;
     --secondary-foreground: 35 20% 85%;
 
+    /* Warm dark muted */
     --muted: 25 15% 18%;
-    --muted-foreground: 35 15% 55%;
+    --muted-foreground: 35 15% 60%;
 
+    /* Olive accent */
     --accent: 45 15% 20%;
     --accent-foreground: 35 20% 85%;
 
     --destructive: 0 50% 45%;
     --destructive-foreground: 35 30% 96%;
 
-    --border: 25 15% 20%;
-    --input: 25 15% 22%;
+    --border: 25 15% 22%;
+    --input: 25 15% 24%;
     --ring: 18 50% 55%;
 
+    /* Phase colors for dark mode */
     --phase-praise: 45 40% 35%;
     --phase-will: 85 20% 30%;
     --phase-needs: 200 25% 35%;
@@ -109,12 +112,12 @@
                      0 8px 24px -6px hsl(0 0% 0% / 0.3);
 
     --sidebar-background: 25 18% 12%;
-    --sidebar-foreground: 35 20% 90%;
+    --sidebar-foreground: 35 20% 92%;
     --sidebar-primary: 18 50% 55%;
     --sidebar-primary-foreground: 25 20% 10%;
     --sidebar-accent: 45 15% 20%;
     --sidebar-accent-foreground: 35 20% 85%;
-    --sidebar-border: 25 15% 20%;
+    --sidebar-border: 25 15% 22%;
     --sidebar-ring: 18 50% 55%;
   }
 }
