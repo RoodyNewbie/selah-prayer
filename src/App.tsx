@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import Pray from "./pages/Pray";
 import Requests from "./pages/Requests";
 import Journal from "./pages/Journal";
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route
           path="/home"
           element={

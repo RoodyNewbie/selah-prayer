@@ -121,12 +121,11 @@ export default function Landing() {
                 <p className="text-muted-foreground text-lg md:text-xl mb-8 max-w-lg mx-auto md:mx-0">
                   Selah helps you structure your prayers with time-tested frameworks — so you never feel lost for words.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                <div className="flex justify-center md:justify-start">
                   <Button asChild size="lg" className="text-base px-8">
                     <Link to="/auth?signup=true">Start Praying — It's Free</Link>
                   </Button>
                 </div>
-                <p className="text-muted-foreground text-sm mt-4">No credit card required</p>
               </div>
             </AnimateOnScroll>
             <AnimateOnScroll delay={200}>
@@ -285,6 +284,12 @@ export default function Landing() {
               className="text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
               Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            >
+              Terms of Service
             </Link>
             <Link
               to="/contact"
