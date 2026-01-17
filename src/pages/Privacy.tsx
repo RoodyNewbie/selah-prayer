@@ -214,6 +214,12 @@ export default function Privacy() {
           <div className="flex items-center gap-6">
             <span className="text-foreground text-sm font-medium">Privacy Policy</span>
             <Link
+              to="/terms"
+              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            >
+              Terms of Service
+            </Link>
+            <Link
               to="/auth"
               className="text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
