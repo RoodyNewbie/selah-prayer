@@ -326,11 +326,11 @@ export default function Settings() {
 
             {/* Custom formats section - Donor only */}
             <div className="pt-4 mt-4 border-t border-border">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
-                  Custom Formats
-                </h3>
-                <DonorGate featureName="Custom Prayer Formats">
+              <DonorGate featureName="Custom Prayer Formats">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+                    Custom Formats
+                  </h3>
                   <Button
                     variant="warm"
                     size="sm"
@@ -340,10 +340,8 @@ export default function Settings() {
                     <Plus className="w-4 h-4" />
                     New
                   </Button>
-                </DonorGate>
-              </div>
+                </div>
 
-              <DonorGate featureName="Custom Prayer Formats">
                 {isLoading ? (
                   <p className="text-muted-foreground text-sm py-4 text-center">
                     Loading formats...
