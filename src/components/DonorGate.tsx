@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DonorGateProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   fallback?: React.ReactNode;
   featureName?: string;
 }
@@ -22,8 +22,12 @@ export function DonorGate({ children, fallback, featureName }: DonorGateProps) {
     );
   }
 
-  if (isDonor) {
+  if (isDonor && children) {
     return <>{children}</>;
+  }
+
+  if (isDonor && !children) {
+    return null;
   }
 
   if (fallback) {

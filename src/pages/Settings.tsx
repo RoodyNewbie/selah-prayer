@@ -60,6 +60,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { DonorGate } from '@/components/DonorGate';
 
 const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
   { value: 'silence', label: 'Silence' },
@@ -293,21 +294,15 @@ export default function Settings() {
 
         {/* Prayer Formats Section */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg text-foreground">Prayer Formats</h2>
-            <Button
-              variant="warm"
-              size="sm"
-              onClick={() => setShowCreateDialog(true)}
-              className="gap-1"
-            >
-              <Plus className="w-4 h-4" />
-              New
-            </Button>
-          </div>
+          <h2 className="font-display text-lg text-foreground mb-4">Prayer Formats</h2>
 
           <div className="space-y-3">
-            {/* Built-in formats (not deletable) */}
+            {/* Built-in formats section header */}
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+              Built-in Formats
+            </h3>
+            
+            {/* Built-in formats (always visible, not deletable) */}
             {builtInFormats.map((format, index) => (
               <Card key={format.id} className="p-4">
                 <div className="flex items-start justify-between">
@@ -329,60 +324,81 @@ export default function Settings() {
               </Card>
             ))}
 
-            {isLoading ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">
-                Loading formats...
-              </p>
-            ) : (
-              formats.map((format) => (
-                <Card key={format.id} className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-body font-medium text-foreground">
-                          {format.name}
-                        </span>
-                        {format.isDefault && (
-                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {format.description || 'Custom format'} • {format.phases.length} phases
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {!format.isDefault && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleSetDefault(format.id)}
-                          title="Set as default"
-                        >
-                          <Star className="w-4 h-4" />
-                        </Button>
-                      )}
-                      {/* Only show delete for user-created formats */}
-                      {!isBuiltInFormat(format.id) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteConfirm(format.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))
-            )}
+            {/* Custom formats section - Donor only */}
+            <div className="pt-4 mt-4 border-t border-border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+                  Custom Formats
+                </h3>
+                <DonorGate featureName="Custom Prayer Formats">
+                  <Button
+                    variant="warm"
+                    size="sm"
+                    onClick={() => setShowCreateDialog(true)}
+                    className="gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New
+                  </Button>
+                </DonorGate>
+              </div>
 
-            {!isLoading && formats.length === 0 && (
-              <p className="text-muted-foreground text-sm py-4 text-center">
-                Create custom formats to personalize your prayer time
-              </p>
-            )}
+              <DonorGate featureName="Custom Prayer Formats">
+                {isLoading ? (
+                  <p className="text-muted-foreground text-sm py-4 text-center">
+                    Loading formats...
+                  </p>
+                ) : formats.length === 0 ? (
+                  <p className="text-muted-foreground text-sm py-4 text-center">
+                    Create custom formats to personalize your prayer time
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {formats.map((format) => (
+                      <Card key={format.id} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-body font-medium text-foreground">
+                                {format.name}
+                              </span>
+                              {format.isDefault && (
+                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {format.description || 'Custom format'} • {format.phases.length} phases
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {!format.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleSetDefault(format.id)}
+                                title="Set as default"
+                              >
+                                <Star className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {!isBuiltInFormat(format.id) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeleteConfirm(format.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </DonorGate>
+            </div>
           </div>
         </section>
 
