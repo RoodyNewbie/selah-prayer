@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      color_palettes: {
+        Row: {
+          accent_color: string
+          background_tint: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          primary_color: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accent_color: string
+          background_tint: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          primary_color: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accent_color?: string
+          background_tint?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          primary_color?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           created_at: string

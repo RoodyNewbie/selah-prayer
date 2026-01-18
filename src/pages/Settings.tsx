@@ -57,10 +57,12 @@ import {
   Sun,
   Volume2,
   Code,
+  Palette,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DonorGate } from '@/components/DonorGate';
+import { PaletteList } from '@/components/settings/PaletteList';
 
 const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
   { value: 'silence', label: 'Silence' },
@@ -187,7 +189,8 @@ export default function Settings() {
         {/* Appearance Section */}
         <section>
           <h2 className="font-display text-lg text-foreground mb-4">Appearance</h2>
-          <Card className="p-4">
+          <Card className="p-4 space-y-4">
+            {/* Dark Mode Toggle */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
@@ -203,6 +206,23 @@ export default function Settings() {
                 </div>
               </div>
               <ThemeToggle />
+            </div>
+
+            {/* Custom Colors Section - Donor only */}
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-body font-medium text-foreground">Custom Colors</p>
+                  <p className="text-sm text-muted-foreground">Personalize your prayer experience</p>
+                </div>
+              </div>
+              
+              <DonorGate featureName="Custom Color Palettes">
+                <PaletteList />
+              </DonorGate>
             </div>
           </Card>
         </section>
