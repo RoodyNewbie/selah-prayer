@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AudioProvider } from "@/contexts/AudioContext";
+import { DonorProvider } from "@/contexts/DonorContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
@@ -11,6 +12,7 @@ import Auth from "./pages/Auth";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
+import Donate from "./pages/Donate";
 import Pray from "./pages/Pray";
 import Requests from "./pages/Requests";
 import Journal from "./pages/Journal";
@@ -56,6 +58,7 @@ function AppRoutes() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/donate" element={<Donate />} />
         <Route
           path="/home"
           element={
@@ -139,7 +142,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppRoutes />
+            <DonorProvider>
+              <AppRoutes />
+            </DonorProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -10,6 +10,9 @@ import { BottomNav } from '@/components/navigation/BottomNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { useGlobalAudio, AudioTrack } from '@/contexts/AudioContext';
+import { useDonor } from '@/contexts/DonorContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import {
   usePrayerFormats,
   useCreateFormat,
@@ -37,6 +40,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   ArrowLeft,
   Plus,
   Star,
@@ -48,6 +56,7 @@ import {
   Moon,
   Sun,
   Volume2,
+  Code,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -58,13 +67,19 @@ const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
   { value: 'piano', label: 'Soft Ambience' },
 ];
 
+const isDev = import.meta.env.DEV;
+
 export default function Settings() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isDonor, isLoading: isDonorLoading, refetchDonorStatus } = useDonor();
   const { data: formats = [], isLoading } = usePrayerFormats();
   const createFormat = useCreateFormat();
   const deleteFormat = useDeleteFormat();
   const setDefaultFormat = useSetDefaultFormat();
   const { settings: audioSettings, changeTrack, changeVolume, toggleEnabled } = useGlobalAudio();
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
+  const [togglingDonor, setTogglingDonor] = useState(false);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -370,6 +385,69 @@ export default function Settings() {
             )}
           </div>
         </section>
+
+        {/* Developer Tools - Dev only */}
+        {isDev && (
+          <section className="mt-8">
+            <Collapsible open={devToolsOpen} onOpenChange={setDevToolsOpen}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-dashed border-muted-foreground/50 text-muted-foreground gap-2"
+                >
+                  <Code className="w-4 h-4" />
+                  Developer Tools
+                  <ChevronDown className={cn(
+                    "w-4 h-4 transition-transform ml-auto",
+                    devToolsOpen && "rotate-180"
+                  )} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <Card className="p-4 border-dashed border-muted-foreground/50 bg-muted/30">
+                  <p className="text-xs text-muted-foreground mb-3 font-mono">
+                    ⚠️ Development tools - not visible in production
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Donor Status</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isDonorLoading ? 'Loading...' : isDonor ? 'Yes (Donor)' : 'No (Free tier)'}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={togglingDonor || !user}
+                      onClick={async () => {
+                        if (!user) return;
+                        setTogglingDonor(true);
+                        try {
+                          const { error } = await supabase
+                            .from('profiles')
+                            .update({ is_donor: !isDonor })
+                            .eq('user_id', user.id);
+                          
+                          if (error) throw error;
+                          await refetchDonorStatus();
+                          toast.success(`Donor status: ${!isDonor ? 'Enabled' : 'Disabled'}`);
+                        } catch (err) {
+                          toast.error('Failed to toggle donor status');
+                          console.error(err);
+                        } finally {
+                          setTogglingDonor(false);
+                        }
+                      }}
+                    >
+                      {togglingDonor ? 'Toggling...' : 'Toggle Donor'}
+                    </Button>
+                  </div>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
+          </section>
+        )}
       </main>
 
       {/* Create Format Dialog */}
