@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { prayerPhases, PrayerSession } from '@/lib/prayerData';
-import { usePrayerSessions, useUpdateSessionPrayer, useDeleteSession } from '@/hooks/usePrayerSessions';
+import { usePrayerSessions, useUpdateSessionPrayer, useDeleteSession, useHasOlderSessions } from '@/hooks/usePrayerSessions';
+import { useDonor } from '@/contexts/DonorContext';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Card } from '@/components/ui/card';
@@ -16,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, subDays, subMonths } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2, Clock, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -57,7 +59,22 @@ export default function History() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<PrayerSession | null>(null);
 
-  const { data: sessions = [], isLoading, error, refetch } = usePrayerSessions();
+  // Donor status determines history limit
+  const { isDonor, isLoading: isDonorLoading } = useDonor();
+  
+  // Only fetch sessions once we know donor status
+  const { data: sessions = [], isLoading: isSessionsLoading, error, refetch } = usePrayerSessions({
+    isDonor,
+    enabled: !isDonorLoading,
+  });
+  
+  // Check if free user has older sessions (for showing upgrade prompt)
+  const { data: hasOlderSessions = false } = useHasOlderSessions({
+    enabled: !isDonorLoading && !isDonor,
+  });
+
+  const isLoading = isDonorLoading || isSessionsLoading;
+  
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
   const deleteSessionMutation = useDeleteSession();
 
@@ -261,13 +278,36 @@ export default function History() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : !error && sessions.length === 0 ? (
+          /* Empty state - differentiate between free user with old sessions vs truly empty */
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <HistoryIcon className="w-8 h-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground font-body">
-              Your prayer sessions will appear here
-            </p>
+            {!isDonor && hasOlderSessions ? (
+              <>
+                <p className="text-foreground font-body font-medium mb-2">
+                  No prayer sessions in the last 30 days
+                </p>
+                <p className="text-muted-foreground font-body text-sm mb-4">
+                  Unlock unlimited history to view your older sessions
+                </p>
+                <Button variant="warm" size="sm" asChild>
+                  <Link to="/donate">
+                    <Heart className="w-4 h-4 mr-2" />
+                    Unlock History
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground font-body mb-4">
+                  Your prayer sessions will appear here
+                </p>
+                <Button variant="warm" size="sm" asChild>
+                  <Link to="/pray">Start Praying</Link>
+                </Button>
+              </>
+            )}
           </div>
         ) : !error && filteredSessions.length === 0 && sessions.length > 0 ? (
           /* No Results from Search/Filter */
@@ -417,6 +457,34 @@ export default function History() {
               </Card>
             );
           })
+        )}
+
+        {/* 30-day limit message for free users */}
+        {!isDonor && !isLoading && !error && sessions.length > 0 && (
+          <Card className="mt-6 p-4 bg-muted/30 border-dashed">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground font-body">
+                  Viewing your last 30 days of prayer sessions
+                </p>
+                {hasOlderSessions && (
+                  <p className="text-xs text-muted-foreground font-body mt-1">
+                    You have older sessions that are currently hidden
+                  </p>
+                )}
+                <Link 
+                  to="/donate" 
+                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium mt-2 transition-colors"
+                >
+                  <Heart className="w-3.5 h-3.5" />
+                  Unlock unlimited history
+                </Link>
+              </div>
+            </div>
+          </Card>
         )}
       </main>
 

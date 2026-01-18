@@ -132,17 +132,43 @@ export const db = {
   },
 
   // Prayer Sessions
-  async getSessions(): Promise<PrayerSession[]> {
-    const { data, error } = await supabase
+  async getSessions(options?: { limitToLast30Days?: boolean }): Promise<PrayerSession[]> {
+    let query = supabase
       .from('prayer_sessions')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+
+    // Apply 30-day limit for free users
+    if (options?.limitToLast30Days) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      query = query.gte('created_at', thirtyDaysAgo.toISOString());
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       throw new DatabaseError('Failed to load your prayer history. Please try again.', error);
     }
 
     return (data || []).map(toSession);
+  },
+
+  // Check if user has sessions older than 30 days (for showing upgrade prompt)
+  async hasOlderSessions(): Promise<boolean> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { count, error } = await supabase
+      .from('prayer_sessions')
+      .select('*', { count: 'exact', head: true })
+      .lt('created_at', thirtyDaysAgo.toISOString());
+
+    if (error) {
+      console.error('Error checking for older sessions:', error);
+      return false;
+    }
+
+    return (count ?? 0) > 0;
   },
 
   async saveSession(phases: Record<string, string>, generatedPrayer?: string, formatId?: string): Promise<PrayerSession> {

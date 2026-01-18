@@ -1,11 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/db';
 
-export function usePrayerSessions() {
+export function usePrayerSessions(options?: { isDonor?: boolean; enabled?: boolean }) {
+  const { isDonor = true, enabled = true } = options ?? {};
+  
   return useQuery({
-    queryKey: ['prayer-sessions'],
-    queryFn: () => db.getSessions(),
+    queryKey: ['prayer-sessions', isDonor],
+    queryFn: () => db.getSessions({ limitToLast30Days: !isDonor }),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled,
+  });
+}
+
+export function useHasOlderSessions(options?: { enabled?: boolean }) {
+  const { enabled = true } = options ?? {};
+  
+  return useQuery({
+    queryKey: ['has-older-sessions'],
+    queryFn: () => db.hasOlderSessions(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled,
   });
 }
 
