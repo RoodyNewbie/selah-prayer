@@ -165,10 +165,10 @@ export default function Terms() {
             <p className="text-muted-foreground mt-4">
               <strong className="text-foreground">Email:</strong>{' '}
               <a
-                href="mailto:unreasonablemelons@gmail.com"
+                href="mailto:Selah.Prayer.App@gmail.com"
                 className="text-primary hover:underline"
               >
-                unreasonablemelons@gmail.com
+                Selah.Prayer.App@gmail.com
               </a>
             </p>
           </section>

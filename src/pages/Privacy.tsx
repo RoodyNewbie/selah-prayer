@@ -187,8 +187,8 @@ export default function Privacy() {
                 If you have questions about this Privacy Policy or your data, contact us at:
               </p>
               <p className="text-primary font-medium">
-                <a href="mailto:unreasonablemelons@gmail.com" className="hover:underline">
-                  unreasonablemelons@gmail.com
+                <a href="mailto:Selah.Prayer.App@gmail.com" className="hover:underline">
+                  Selah.Prayer.App@gmail.com
                 </a>
               </p>
             </section>
