@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { DonorProvider } from "@/contexts/DonorContext";
+import { ColorPaletteProvider } from "@/contexts/ColorPaletteContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
@@ -143,7 +144,9 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <DonorProvider>
-              <AppRoutes />
+              <ColorPaletteProvider>
+                <AppRoutes />
+              </ColorPaletteProvider>
             </DonorProvider>
           </AuthProvider>
         </BrowserRouter>

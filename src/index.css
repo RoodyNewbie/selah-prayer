@@ -122,6 +122,30 @@
   }
 }
 
+/* Custom color palette overrides - only applied when .custom-palette-active is present */
+:root.custom-palette-active {
+  --primary: var(--custom-primary);
+  --ring: var(--custom-primary);
+  --accent: var(--custom-accent);
+}
+
+/* Apply background tint subtly to main content areas */
+.custom-palette-active body {
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--custom-background-tint) / 0.08),
+    hsl(var(--background))
+  );
+}
+
+.custom-palette-active .dark body {
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--custom-background-tint) / 0.05),
+    hsl(var(--background))
+  );
+}
+
 @layer base {
   * {
     @apply border-border;
