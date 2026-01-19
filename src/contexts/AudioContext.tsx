@@ -1,21 +1,31 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { getSignedAudioUrl } from '@/hooks/useCustomAudioTracks';
 
-export type AudioTrack = 'silence' | 'rain' | 'piano';
+export type AudioTrack = 'silence' | 'rain' | 'piano' | string; // string for custom track IDs
 
 export interface AudioSettings {
   track: AudioTrack;
   volume: number; // 0-100
   enabled: boolean; // Whether audio should play globally
+  customTrackPath?: string; // File path for custom tracks
+}
+
+export interface CustomTrackInfo {
+  id: string;
+  name: string;
+  filePath: string;
 }
 
 interface AudioContextType {
   settings: AudioSettings;
   isPlaying: boolean;
-  changeTrack: (track: AudioTrack) => void;
+  changeTrack: (track: AudioTrack, customTrackPath?: string) => void;
   changeVolume: (volume: number) => void;
   toggleEnabled: () => void;
   setEnabled: (enabled: boolean) => void;
   handleUserInteraction: () => void;
+  playCustomTrack: (track: CustomTrackInfo) => void;
+  isCustomTrack: (track: AudioTrack) => boolean;
 }
 
 const STORAGE_KEY = 'selah_audio_settings';
@@ -32,6 +42,14 @@ const defaultSettings: AudioSettings = {
   track: 'silence',
   volume: 50,
   enabled: false,
+  customTrackPath: undefined,
+};
+
+// Check if a track is a custom track (UUID format)
+const isCustomTrackId = (track: AudioTrack): boolean => {
+  if (track === 'silence' || track === 'rain' || track === 'piano') return false;
+  // UUID pattern check
+  return /^[a-f0-9-]{36}$/i.test(track) || track.startsWith('custom-');
 };
 
 function getStoredSettings(): AudioSettings {
@@ -115,14 +133,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }, FADE_INTERVAL);
   }, [clearFade, prefersReducedMotion]);
 
-  // Start playing audio
-  const startAudio = useCallback(async (track: Exclude<AudioTrack, 'silence'>) => {
+  // Start playing audio from URL
+  const startAudioFromUrl = useCallback(async (url: string) => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
 
-    const audio = new Audio(AUDIO_SOURCES[track]);
+    const audio = new Audio(url);
     audio.loop = true;
     audio.volume = 0;
     audioRef.current = audio;
@@ -137,11 +155,27 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setIsPlaying(true);
       fadeVolume(audio, targetVolumeRef.current, FADE_IN_DURATION);
     } catch (err) {
-      // Autoplay blocked - will retry on user interaction
       console.log('Autoplay blocked, waiting for user interaction');
       hasUserInteractedRef.current = false;
     }
   }, [fadeVolume]);
+
+  // Start playing default audio track
+  const startAudio = useCallback(async (track: 'rain' | 'piano') => {
+    const url = AUDIO_SOURCES[track];
+    await startAudioFromUrl(url);
+  }, [startAudioFromUrl]);
+
+  // Start playing custom audio track
+  const startCustomAudio = useCallback(async (filePath: string) => {
+    const url = await getSignedAudioUrl(filePath);
+    if (!url) {
+      console.error('Failed to get signed URL for custom track');
+      setIsPlaying(false);
+      return;
+    }
+    await startAudioFromUrl(url);
+  }, [startAudioFromUrl]);
 
   // Stop playing audio with fade
   const stopAudio = useCallback((immediate = false) => {
@@ -166,9 +200,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     });
   }, [fadeVolume, clearFade, prefersReducedMotion]);
 
-  // Change track
-  const changeTrack = useCallback((newTrack: AudioTrack) => {
-    const newSettings = { ...settings, track: newTrack };
+  // Change track (for default tracks only)
+  const changeTrack = useCallback((newTrack: AudioTrack, customTrackPath?: string) => {
+    const newSettings = { ...settings, track: newTrack, customTrackPath };
     setSettings(newSettings);
     saveSettings(newSettings);
 
@@ -181,13 +215,21 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       stopAudio();
       setTimeout(() => {
         if (settings.enabled) {
-          startAudio(newTrack);
+          if (isCustomTrackId(newTrack) && customTrackPath) {
+            startCustomAudio(customTrackPath);
+          } else if (newTrack === 'rain' || newTrack === 'piano') {
+            startAudio(newTrack);
+          }
         }
       }, prefersReducedMotion ? 0 : FADE_OUT_DURATION);
     } else {
-      startAudio(newTrack);
+      if (isCustomTrackId(newTrack) && customTrackPath) {
+        startCustomAudio(customTrackPath);
+      } else if (newTrack === 'rain' || newTrack === 'piano') {
+        startAudio(newTrack);
+      }
     }
-  }, [settings, stopAudio, startAudio, prefersReducedMotion]);
+  }, [settings, stopAudio, startAudio, startCustomAudio, prefersReducedMotion]);
 
   // Change volume
   const changeVolume = useCallback((newVolume: number) => {
@@ -201,6 +243,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, [settings, isPlaying]);
 
+  // Helper to start audio based on track type
+  const startTrackAudio = useCallback(async (track: AudioTrack, customPath?: string) => {
+    if (track === 'silence') return;
+    
+    if (isCustomTrackId(track) && customPath) {
+      await startCustomAudio(customPath);
+    } else if (track === 'rain' || track === 'piano') {
+      await startAudio(track);
+    }
+  }, [startAudio, startCustomAudio]);
+
   // Toggle enabled
   const toggleEnabled = useCallback(() => {
     const newEnabled = !settings.enabled;
@@ -210,11 +263,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     if (newEnabled && settings.track !== 'silence') {
       hasUserInteractedRef.current = true;
-      startAudio(settings.track);
+      startTrackAudio(settings.track, settings.customTrackPath);
     } else if (!newEnabled) {
       stopAudio();
     }
-  }, [settings, startAudio, stopAudio]);
+  }, [settings, startTrackAudio, stopAudio]);
 
   // Set enabled directly
   const setEnabled = useCallback((enabled: boolean) => {
@@ -224,11 +277,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     if (enabled && settings.track !== 'silence') {
       hasUserInteractedRef.current = true;
-      startAudio(settings.track);
+      startTrackAudio(settings.track, settings.customTrackPath);
     } else if (!enabled) {
       stopAudio();
     }
-  }, [settings, startAudio, stopAudio]);
+  }, [settings, startTrackAudio, stopAudio]);
 
   // Handle user interaction for autoplay unlock
   const handleUserInteraction = useCallback(() => {
@@ -236,15 +289,25 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     hasUserInteractedRef.current = true;
 
     if (settings.enabled && settings.track !== 'silence' && !isPlaying && !audioRef.current) {
-      startAudio(settings.track);
+      startTrackAudio(settings.track, settings.customTrackPath);
     }
-  }, [settings.enabled, settings.track, isPlaying, startAudio]);
+  }, [settings.enabled, settings.track, settings.customTrackPath, isPlaying, startTrackAudio]);
+
+  // Play a custom track directly
+  const playCustomTrack = useCallback((track: CustomTrackInfo) => {
+    changeTrack(track.id, track.filePath);
+  }, [changeTrack]);
+
+  // Check if a track is custom
+  const isCustomTrack = useCallback((track: AudioTrack) => {
+    return isCustomTrackId(track);
+  }, []);
 
   // Start/stop based on enabled state
   useEffect(() => {
     if (settings.enabled && settings.track !== 'silence') {
       hasUserInteractedRef.current = true;
-      startAudio(settings.track);
+      startTrackAudio(settings.track, settings.customTrackPath);
     } else if (!settings.enabled || settings.track === 'silence') {
       stopAudio();
     }
@@ -280,6 +343,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         toggleEnabled,
         setEnabled,
         handleUserInteraction,
+        playCustomTrack,
+        isCustomTrack,
       }}
     >
       {children}

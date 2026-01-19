@@ -63,6 +63,10 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DonorGate } from '@/components/DonorGate';
 import { PaletteList } from '@/components/settings/PaletteList';
+import { AudioUploader } from '@/components/settings/AudioUploader';
+import { CustomTrackList } from '@/components/settings/CustomTrackList';
+import { useCustomAudioTracks, CustomAudioTrack } from '@/hooks/useCustomAudioTracks';
+import { Music } from 'lucide-react';
 
 const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
   { value: 'silence', label: 'Silence' },
@@ -80,7 +84,9 @@ export default function Settings() {
   const createFormat = useCreateFormat();
   const deleteFormat = useDeleteFormat();
   const setDefaultFormat = useSetDefaultFormat();
-  const { settings: audioSettings, changeTrack, changeVolume, toggleEnabled } = useGlobalAudio();
+  const { settings: audioSettings, changeTrack, changeVolume, toggleEnabled, playCustomTrack, isCustomTrack } = useGlobalAudio();
+  const { data: customTracks = [] } = useCustomAudioTracks(isDonor);
+  const [customTracksAtLimit, setCustomTracksAtLimit] = useState(false);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
   const [togglingDonor, setTogglingDonor] = useState(false);
 
@@ -256,6 +262,7 @@ export default function Settings() {
             )}>
               <p className="text-sm font-medium text-foreground">Sound Track</p>
               <div className="space-y-1">
+                {/* Default tracks */}
                 {TRACK_OPTIONS.map((option) => (
                   <button
                     key={option.value}
@@ -287,6 +294,51 @@ export default function Settings() {
                     )}
                   </button>
                 ))}
+                
+                {/* Custom tracks (donors only) */}
+                {isDonor && customTracks.length > 0 && (
+                  <>
+                    <div className="py-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Custom Tracks
+                      </p>
+                    </div>
+                    {customTracks.map((track) => (
+                      <button
+                        key={track.id}
+                        onClick={() => playCustomTrack({ id: track.id, name: track.name, filePath: track.filePath })}
+                        disabled={!audioSettings.enabled}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
+                          "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                          audioSettings.track === track.id
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground"
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Music className="w-3.5 h-3.5" />
+                          <span className="truncate max-w-[180px]">{track.name}</span>
+                        </span>
+                        {audioSettings.track === track.id && (
+                          <svg
+                            className="w-4 h-4 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
 
@@ -308,6 +360,26 @@ export default function Settings() {
                 className="w-full"
                 disabled={!audioSettings.enabled || audioSettings.track === 'silence'}
               />
+            </div>
+
+            {/* Custom Audio Uploads - Donor only */}
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  <Music className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-body font-medium text-foreground">Custom Tracks</p>
+                  <p className="text-sm text-muted-foreground">Upload your own ambient audio</p>
+                </div>
+              </div>
+              
+              <DonorGate featureName="Custom Audio Uploads">
+                <div className="space-y-4">
+                  <AudioUploader disabled={customTracksAtLimit} />
+                  <CustomTrackList onLimitChange={setCustomTracksAtLimit} />
+                </div>
+              </DonorGate>
             </div>
           </Card>
         </section>
