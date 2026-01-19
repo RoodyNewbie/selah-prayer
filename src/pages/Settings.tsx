@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { useGlobalAudio, AudioTrack } from '@/contexts/AudioContext';
 import { useDonor } from '@/contexts/DonorContext';
+import { useMeditationTimer } from '@/contexts/MeditationTimerContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -61,6 +62,8 @@ import {
   Lock,
   Heart,
   ArrowRight,
+  Timer,
+  Music,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -68,8 +71,8 @@ import { Link } from 'react-router-dom';
 import { PaletteList } from '@/components/settings/PaletteList';
 import { AudioUploader } from '@/components/settings/AudioUploader';
 import { CustomTrackList } from '@/components/settings/CustomTrackList';
+import { MeditationTimerSettings } from '@/components/settings/MeditationTimerSettings';
 import { useCustomAudioTracks, CustomAudioTrack } from '@/hooks/useCustomAudioTracks';
-import { Music } from 'lucide-react';
 
 const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
   { value: 'silence', label: 'Silence' },
@@ -391,6 +394,14 @@ export default function Settings() {
           </Card>
         </section>
 
+        {/* Meditation Timer Section */}
+        <section>
+          <h2 className="font-display text-lg text-foreground mb-4">Meditation Timer</h2>
+          <Card className="p-4 space-y-4">
+            <MeditationTimerSettings />
+          </Card>
+        </section>
+
         {/* Prayer Formats Section */}
         <section>
           <h2 className="font-display text-lg text-foreground mb-4">Prayer Formats</h2>
@@ -527,6 +538,7 @@ export default function Settings() {
                     <li>• Custom color palettes</li>
                     <li>• Upload your own ambient audio</li>
                     <li>• Create custom prayer formats</li>
+                    <li>• Meditation timer</li>
                   </ul>
                   <Link 
                     to="/donate" 
