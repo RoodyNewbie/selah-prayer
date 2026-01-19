@@ -16,6 +16,7 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import Donate from "./pages/Donate";
 import Pray from "./pages/Pray";
+import Meditate from "./pages/Meditate";
 import Requests from "./pages/Requests";
 import Journal from "./pages/Journal";
 import Answered from "./pages/Answered";
@@ -77,6 +78,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <Pray />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pray/meditate"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Meditate />
               </ErrorBoundary>
             </ProtectedRoute>
           }

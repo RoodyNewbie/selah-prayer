@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
@@ -10,14 +10,15 @@ import { useDonor } from '@/contexts/DonorContext';
 import { PrayerFormat } from '@/hooks/usePrayerFormats';
 import { builtInFormats } from '@/lib/builtInFormats';
 import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/db';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { FormatSelector } from '@/components/prayer/FormatSelector';
-import { MeditationTimerDisplay } from '@/components/prayer/MeditationTimerDisplay';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock } from 'lucide-react';
 import { TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -34,6 +35,11 @@ export default function Pray() {
   const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  
+  // New state for completion screen
+  const [personalPrayer, setPersonalPrayer] = useState('');
+  const [selectedDuration, setSelectedDuration] = useState(10);
+  const [isSavingPersonal, setIsSavingPersonal] = useState(false);
 
   // Track if transition is in progress to prevent double-clicks
   const isTransitioning = useRef(false);
@@ -41,38 +47,14 @@ export default function Pray() {
   // Global audio - just for user interaction handling
   const { handleUserInteraction } = useGlobalAudio();
   
-  // Meditation timer
+  // Meditation timer settings (for default duration)
   const { isDonor } = useDonor();
-  const { 
-    isEnabled: timerEnabled, 
-    defaultDuration, 
-    startTimer, 
-    stopTimer,
-    isRunning: timerIsRunning 
-  } = useMeditationTimer();
+  const { defaultDuration } = useMeditationTimer();
 
   const { data: recurringRequests = [] } = useRecurringRequests();
   const createSessionMutation = useCreateSession();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
   const saveTopicsMutation = useSaveSessionTopics();
-  
-  // Track if timer has been started for this session
-  const timerStartedRef = useRef(false);
-
-  // Start timer when prayer session begins (if enabled and donor)
-  useEffect(() => {
-    if (isDonor && timerEnabled && !timerStartedRef.current && !isComplete) {
-      timerStartedRef.current = true;
-      startTimer(defaultDuration);
-    }
-  }, [isDonor, timerEnabled, defaultDuration, startTimer, isComplete]);
-
-  // Stop timer when leaving the prayer session
-  useEffect(() => {
-    return () => {
-      stopTimer();
-    };
-  }, [stopTimer]);
 
   // Check for reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' 
@@ -125,7 +107,6 @@ export default function Pray() {
         isTransitioning.current = false;
       }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
     }
-    // Note: handleComplete is called separately, not from here to avoid stale closure issues
   }, [currentPhaseIndex, activePhases.length, prefersReducedMotion]);
 
   const handleSkip = useCallback(() => {
@@ -143,7 +124,6 @@ export default function Pray() {
         isTransitioning.current = false;
       }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
     }
-    // Note: handleComplete is called separately, not from here to avoid stale closure issues
   }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, currentPhase.id]);
 
   const generatePrayer = async (phases: Record<string, string>, sessionId: string) => {
@@ -174,7 +154,6 @@ export default function Pray() {
         });
       } catch (saveErr) {
         console.error('Error saving generated prayer:', saveErr);
-        // Non-critical - prayer is displayed, just not persisted
       }
     } catch (err) {
       console.error('Error:', err);
@@ -194,13 +173,17 @@ export default function Pray() {
       setSavedSessionId(session.id);
       setIsComplete(true);
       
+      // Initialize duration from user preference
+      if (defaultDuration) {
+        setSelectedDuration(defaultDuration);
+      }
+      
       // Save prayer topics for session memory (non-blocking)
       saveTopicsMutation.mutate(
         { sessionId: session.id, phases: phaseContent },
         {
           onError: (err) => {
             console.error('Failed to save prayer topics:', err);
-            // Non-critical - don't show error to user
           },
         }
       );
@@ -238,36 +221,69 @@ export default function Pray() {
     }
   }, [currentPhaseIndex, activePhases.length, handleSkip, phaseContent, selectedFormat]);
 
+  // Handle return home - save personal prayer if entered
+  const handleReturnHome = async () => {
+    if (personalPrayer.trim() && savedSessionId) {
+      setIsSavingPersonal(true);
+      try {
+        await db.updateSessionPersonalPrayer(savedSessionId, personalPrayer.trim());
+      } catch (err) {
+        console.error('Failed to save personal prayer:', err);
+      } finally {
+        setIsSavingPersonal(false);
+      }
+    }
+    navigate('/');
+  };
+
+  // Handle begin meditation
+  const handleBeginMeditation = async () => {
+    // Save personal prayer first if entered
+    if (personalPrayer.trim() && savedSessionId) {
+      try {
+        await db.updateSessionPersonalPrayer(savedSessionId, personalPrayer.trim());
+      } catch (err) {
+        console.error('Failed to save personal prayer:', err);
+      }
+    }
+    
+    navigate('/pray/meditate', {
+      state: {
+        duration: selectedDuration,
+        sessionId: savedSessionId,
+        generatedPrayer: generatedPrayer || undefined,
+        personalPrayer: personalPrayer.trim() || undefined,
+      }
+    });
+  };
+
   if (isComplete) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-6 md:p-8 text-center space-y-6 max-w-lg w-full animate-fade-in">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle className="w-8 h-8 text-primary" />
+      <div className="min-h-screen bg-background flex flex-col p-4 max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6 pt-8 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
+            <CheckCircle className="w-7 h-7 text-primary" />
           </div>
-          <div className="space-y-2">
-            <h2 className="font-display text-2xl text-foreground">Amen</h2>
-            <p className="text-muted-foreground font-body">
-              Your prayer has been saved. May peace be with you.
-            </p>
-          </div>
+          <h1 className="font-display text-2xl text-foreground">Amen</h1>
+          <p className="text-muted-foreground font-body mt-1">
+            Your prayer has been saved. May peace be with you.
+          </p>
+        </div>
 
-          {/* Generated Prayer Section */}
-          {isGenerating && (
-            <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+        {/* Generated Prayer Section */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          {isGenerating ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
               <Sparkles className="w-5 h-5 animate-pulse text-primary" />
               <span className="font-body text-sm">Crafting your prayer...</span>
             </div>
-          )}
-
-          {generatedPrayer && !isGenerating && (
-            <div className="text-left space-y-3">
-              <div className="flex items-center justify-between">
+          ) : generatedPrayer ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-body font-medium text-foreground">
-                    Your Prayer
-                  </span>
+                  <span className="text-sm font-medium text-muted-foreground">Your Prayer</span>
                 </div>
                 <Button
                   variant="ghost"
@@ -275,25 +291,99 @@ export default function Pray() {
                   onClick={handleCopy}
                   className="text-muted-foreground"
                 >
-                  {copied ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
-              <div className="bg-muted/50 rounded-xl p-4 border border-border/50 max-h-64 overflow-y-auto">
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/50 max-h-48 overflow-y-auto">
                 <p className="font-body text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                   {generatedPrayer}
                 </p>
               </div>
+            </>
+          ) : null}
+        </div>
+
+        {/* Personal Prayer Section */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-muted-foreground">Add Your Own Words</span>
+            <span className="text-xs text-muted-foreground">Optional</span>
+          </div>
+          <Textarea
+            placeholder="Write additional thoughts, prayers, or reflections..."
+            value={personalPrayer}
+            onChange={(e) => setPersonalPrayer(e.target.value)}
+            className="min-h-[100px] resize-y"
+          />
+        </div>
+
+        {/* Meditation Section */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
+          {isDonor ? (
+            <div className="p-4 rounded-lg bg-muted/20 border border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <Timer className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-medium text-foreground">Continue in Meditation</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Spend quiet time reflecting on your prayer.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Duration selector */}
+              <div className="flex gap-2 flex-wrap mb-3">
+                {[5, 10, 15, 20, 30].map((min) => (
+                  <Button
+                    key={min}
+                    variant={selectedDuration === min ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedDuration(min)}
+                  >
+                    {min} min
+                  </Button>
+                ))}
+              </div>
+              
+              <Button 
+                className="w-full" 
+                onClick={handleBeginMeditation}
+              >
+                Begin Meditation
+              </Button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-lg bg-muted/10 border border-dashed border-border">
+              <div className="flex items-center gap-3 opacity-60">
+                <Timer className="h-5 w-5" />
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">Meditation Timer</p>
+                  <p className="text-sm text-muted-foreground">Available with a donation</p>
+                </div>
+                <Lock className="h-4 w-4" />
+              </div>
             </div>
           )}
+        </div>
 
-          <Button onClick={() => navigate('/')} size="lg" className="w-full">
-            Return Home
+        {/* Return Home Button */}
+        <div className="mt-auto pt-4 animate-fade-in" style={{ animationDelay: '400ms' }}>
+          <Button 
+            className="w-full" 
+            size="lg"
+            onClick={handleReturnHome}
+            disabled={isSavingPersonal}
+          >
+            {isSavingPersonal ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Return Home'
+            )}
           </Button>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -334,8 +424,6 @@ export default function Pray() {
       onClick={handleUserInteraction}
       onKeyDown={handleUserInteraction}
     >
-      {/* Meditation Timer Display */}
-      {isDonor && timerIsRunning && <MeditationTimerDisplay variant="minimal" />}
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
         <Button variant="ghost" size="icon" onClick={handleExit}>

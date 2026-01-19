@@ -206,6 +206,28 @@ export const db = {
     }
   },
 
+  async updateSessionPersonalPrayer(sessionId: string, personalPrayer: string): Promise<void> {
+    const { error } = await supabase
+      .from('prayer_sessions')
+      .update({ personal_prayer: personalPrayer })
+      .eq('id', sessionId);
+
+    if (error) {
+      throw new DatabaseError('Failed to save your personal prayer. Please try again.', error);
+    }
+  },
+
+  async updateSessionMeditation(sessionId: string, meditationSeconds: number): Promise<void> {
+    const { error } = await supabase
+      .from('prayer_sessions')
+      .update({ meditation_seconds_used: meditationSeconds })
+      .eq('id', sessionId);
+
+    if (error) {
+      throw new DatabaseError('Failed to save meditation time. Please try again.', error);
+    }
+  },
+
   async deleteSession(id: string): Promise<void> {
     const { error } = await supabase
       .from('prayer_sessions')
