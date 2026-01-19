@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { prayerPhases, PrayerSession } from '@/lib/prayerData';
 import { usePrayerSessions, useUpdateSessionPrayer, useDeleteSession, useHasOlderSessions } from '@/hooks/usePrayerSessions';
 import { useDonor } from '@/contexts/DonorContext';
@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, subDays, subMonths } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2, Clock, Heart } from 'lucide-react';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2, Clock, Heart, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ function formatDateRange(range: DateRange): string {
 }
 
 export default function History() {
+  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -360,6 +361,20 @@ export default function History() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {isDonor && (
+                        <DropdownMenuItem 
+                          onClick={() => navigate('/pray/meditate', {
+                            state: {
+                              duration: 10,
+                              sessionId: session.id,
+                              generatedPrayer: session.generatedPrayer || undefined,
+                            }
+                          })}
+                        >
+                          <Timer className="w-4 h-4 mr-2" />
+                          Meditate
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem 
                         onClick={() => setSessionToDelete(session)} 
                         className="text-destructive focus:text-destructive"
