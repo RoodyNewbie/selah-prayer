@@ -388,7 +388,7 @@ export default function Pray() {
             <span className="text-xs text-muted-foreground">Optional</span>
           </div>
           <Textarea
-            placeholder="Write additional thoughts, prayers, or reflections..."
+            placeholder="Write your own prayers and reflections..."
             value={personalPrayer}
             onChange={(e) => setPersonalPrayer(e.target.value)}
             className="min-h-[100px] resize-y"
