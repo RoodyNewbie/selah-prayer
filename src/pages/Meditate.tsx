@@ -220,8 +220,8 @@ export default function Meditate() {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
-      {/* Top bar - minimal */}
-      <div className="flex items-center justify-between p-4">
+      {/* Top bar with exit */}
+      <div className="flex items-center justify-between p-4 pb-2">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -234,17 +234,16 @@ export default function Meditate() {
         <span className="text-sm text-muted-foreground font-body">
           Meditation
         </span>
-        <div className="w-16" /> {/* Spacer for centering */}
+        <div className="w-16" />
       </div>
 
-      {/* Main content - centered */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        
-        {/* Timer display - large and central */}
-        <div className="mb-8 text-center">
+      {/* Compact timer section at top */}
+      <div className="px-6 py-4 flex flex-col items-center">
+        {/* Timer display - compact */}
+        <div className="flex items-center gap-4">
           <div 
             className={cn(
-              "text-6xl md:text-8xl font-mono tabular-nums font-light tracking-tight transition-colors duration-500",
+              "text-4xl font-mono tabular-nums font-light tracking-tight transition-colors duration-500",
               isComplete && "text-primary"
             )}
             role="timer"
@@ -254,38 +253,18 @@ export default function Meditate() {
             {formatTime(remainingSeconds)}
           </div>
           
-          {/* Progress indicator */}
-          <div className="mt-6 w-48 mx-auto h-1 bg-muted rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary transition-all duration-1000 ease-linear"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Status text */}
-        <p className="text-muted-foreground mb-8 font-body text-center">
-          {isComplete 
-            ? "Take all the time you need" 
-            : isPaused 
-              ? "Paused" 
-              : "Breathe and reflect"
-          }
-        </p>
-
-        {/* Timer controls */}
-        <div className="flex items-center gap-4">
+          {/* Inline controls */}
           {!isComplete && (
             <Button
               variant="outline"
-              size="lg"
-              className="rounded-full w-14 h-14"
+              size="icon"
+              className="rounded-full h-10 w-10"
               onClick={isPaused ? handleResume : handlePause}
               aria-label={isPaused ? "Resume meditation" : "Pause meditation"}
             >
               {isPaused 
-                ? <Play className="h-6 w-6" /> 
-                : <Pause className="h-6 w-6" />
+                ? <Play className="h-4 w-4" /> 
+                : <Pause className="h-4 w-4" />
               }
             </Button>
           )}
@@ -293,24 +272,42 @@ export default function Meditate() {
           {isComplete && (
             <Button
               variant="outline"
-              size="lg"
+              size="sm"
               onClick={handleAddMoreTime}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add 5 minutes
+              <Plus className="h-3 w-3 mr-1" />
+              +5 min
             </Button>
           )}
         </div>
+        
+        {/* Progress bar */}
+        <div className="mt-3 w-32 h-1 bg-muted rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary transition-all duration-1000 ease-linear"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* Status text - compact */}
+        <p className="text-muted-foreground text-sm mt-2 font-body">
+          {isComplete 
+            ? "Take all the time you need" 
+            : isPaused 
+              ? "Paused" 
+              : "Breathe and reflect"
+          }
+        </p>
       </div>
 
-      {/* Prayer reference - collapsible at bottom */}
+      {/* Prayer section - takes remaining space */}
       {(state.generatedPrayer || state.personalPrayer) && (
-        <div className="p-4">
-          <Collapsible open={showPrayer} onOpenChange={setShowPrayer}>
+        <div className="flex-1 flex flex-col min-h-0 px-4">
+          <Collapsible open={showPrayer} onOpenChange={setShowPrayer} className="flex flex-col min-h-0 flex-1">
             <CollapsibleTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="w-full justify-between text-muted-foreground"
+                className="w-full justify-between text-muted-foreground shrink-0"
               >
                 <span className="text-sm font-body">
                   {showPrayer ? "Hide prayer" : "View your prayer"}
@@ -321,8 +318,8 @@ export default function Meditate() {
                 )} />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="animate-accordion-down">
-              <div className="mt-2 p-4 rounded-lg bg-muted/20 max-h-[30vh] overflow-y-auto">
+            <CollapsibleContent className="flex-1 min-h-0 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <div className="h-full overflow-y-auto p-4 rounded-lg bg-muted/20">
                 {state.generatedPrayer && (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground font-body">
                     {state.generatedPrayer}
@@ -342,8 +339,11 @@ export default function Meditate() {
         </div>
       )}
 
+      {/* Spacer when prayer is collapsed */}
+      {!showPrayer && <div className="flex-1" />}
+
       {/* Finish button - always visible at bottom */}
-      <div className="p-4 pt-0">
+      <div className="p-4 shrink-0">
         <Button 
           className="w-full" 
           size="lg"
