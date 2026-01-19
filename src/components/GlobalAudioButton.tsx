@@ -1,4 +1,4 @@
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -7,19 +7,28 @@ import {
 } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useGlobalAudio, AudioTrack } from '@/contexts/AudioContext';
+import { useCustomAudioTracks } from '@/hooks/useCustomAudioTracks';
+import { useDonor } from '@/contexts/DonorContext';
 
-const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
+const BUILT_IN_TRACKS: { value: AudioTrack; label: string }[] = [
   { value: 'silence', label: 'Silence' },
   { value: 'rain', label: 'Rain and Thunder' },
   { value: 'piano', label: 'Soft Ambience' },
 ];
 
 export function GlobalAudioButton() {
-  const { settings, isPlaying, changeTrack, changeVolume, toggleEnabled } = useGlobalAudio();
+  const { settings, isPlaying, changeTrack, changeVolume, toggleEnabled, playCustomTrack, isCustomTrack } = useGlobalAudio();
+  const { isDonor } = useDonor();
+  const { data: customTracks = [] } = useCustomAudioTracks(isDonor);
   
   const isSilent = !settings.enabled || settings.track === 'silence' || !isPlaying;
+
+  // Check if current track is a custom track
+  const isCurrentCustom = isCustomTrack(settings.track);
+  const currentCustomTrack = customTracks.find(t => t.id === settings.track);
 
   return (
     <Popover>
@@ -52,9 +61,9 @@ export function GlobalAudioButton() {
             />
           </div>
           
-          {/* Track Options */}
+          {/* Built-in Track Options */}
           <div className={cn("space-y-1", !settings.enabled && "opacity-50 pointer-events-none")}>
-            {TRACK_OPTIONS.map((option) => (
+            {BUILT_IN_TRACKS.map((option) => (
               <button
                 key={option.value}
                 onClick={() => changeTrack(option.value)}
@@ -62,13 +71,13 @@ export function GlobalAudioButton() {
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
                   "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                  settings.track === option.value
+                  settings.track === option.value && !isCurrentCustom
                     ? "bg-primary/10 text-primary"
                     : "text-foreground"
                 )}
               >
                 <span>{option.label}</span>
-                {settings.track === option.value && (
+                {settings.track === option.value && !isCurrentCustom && (
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -86,6 +95,50 @@ export function GlobalAudioButton() {
               </button>
             ))}
           </div>
+
+          {/* Custom Tracks Section (Donors only) */}
+          {isDonor && customTracks.length > 0 && (
+            <>
+              <Separator />
+              <div className={cn("space-y-1", !settings.enabled && "opacity-50 pointer-events-none")}>
+                <p className="text-xs text-muted-foreground px-3 pb-1 flex items-center gap-1.5">
+                  <Music className="w-3 h-3" />
+                  Your Tracks
+                </p>
+                {customTracks.map((track) => (
+                  <button
+                    key={track.id}
+                    onClick={() => playCustomTrack({ id: track.id, name: track.name, filePath: track.filePath })}
+                    disabled={!settings.enabled}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors",
+                      "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                      settings.track === track.id
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground"
+                    )}
+                  >
+                    <span className="truncate">{track.name}</span>
+                    {settings.track === track.id && (
+                      <svg
+                        className="w-4 h-4 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Volume Slider */}
           <div className={cn(
