@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/db';
 import { toast } from '@/hooks/use-toast';
+import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -220,7 +221,7 @@ export default function Meditate() {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
-      {/* Top bar with exit */}
+      {/* Top bar with exit and audio */}
       <div className="flex items-center justify-between p-4 pb-2">
         <Button 
           variant="ghost" 
@@ -234,7 +235,7 @@ export default function Meditate() {
         <span className="text-sm text-muted-foreground font-body">
           Meditation
         </span>
-        <div className="w-16" />
+        <GlobalAudioButton />
       </div>
 
       {/* Compact timer section at top */}
