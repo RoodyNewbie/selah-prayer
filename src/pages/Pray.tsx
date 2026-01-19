@@ -1,16 +1,19 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
 import { useCreateSession, useUpdateSessionPrayer } from '@/hooks/usePrayerSessions';
 import { useSaveSessionTopics } from '@/hooks/usePrayerTopics';
 import { useGlobalAudio } from '@/contexts/AudioContext';
+import { useMeditationTimer } from '@/contexts/MeditationTimerContext';
+import { useDonor } from '@/contexts/DonorContext';
 import { PrayerFormat } from '@/hooks/usePrayerFormats';
 import { builtInFormats } from '@/lib/builtInFormats';
 import { supabase } from '@/integrations/supabase/client';
 import { PhaseProgress } from '@/components/prayer/PhaseProgress';
 import { PhaseCard } from '@/components/prayer/PhaseCard';
 import { FormatSelector } from '@/components/prayer/FormatSelector';
+import { MeditationTimerDisplay } from '@/components/prayer/MeditationTimerDisplay';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,11 +40,39 @@ export default function Pray() {
 
   // Global audio - just for user interaction handling
   const { handleUserInteraction } = useGlobalAudio();
+  
+  // Meditation timer
+  const { isDonor } = useDonor();
+  const { 
+    isEnabled: timerEnabled, 
+    defaultDuration, 
+    startTimer, 
+    stopTimer,
+    isRunning: timerIsRunning 
+  } = useMeditationTimer();
 
   const { data: recurringRequests = [] } = useRecurringRequests();
   const createSessionMutation = useCreateSession();
   const updateSessionPrayerMutation = useUpdateSessionPrayer();
   const saveTopicsMutation = useSaveSessionTopics();
+  
+  // Track if timer has been started for this session
+  const timerStartedRef = useRef(false);
+
+  // Start timer when prayer session begins (if enabled and donor)
+  useEffect(() => {
+    if (isDonor && timerEnabled && !timerStartedRef.current && !isComplete) {
+      timerStartedRef.current = true;
+      startTimer(defaultDuration);
+    }
+  }, [isDonor, timerEnabled, defaultDuration, startTimer, isComplete]);
+
+  // Stop timer when leaving the prayer session
+  useEffect(() => {
+    return () => {
+      stopTimer();
+    };
+  }, [stopTimer]);
 
   // Check for reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' 
@@ -299,10 +330,12 @@ export default function Pray() {
 
   return (
     <div 
-      className="min-h-screen bg-background"
+      className="min-h-screen bg-background relative"
       onClick={handleUserInteraction}
       onKeyDown={handleUserInteraction}
     >
+      {/* Meditation Timer Display */}
+      {isDonor && timerIsRunning && <MeditationTimerDisplay variant="minimal" />}
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border">
         <Button variant="ghost" size="icon" onClick={handleExit}>

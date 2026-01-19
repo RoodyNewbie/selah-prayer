@@ -312,6 +312,8 @@ export type Database = {
           display_name: string | null
           id: string
           is_donor: boolean
+          meditation_timer_duration: number
+          meditation_timer_enabled: boolean
           updated_at: string
           user_id: string
         }
@@ -320,6 +322,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_donor?: boolean
+          meditation_timer_duration?: number
+          meditation_timer_enabled?: boolean
           updated_at?: string
           user_id: string
         }
@@ -328,6 +332,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_donor?: boolean
+          meditation_timer_duration?: number
+          meditation_timer_enabled?: boolean
           updated_at?: string
           user_id?: string
         }

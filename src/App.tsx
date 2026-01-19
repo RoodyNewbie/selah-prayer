@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { DonorProvider } from "@/contexts/DonorContext";
 import { ColorPaletteProvider } from "@/contexts/ColorPaletteContext";
+import { MeditationTimerProvider } from "@/contexts/MeditationTimerContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
@@ -144,9 +145,11 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <DonorProvider>
-              <ColorPaletteProvider>
-                <AppRoutes />
-              </ColorPaletteProvider>
+              <MeditationTimerProvider>
+                <ColorPaletteProvider>
+                  <AppRoutes />
+                </ColorPaletteProvider>
+              </MeditationTimerProvider>
             </DonorProvider>
           </AuthProvider>
         </BrowserRouter>
