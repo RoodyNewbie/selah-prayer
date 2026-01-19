@@ -129,21 +129,49 @@
   --accent: var(--custom-accent);
 }
 
-/* Apply background tint subtly to main content areas */
+/* Apply background tint to main content areas with stronger visibility */
 .custom-palette-active body {
   background: linear-gradient(
     to bottom,
-    hsl(var(--custom-background-tint) / 0.08),
-    hsl(var(--background))
+    hsl(var(--custom-background-tint) / 0.45),
+    hsl(var(--custom-background-tint) / 0.25)
   );
 }
 
-.custom-palette-active .dark body {
+.custom-palette-active.dark body {
   background: linear-gradient(
     to bottom,
-    hsl(var(--custom-background-tint) / 0.05),
-    hsl(var(--background))
+    hsl(var(--custom-background-tint) / 0.35),
+    hsl(var(--custom-background-tint) / 0.18)
   );
+}
+
+/* Apply tint to cards and containers */
+.custom-palette-active .bg-card,
+.custom-palette-active [class*="card"] {
+  background-color: hsl(var(--custom-background-tint) / 0.15);
+}
+
+.custom-palette-active.dark .bg-card,
+.custom-palette-active.dark [class*="card"] {
+  background-color: hsl(var(--custom-background-tint) / 0.12);
+}
+
+/* Apply tint to navigation */
+.custom-palette-active nav,
+.custom-palette-active [role="navigation"] {
+  background-color: hsl(var(--custom-background-tint) / 0.25);
+}
+
+.custom-palette-active.dark nav,
+.custom-palette-active.dark [role="navigation"] {
+  background-color: hsl(var(--custom-background-tint) / 0.18);
+}
+
+/* Apply tint to dialogs and modals */
+.custom-palette-active [role="dialog"],
+.custom-palette-active [data-radix-dialog-content] {
+  background-color: hsl(var(--custom-background-tint) / 0.20);
 }
 
 @layer base {
