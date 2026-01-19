@@ -227,6 +227,8 @@ export type Database = {
           format_id: string | null
           generated_prayer: string | null
           id: string
+          meditation_seconds_used: number | null
+          personal_prayer: string | null
           phases: Json
           user_id: string
         }
@@ -235,6 +237,8 @@ export type Database = {
           format_id?: string | null
           generated_prayer?: string | null
           id?: string
+          meditation_seconds_used?: number | null
+          personal_prayer?: string | null
           phases?: Json
           user_id: string
         }
@@ -243,6 +247,8 @@ export type Database = {
           format_id?: string | null
           generated_prayer?: string | null
           id?: string
+          meditation_seconds_used?: number | null
+          personal_prayer?: string | null
           phases?: Json
           user_id?: string
         }
