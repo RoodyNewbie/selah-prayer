@@ -37,6 +37,7 @@ const toSession = (row: PrayerSessionRow): PrayerSession => ({
   timestamp: row.created_at,
   phases: row.phases as Record<string, string>,
   generatedPrayer: row.generated_prayer || undefined,
+  personalPrayer: row.personal_prayer || undefined,
 });
 
 // Transform database row to JournalEntry
