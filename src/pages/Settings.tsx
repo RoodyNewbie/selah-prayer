@@ -58,10 +58,13 @@ import {
   Volume2,
   Code,
   Palette,
+  Lock,
+  Heart,
+  ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { DonorGate } from '@/components/DonorGate';
+import { Link } from 'react-router-dom';
 import { PaletteList } from '@/components/settings/PaletteList';
 import { AudioUploader } from '@/components/settings/AudioUploader';
 import { CustomTrackList } from '@/components/settings/CustomTrackList';
@@ -216,19 +219,20 @@ export default function Settings() {
 
             {/* Custom Colors Section - Donor only */}
             <div className="pt-4 border-t border-border">
-              <div className="flex items-center gap-3 mb-3">
+              <div className={cn("flex items-center gap-3 mb-3", !isDonor && "opacity-60")}>
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                   <Palette className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div>
-                  <p className="font-body font-medium text-foreground">Custom Colors</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-body font-medium text-foreground">Custom Colors</p>
+                    {!isDonor && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                  </div>
                   <p className="text-sm text-muted-foreground">Personalize your prayer experience</p>
                 </div>
               </div>
               
-              <DonorGate featureName="Custom Color Palettes">
-                <PaletteList />
-              </DonorGate>
+              {isDonor && <PaletteList />}
             </div>
           </Card>
         </section>
@@ -364,22 +368,25 @@ export default function Settings() {
 
             {/* Custom Audio Uploads - Donor only */}
             <div className="pt-4 border-t border-border">
-              <div className="flex items-center gap-3 mb-3">
+              <div className={cn("flex items-center gap-3 mb-3", !isDonor && "opacity-60")}>
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                   <Music className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div>
-                  <p className="font-body font-medium text-foreground">Custom Tracks</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-body font-medium text-foreground">Custom Tracks</p>
+                    {!isDonor && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                  </div>
                   <p className="text-sm text-muted-foreground">Upload your own ambient audio</p>
                 </div>
               </div>
               
-              <DonorGate featureName="Custom Audio Uploads">
+              {isDonor && (
                 <div className="space-y-4">
                   <AudioUploader disabled={customTracksAtLimit} />
                   <CustomTrackList onLimitChange={setCustomTracksAtLimit} />
                 </div>
-              </DonorGate>
+              )}
             </div>
           </Card>
         </section>
@@ -418,11 +425,14 @@ export default function Settings() {
 
             {/* Custom formats section - Donor only */}
             <div className="pt-4 mt-4 border-t border-border">
-              <DonorGate featureName="Custom Prayer Formats">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+              <div className={cn("flex items-center justify-between mb-3", !isDonor && "opacity-60")}>
+                <div className="flex items-center gap-2 px-1">
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Custom Formats
                   </h3>
+                  {!isDonor && <Lock className="w-3 h-3 text-muted-foreground" />}
+                </div>
+                {isDonor && (
                   <Button
                     variant="warm"
                     size="sm"
@@ -432,65 +442,104 @@ export default function Settings() {
                     <Plus className="w-4 h-4" />
                     New
                   </Button>
-                </div>
+                )}
+              </div>
 
-                {isLoading ? (
-                  <p className="text-muted-foreground text-sm py-4 text-center">
-                    Loading formats...
-                  </p>
-                ) : formats.length === 0 ? (
-                  <p className="text-muted-foreground text-sm py-4 text-center">
-                    Create custom formats to personalize your prayer time
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {formats.map((format) => (
-                      <Card key={format.id} className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-body font-medium text-foreground">
-                                {format.name}
-                              </span>
-                              {format.isDefault && (
-                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              {isDonor ? (
+                <>
+                  {isLoading ? (
+                    <p className="text-muted-foreground text-sm py-4 text-center">
+                      Loading formats...
+                    </p>
+                  ) : formats.length === 0 ? (
+                    <p className="text-muted-foreground text-sm py-4 text-center">
+                      Create custom formats to personalize your prayer time
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {formats.map((format) => (
+                        <Card key={format.id} className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-body font-medium text-foreground">
+                                  {format.name}
+                                </span>
+                                {format.isDefault && (
+                                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {format.description || 'Custom format'} • {format.phases.length} phases
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {!format.isDefault && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleSetDefault(format.id)}
+                                  title="Set as default"
+                                >
+                                  <Star className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {!isBuiltInFormat(format.id) && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteConfirm(format.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {format.description || 'Custom format'} • {format.phases.length} phases
-                            </p>
                           </div>
-                          <div className="flex items-center gap-1">
-                            {!format.isDefault && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleSetDefault(format.id)}
-                                title="Set as default"
-                              >
-                                <Star className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {!isBuiltInFormat(format.id) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDeleteConfirm(format.id)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </DonorGate>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Design your own prayer structure with custom phases.
+                </p>
+              )}
             </div>
           </div>
         </section>
+
+        {/* Consolidated Premium Features Section - Free users only */}
+        {!isDonor && (
+          <section className="mt-4">
+            <div className="p-4 rounded-lg border border-dashed border-border bg-muted/20">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-primary/10 p-2">
+                  <Heart className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-foreground">Premium Features</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Unlock these features with a one-time donation:
+                  </p>
+                  <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                    <li>• Custom color palettes</li>
+                    <li>• Upload your own ambient audio</li>
+                    <li>• Create custom prayer formats</li>
+                  </ul>
+                  <Link 
+                    to="/donate" 
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-3"
+                  >
+                    Learn more about supporting Selah
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Developer Tools - Dev only */}
         {isDev && (
