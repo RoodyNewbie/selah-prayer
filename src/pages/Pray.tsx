@@ -18,7 +18,8 @@ import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock, FileText, ChevronDown } from 'lucide-react';
 import { TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ export default function Pray() {
   const [personalPrayer, setPersonalPrayer] = useState('');
   const [selectedDuration, setSelectedDuration] = useState(10);
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
+  const [showPhaseNotes, setShowPhaseNotes] = useState(false);
 
   // Track if transition is in progress to prevent double-clicks
   const isTransitioning = useRef(false);
@@ -126,16 +128,18 @@ export default function Pray() {
     }
   }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, currentPhase.id]);
 
-  const generatePrayer = async (phases: Record<string, string>, sessionId: string) => {
+  const generatePrayer = async () => {
+    if (!savedSessionId) return;
+    
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-prayer', {
-        body: { phases },
+        body: { phases: phaseContent },
       });
 
       if (error) {
         console.error('Error generating prayer:', error);
-        toast.error('Your session was saved, but we couldn\'t create a flowing prayer.');
+        toast.error('Could not generate prayer. Please try again.');
         return;
       }
 
@@ -145,11 +149,12 @@ export default function Pray() {
       }
 
       setGeneratedPrayer(data.prayer);
+      toast.success('Prayer generated');
       
       // Save the generated prayer to the session
       try {
         await updateSessionPrayerMutation.mutateAsync({
-          sessionId,
+          sessionId: savedSessionId,
           generatedPrayer: data.prayer,
         });
       } catch (saveErr) {
@@ -157,6 +162,7 @@ export default function Pray() {
       }
     } catch (err) {
       console.error('Error:', err);
+      toast.error('Could not generate prayer. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -188,11 +194,7 @@ export default function Pray() {
         }
       );
       
-      // Generate the flowing prayer
-      const hasContent = Object.values(phaseContent).some((v) => v && v.trim());
-      if (hasContent) {
-        generatePrayer(phaseContent, session.id);
-      }
+      // Note: AI prayer generation is now optional - user can trigger it from the completion screen
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save your prayer session';
       setSaveError(message);
@@ -258,6 +260,13 @@ export default function Pray() {
   };
 
   if (isComplete) {
+    // Build phase notes for display
+    const phaseNotes = activePhases.map((phase) => ({
+      id: phase.id,
+      name: phase.name,
+      content: phaseContent[phase.id] || '',
+    }));
+
     return (
       <div className="min-h-screen bg-background flex flex-col p-4 max-w-2xl mx-auto">
         {/* Header */}
@@ -267,44 +276,113 @@ export default function Pray() {
           </div>
           <h1 className="font-display text-2xl text-foreground">Amen</h1>
           <p className="text-muted-foreground font-body mt-1">
-            Your prayer has been saved. May peace be with you.
+            Your prayer session is complete. May peace be with you.
           </p>
         </div>
 
-        {/* Generated Prayer Section */}
+        {/* Phase Notes Reference (Collapsible) */}
         <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          {isGenerating ? (
-            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-              <Sparkles className="w-5 h-5 animate-pulse text-primary" />
-              <span className="font-body text-sm">Crafting your prayer...</span>
-            </div>
-          ) : generatedPrayer ? (
+          <Collapsible open={showPhaseNotes} onOpenChange={setShowPhaseNotes}>
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  View Your Phase Notes
+                </span>
+                <ChevronDown className={cn(
+                  "h-4 w-4 transition-transform",
+                  showPhaseNotes && "rotate-180"
+                )} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-2 p-4 rounded-lg bg-muted/20 border border-border space-y-4 max-h-[300px] overflow-y-auto">
+                {phaseNotes.map((phase) => (
+                  <div key={phase.id}>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                      {phase.name}
+                    </p>
+                    {phase.content ? (
+                      <p className="text-sm whitespace-pre-wrap text-foreground">
+                        {phase.content}
+                      </p>
+                    ) : (
+                      <p className="text-sm italic text-muted-foreground">No notes</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+
+        {/* AI Generated Prayer Section - Conditional */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
+          {generatedPrayer ? (
             <>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-muted-foreground">Your Prayer</span>
+                  <span className="text-sm font-medium text-muted-foreground">AI-Generated Prayer</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="text-muted-foreground"
-                >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="text-muted-foreground"
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={generatePrayer}
+                    disabled={isGenerating}
+                    className="text-muted-foreground"
+                  >
+                    <RefreshCw className={cn("w-4 h-4", isGenerating && "animate-spin")} />
+                  </Button>
+                </div>
               </div>
-              <div className="p-4 rounded-lg bg-muted/30 border border-border/50 max-h-48 overflow-y-auto">
+              <div className="p-4 rounded-lg bg-muted/30 border border-border/50 max-h-[200px] overflow-y-auto">
                 <p className="font-body text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                   {generatedPrayer}
                 </p>
               </div>
             </>
-          ) : null}
+          ) : (
+            <div>
+              <Button 
+                variant="outline" 
+                className="w-full py-6"
+                onClick={generatePrayer}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating prayer...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate AI Prayer from Your Notes
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                Optional – creates a flowing prayer from your phase reflections
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Personal Prayer Section */}
-        <div className="mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Add Your Own Words</span>
             <span className="text-xs text-muted-foreground">Optional</span>
@@ -317,8 +395,8 @@ export default function Pray() {
           />
         </div>
 
-        {/* Meditation Section */}
-        <div className="mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
+        {/* Meditation Section - donor only */}
+        <div className="mb-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
           {isDonor ? (
             <div className="p-4 rounded-lg bg-muted/20 border border-border">
               <div className="flex items-center gap-3 mb-3">
@@ -367,7 +445,7 @@ export default function Pray() {
         </div>
 
         {/* Return Home Button */}
-        <div className="mt-auto pt-4 animate-fade-in" style={{ animationDelay: '400ms' }}>
+        <div className="mt-auto pt-4 animate-fade-in" style={{ animationDelay: '500ms' }}>
           <Button 
             className="w-full" 
             size="lg"
