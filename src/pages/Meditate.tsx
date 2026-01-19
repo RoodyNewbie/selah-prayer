@@ -129,30 +129,30 @@ export default function Meditate() {
         <X className="h-5 w-5" />
       </Button>
 
-      <div className="text-center max-w-md w-full space-y-8">
-        {/* Timer Circle */}
-        <div className="relative mx-auto w-48 h-48">
+      <div className="text-center max-w-lg w-full space-y-6">
+        {/* Timer Circle - Smaller */}
+        <div className="relative mx-auto w-28 h-28">
           {/* Background circle */}
           <svg className="w-full h-full transform -rotate-90">
             <circle
-              cx="96"
-              cy="96"
-              r="88"
+              cx="56"
+              cy="56"
+              r="48"
               fill="none"
               stroke="hsl(var(--muted))"
-              strokeWidth="8"
+              strokeWidth="6"
             />
             {/* Progress circle */}
             <circle
-              cx="96"
-              cy="96"
-              r="88"
+              cx="56"
+              cy="56"
+              r="48"
               fill="none"
               stroke="hsl(var(--primary))"
-              strokeWidth="8"
+              strokeWidth="6"
               strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 88}
-              strokeDashoffset={2 * Math.PI * 88 * (1 - progress / 100)}
+              strokeDasharray={2 * Math.PI * 48}
+              strokeDashoffset={2 * Math.PI * 48 * (1 - progress / 100)}
               className="transition-all duration-1000 ease-linear"
             />
           </svg>
@@ -160,7 +160,7 @@ export default function Meditate() {
           {/* Time display */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span className={cn(
-              "font-mono text-4xl tabular-nums",
+              "font-mono text-xl tabular-nums",
               isComplete && "text-primary"
             )}>
               {formatTime(remainingSeconds)}
@@ -169,8 +169,8 @@ export default function Meditate() {
         </div>
 
         {/* Status text */}
-        <div className="space-y-2">
-          <h1 className="font-display text-2xl text-foreground">
+        <div className="space-y-1">
+          <h1 className="font-display text-xl text-foreground">
             {isComplete ? 'Meditation Complete' : isPaused ? 'Paused' : 'Rest in Stillness'}
           </h1>
           <p className="text-muted-foreground text-sm font-body">
@@ -180,9 +180,9 @@ export default function Meditate() {
           </p>
         </div>
 
-        {/* Generated prayer (scrollable) */}
+        {/* Generated prayer (scrollable) - Larger */}
         {state.generatedPrayer && (
-          <div className="bg-muted/30 rounded-xl p-4 border border-border/50 max-h-32 overflow-y-auto text-left">
+          <div className="bg-muted/30 rounded-xl p-4 border border-border/50 max-h-64 overflow-y-auto text-left">
             <p className="font-body text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
               {state.generatedPrayer}
             </p>
