@@ -1,9 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Timer, Pause, Play, X, Home } from 'lucide-react';
+import { Pause, Play, X, Plus, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/db';
+import { toast } from '@/hooks/use-toast';
 
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -21,6 +23,7 @@ const playChime = () => {
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
+    // 528 Hz - known as the "love frequency" / healing tone
     oscillator.frequency.value = 528;
     oscillator.type = 'sine';
     
@@ -50,177 +53,304 @@ export default function Meditate() {
   const navigate = useNavigate();
   const state = location.state as MeditateState | null;
   
+  // Timer state
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
+  const [isRunning, setIsRunning] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  
+  // UI state
+  const [showPrayer, setShowPrayer] = useState(false);
+  
+  // Track actual meditation time
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const chimePlayedRef = useRef(false);
-  const elapsedRef = useRef(0);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // Computed
+  const progressPercent = totalSeconds > 0 ? ((totalSeconds - remainingSeconds) / totalSeconds) * 100 : 0;
+
+  // Redirect if no state
+  useEffect(() => {
+    if (!state?.duration || !state?.sessionId) {
+      toast({
+        title: "Invalid session",
+        description: "Please start meditation from a prayer session",
+        variant: "destructive"
+      });
+      navigate('/', { replace: true });
+    }
+  }, [state, navigate]);
 
   // Initialize timer
   useEffect(() => {
-    if (!state?.duration) {
-      navigate('/');
-      return;
-    }
+    if (!state?.duration) return;
     
     const seconds = state.duration * 60;
     setTotalSeconds(seconds);
     setRemainingSeconds(seconds);
-  }, [state, navigate]);
+  }, [state?.duration]);
 
   // Timer countdown
   useEffect(() => {
-    if (remainingSeconds > 0 && !isPaused && totalSeconds > 0) {
-      intervalRef.current = setInterval(() => {
-        setRemainingSeconds(prev => {
-          elapsedRef.current = totalSeconds - prev + 1;
+    if (!isRunning || isPaused || isComplete || remainingSeconds <= 0) return;
+
+    intervalRef.current = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          // Timer complete
+          setIsComplete(true);
+          setIsRunning(false);
           
-          if (prev <= 1) {
-            if (intervalRef.current) clearInterval(intervalRef.current);
-            setIsComplete(true);
-            
-            if (!chimePlayedRef.current) {
-              chimePlayedRef.current = true;
-              playChime();
-            }
-            return 0;
+          if (!chimePlayedRef.current) {
+            chimePlayedRef.current = true;
+            playChime();
           }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+          return 0;
+        }
+        return prev - 1;
+      });
+      
+      // Track elapsed time
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [remainingSeconds, isPaused, totalSeconds]);
+  }, [isRunning, isPaused, isComplete, remainingSeconds]);
 
-  // Save meditation time when leaving
-  const handleExit = async () => {
-    if (state?.sessionId && elapsedRef.current > 0) {
+  // Wake lock - prevent screen from dimming
+  useEffect(() => {
+    const requestWakeLock = async () => {
       try {
-        await db.updateSessionMeditation(state.sessionId, elapsedRef.current);
+        if ('wakeLock' in navigator && isRunning && !isPaused) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+        }
       } catch (err) {
-        console.error('Failed to save meditation time:', err);
+        console.log('Wake lock not supported or failed:', err);
+      }
+    };
+
+    if (isRunning && !isPaused) {
+      requestWakeLock();
+    }
+
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    };
+  }, [isRunning, isPaused]);
+
+  // Prevent accidental navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isRunning && !isComplete) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isRunning, isComplete]);
+
+  const handlePause = useCallback(() => {
+    setIsPaused(true);
+  }, []);
+
+  const handleResume = useCallback(() => {
+    setIsPaused(false);
+  }, []);
+
+  const handleAddMoreTime = useCallback(() => {
+    setRemainingSeconds((prev) => prev + 300); // Add 5 minutes
+    setTotalSeconds((prev) => prev + 300);
+    setIsComplete(false);
+    setIsRunning(true);
+    chimePlayedRef.current = false;
+    toast({
+      title: "Time added",
+      description: "5 minutes added to your meditation"
+    });
+  }, []);
+
+  const handleExit = useCallback(() => {
+    if (isRunning && !isComplete) {
+      if (!confirm('Exit meditation? Your meditation time will not be saved.')) {
+        return;
       }
     }
     navigate('/');
-  };
+  }, [isRunning, isComplete, navigate]);
 
-  const togglePause = () => setIsPaused(prev => !prev);
+  const handleFinish = useCallback(async () => {
+    if (!state?.sessionId) {
+      navigate('/');
+      return;
+    }
 
-  const progress = totalSeconds > 0 ? ((totalSeconds - remainingSeconds) / totalSeconds) * 100 : 0;
+    try {
+      // Save meditation time to the session
+      await db.updateSessionMeditation(state.sessionId, elapsedSeconds);
+      
+      toast({
+        title: "Meditation complete",
+        description: "Peace be with you."
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to save meditation time:', error);
+      toast({
+        title: "Could not save",
+        description: "Meditation time could not be saved",
+        variant: "destructive"
+      });
+      navigate('/');
+    }
+  }, [state?.sessionId, elapsedSeconds, navigate]);
 
   if (!state) {
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      {/* Exit button */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="absolute top-4 right-4"
-        onClick={handleExit}
-      >
-        <X className="h-5 w-5" />
-      </Button>
+    <div className="fixed inset-0 bg-background flex flex-col">
+      {/* Top bar - minimal */}
+      <div className="flex items-center justify-between p-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleExit}
+          className="text-muted-foreground"
+        >
+          <X className="h-4 w-4 mr-1" />
+          Exit
+        </Button>
+        <span className="text-sm text-muted-foreground font-body">
+          Meditation
+        </span>
+        <div className="w-16" /> {/* Spacer for centering */}
+      </div>
 
-      <div className="text-center max-w-lg w-full space-y-6">
-        {/* Timer Circle - Smaller */}
-        <div className="relative mx-auto w-28 h-28">
-          {/* Background circle */}
-          <svg className="w-full h-full transform -rotate-90">
-            <circle
-              cx="56"
-              cy="56"
-              r="48"
-              fill="none"
-              stroke="hsl(var(--muted))"
-              strokeWidth="6"
-            />
-            {/* Progress circle */}
-            <circle
-              cx="56"
-              cy="56"
-              r="48"
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 48}
-              strokeDashoffset={2 * Math.PI * 48 * (1 - progress / 100)}
-              className="transition-all duration-1000 ease-linear"
-            />
-          </svg>
-          
-          {/* Time display */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn(
-              "font-mono text-xl tabular-nums",
+      {/* Main content - centered */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        
+        {/* Timer display - large and central */}
+        <div className="mb-8 text-center">
+          <div 
+            className={cn(
+              "text-6xl md:text-8xl font-mono tabular-nums font-light tracking-tight transition-colors duration-500",
               isComplete && "text-primary"
-            )}>
-              {formatTime(remainingSeconds)}
-            </span>
+            )}
+            role="timer"
+            aria-live="polite"
+            aria-label={`${Math.floor(remainingSeconds / 60)} minutes ${remainingSeconds % 60} seconds remaining`}
+          >
+            {formatTime(remainingSeconds)}
+          </div>
+          
+          {/* Progress indicator */}
+          <div className="mt-6 w-48 mx-auto h-1 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-1000 ease-linear"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
         </div>
 
         {/* Status text */}
-        <div className="space-y-1">
-          <h1 className="font-display text-xl text-foreground">
-            {isComplete ? 'Meditation Complete' : isPaused ? 'Paused' : 'Rest in Stillness'}
-          </h1>
-          <p className="text-muted-foreground text-sm font-body">
-            {isComplete 
-              ? 'May this peace remain with you.' 
-              : 'Be still, and know that I am God.'}
-          </p>
-        </div>
+        <p className="text-muted-foreground mb-8 font-body text-center">
+          {isComplete 
+            ? "Take all the time you need" 
+            : isPaused 
+              ? "Paused" 
+              : "Breathe and reflect"
+          }
+        </p>
 
-        {/* Generated prayer (scrollable) - Larger */}
-        {state.generatedPrayer && (
-          <div className="bg-muted/30 rounded-xl p-4 border border-border/50 max-h-64 overflow-y-auto text-left">
-            <p className="font-body text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {state.generatedPrayer}
-            </p>
-          </div>
-        )}
-
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-4">
+        {/* Timer controls */}
+        <div className="flex items-center gap-4">
           {!isComplete && (
             <Button
               variant="outline"
               size="lg"
-              onClick={togglePause}
-              className="w-32"
+              className="rounded-full w-14 h-14"
+              onClick={isPaused ? handleResume : handlePause}
+              aria-label={isPaused ? "Resume meditation" : "Pause meditation"}
             >
-              {isPaused ? (
-                <>
-                  <Play className="h-4 w-4 mr-2" />
-                  Resume
-                </>
-              ) : (
-                <>
-                  <Pause className="h-4 w-4 mr-2" />
-                  Pause
-                </>
-              )}
+              {isPaused 
+                ? <Play className="h-6 w-6" /> 
+                : <Pause className="h-6 w-6" />
+              }
             </Button>
           )}
           
-          <Button
-            size="lg"
-            onClick={handleExit}
-            className="w-32"
-          >
-            <Home className="h-4 w-4 mr-2" />
-            Home
-          </Button>
+          {isComplete && (
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleAddMoreTime}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add 5 minutes
+            </Button>
+          )}
         </div>
+      </div>
+
+      {/* Prayer reference - collapsible at bottom */}
+      {(state.generatedPrayer || state.personalPrayer) && (
+        <div className="p-4">
+          <Collapsible open={showPrayer} onOpenChange={setShowPrayer}>
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between text-muted-foreground"
+              >
+                <span className="text-sm font-body">
+                  {showPrayer ? "Hide prayer" : "View your prayer"}
+                </span>
+                <ChevronUp className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  !showPrayer && "rotate-180"
+                )} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="animate-accordion-down">
+              <div className="mt-2 p-4 rounded-lg bg-muted/20 max-h-[30vh] overflow-y-auto">
+                {state.generatedPrayer && (
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground font-body">
+                    {state.generatedPrayer}
+                  </p>
+                )}
+                {state.personalPrayer && (
+                  <>
+                    {state.generatedPrayer && <hr className="my-3 border-border" />}
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground italic font-body">
+                      {state.personalPrayer}
+                    </p>
+                  </>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      )}
+
+      {/* Finish button - always visible at bottom */}
+      <div className="p-4 pt-0">
+        <Button 
+          className="w-full" 
+          size="lg"
+          onClick={handleFinish}
+        >
+          {isComplete ? "Finish Session" : "End Early"}
+        </Button>
       </div>
     </div>
   );
