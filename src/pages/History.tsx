@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { prayerPhases, PrayerSession } from '@/lib/prayerData';
 import { usePrayerSessions, useUpdateSessionPrayer, useDeleteSession, useHasOlderSessions } from '@/hooks/usePrayerSessions';
 import { useDonor } from '@/contexts/DonorContext';
+import { useMeditationTimer } from '@/contexts/MeditationTimerContext';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Card } from '@/components/ui/card';
@@ -62,6 +63,7 @@ export default function History() {
 
   // Donor status determines history limit
   const { isDonor, isLoading: isDonorLoading } = useDonor();
+  const { defaultDuration } = useMeditationTimer();
   
   // Only fetch sessions once we know donor status
   const { data: sessions = [], isLoading: isSessionsLoading, error, refetch } = usePrayerSessions({
@@ -365,7 +367,7 @@ export default function History() {
                         <DropdownMenuItem 
                           onClick={() => navigate('/pray/meditate', {
                             state: {
-                              duration: 10,
+                              duration: defaultDuration,
                               sessionId: session.id,
                               generatedPrayer: session.generatedPrayer || undefined,
                             }
