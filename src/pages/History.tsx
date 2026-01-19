@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { format, subDays, subMonths } from 'date-fns';
-import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2, Clock, Heart, Timer } from 'lucide-react';
+import { ChevronDown, ChevronUp, History as HistoryIcon, Loader2, RefreshCw, Copy, Check, Search, X, MoreVertical, Trash2, Clock, Heart, Timer, PenLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -116,6 +116,8 @@ export default function History() {
       result = result.filter(s => {
         // Search in generated prayer
         if (s.generatedPrayer?.toLowerCase().includes(query)) return true;
+        // Search in personal prayer
+        if (s.personalPrayer?.toLowerCase().includes(query)) return true;
         // Search in phase contents
         return Object.values(s.phases).some(content => 
           content?.toLowerCase().includes(query)
@@ -422,6 +424,23 @@ export default function History() {
                         <p className="text-sm text-foreground font-body whitespace-pre-wrap leading-relaxed">
                           {highlightMatch(session.generatedPrayer, searchQuery)}
                         </p>
+                      </div>
+                    )}
+
+                    {/* Personal Prayer Section */}
+                    {session.personalPrayer && session.personalPrayer.trim() !== '' && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <PenLine className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm font-medium text-muted-foreground font-body uppercase tracking-wide">
+                            Your Own Words
+                          </p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-muted/20 border border-border">
+                          <p className="text-sm text-foreground font-body whitespace-pre-wrap leading-relaxed italic">
+                            {highlightMatch(session.personalPrayer, searchQuery)}
+                          </p>
+                        </div>
                       </div>
                     )}
 

@@ -151,6 +151,7 @@ export interface PrayerSession {
     [key: string]: string;
   };
   generatedPrayer?: string;
+  personalPrayer?: string;
 }
 
 // Journal entries types
