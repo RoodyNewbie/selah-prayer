@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock, FileText, ChevronDown } from 'lucide-react';
+import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock, FileText, ChevronDown, Gift } from 'lucide-react';
 import { TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -46,6 +46,10 @@ export default function Pray() {
   // Rate limiting for prayer generation
   const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
   const GENERATION_COOLDOWN_MS = 30000; // 30 seconds between generations
+  
+  // Daily generation limit tracking
+  const [remainingGenerations, setRemainingGenerations] = useState<number | null>(null);
+  const [dailyLimit, setDailyLimit] = useState<number | null>(null);
 
   // Track if transition is in progress to prevent double-clicks
   const isTransitioning = useRef(false);
@@ -135,6 +139,15 @@ export default function Pray() {
   const generatePrayer = async () => {
     if (!savedSessionId) return;
     
+    // Check if daily limit reached (client-side check)
+    if (remainingGenerations !== null && remainingGenerations <= 0) {
+      const message = isDonor 
+        ? "Daily limit reached. Try again tomorrow!"
+        : "Daily limit reached. Upgrade to donor for more generations!";
+      toast.error(message);
+      return;
+    }
+    
     // Rate limiting check
     const now = Date.now();
     if (now - lastGeneratedAt < GENERATION_COOLDOWN_MS) {
@@ -156,13 +169,29 @@ export default function Pray() {
         return;
       }
 
+      // Handle rate limit response (429)
       if (data?.error) {
         toast.error(data.error);
+        // Update remaining count if provided
+        if (typeof data.remaining === 'number') {
+          setRemainingGenerations(data.remaining);
+        }
+        if (typeof data.limit === 'number') {
+          setDailyLimit(data.limit);
+        }
         return;
       }
 
       setGeneratedPrayer(data.prayer);
       toast.success('Prayer generated');
+      
+      // Update remaining generations from response
+      if (typeof data.remaining === 'number') {
+        setRemainingGenerations(data.remaining);
+      }
+      if (typeof data.limit === 'number') {
+        setDailyLimit(data.limit);
+      }
       
       // Save the generated prayer to the session
       try {
@@ -354,7 +383,7 @@ export default function Pray() {
                     variant="ghost"
                     size="sm"
                     onClick={generatePrayer}
-                    disabled={isGenerating}
+                    disabled={isGenerating || (remainingGenerations !== null && remainingGenerations <= 0)}
                     className="text-muted-foreground"
                   >
                     <RefreshCw className={cn("w-4 h-4", isGenerating && "animate-spin")} />
@@ -366,7 +395,38 @@ export default function Pray() {
                   {generatedPrayer}
                 </p>
               </div>
+              {/* Show remaining generations */}
+              {remainingGenerations !== null && dailyLimit !== null && (
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  {remainingGenerations}/{dailyLimit} generations remaining today
+                </p>
+              )}
             </>
+          ) : remainingGenerations !== null && remainingGenerations <= 0 ? (
+            // Show upgrade prompt when limit reached
+            <div className="p-4 rounded-lg bg-muted/10 border border-dashed border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium text-foreground">Daily limit reached</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isDonor 
+                      ? "You've used all 10 generations today. Try again tomorrow!"
+                      : "You've used all 5 free generations today."}
+                  </p>
+                </div>
+              </div>
+              {!isDonor && (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate('/donate')}
+                >
+                  <Gift className="h-4 w-4 mr-2" />
+                  Upgrade for 10 Daily Generations
+                </Button>
+              )}
+            </div>
           ) : (
             <div>
               <Button 
@@ -389,6 +449,9 @@ export default function Pray() {
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-2">
                 Optional – creates a flowing prayer from your phase reflections
+                {remainingGenerations !== null && dailyLimit !== null && (
+                  <> • {remainingGenerations}/{dailyLimit} remaining today</>
+                )}
               </p>
             </div>
           )}
