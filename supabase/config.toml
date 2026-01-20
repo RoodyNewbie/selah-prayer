@@ -2,3 +2,6 @@ project_id = "tuvsuimucjyunwnxpeap"
 
 [functions.generate-prayer]
 verify_jwt = false
+
+[functions.cleanup-old-records]
+verify_jwt = false
