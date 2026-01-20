@@ -553,68 +553,6 @@ export default function Settings() {
           </section>
         )}
 
-        {/* Developer Tools - visible in dev/preview, remove before production */}
-        {(
-          <section className="mt-8">
-            <Collapsible open={devToolsOpen} onOpenChange={setDevToolsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="w-full border-dashed border-muted-foreground/50 text-muted-foreground gap-2"
-                >
-                  <Code className="w-4 h-4" />
-                  Developer Tools
-                  <ChevronDown className={cn(
-                    "w-4 h-4 transition-transform ml-auto",
-                    devToolsOpen && "rotate-180"
-                  )} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3">
-                <Card className="p-4 border-dashed border-muted-foreground/50 bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-3 font-mono">
-                    ⚠️ Development tools - not visible in production
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Donor Status</p>
-                      <p className="text-xs text-muted-foreground">
-                        {isDonorLoading ? 'Loading...' : isDonor ? 'Yes (Donor)' : 'No (Free tier)'}
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={togglingDonor || !user}
-                      onClick={async () => {
-                        if (!user) return;
-                        setTogglingDonor(true);
-                        try {
-                          const { error } = await supabase
-                            .from('profiles')
-                            .update({ is_donor: !isDonor })
-                            .eq('user_id', user.id);
-                          
-                          if (error) throw error;
-                          await refetchDonorStatus();
-                          toast.success(`Donor status: ${!isDonor ? 'Enabled' : 'Disabled'}`);
-                        } catch (err) {
-                          toast.error('Failed to toggle donor status');
-                          console.error(err);
-                        } finally {
-                          setTogglingDonor(false);
-                        }
-                      }}
-                    >
-                      {togglingDonor ? 'Toggling...' : 'Toggle Donor'}
-                    </Button>
-                  </div>
-                </Card>
-              </CollapsibleContent>
-            </Collapsible>
-          </section>
-        )}
       </main>
 
       {/* Create Format Dialog */}

@@ -1,9 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://selah-prayer.lovable.app',
+  'https://id-preview--08ab0c83-ad50-4df7-9c20-fd72f6197a42.lovable.app',
+  'http://localhost:5173',
+  'http://localhost:8080',
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o.replace(/\/$/, '')))
+    ? origin 
+    : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 interface PrayerPhases {
@@ -64,6 +77,9 @@ function validatePrayerPhases(phases: unknown): { valid: boolean; error?: string
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
