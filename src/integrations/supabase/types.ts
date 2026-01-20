@@ -350,7 +350,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_user_profile: {
+        Args: {
+          p_display_name?: string
+          p_meditation_timer_duration?: number
+          p_meditation_timer_enabled?: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

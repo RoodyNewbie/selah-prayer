@@ -42,6 +42,10 @@ export default function Pray() {
   const [selectedDuration, setSelectedDuration] = useState(10);
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
   const [showPhaseNotes, setShowPhaseNotes] = useState(false);
+  
+  // Rate limiting for prayer generation
+  const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
+  const GENERATION_COOLDOWN_MS = 30000; // 30 seconds between generations
 
   // Track if transition is in progress to prevent double-clicks
   const isTransitioning = useRef(false);
@@ -131,6 +135,15 @@ export default function Pray() {
   const generatePrayer = async () => {
     if (!savedSessionId) return;
     
+    // Rate limiting check
+    const now = Date.now();
+    if (now - lastGeneratedAt < GENERATION_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((GENERATION_COOLDOWN_MS - (now - lastGeneratedAt)) / 1000);
+      toast.error(`Please wait ${remainingSeconds} seconds before generating again`);
+      return;
+    }
+    
+    setLastGeneratedAt(now);
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-prayer', {
