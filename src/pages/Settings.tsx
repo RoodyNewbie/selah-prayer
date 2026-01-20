@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { useGlobalAudio, AudioTrack } from '@/contexts/AudioContext';
 import { useDonor } from '@/contexts/DonorContext';
 import { useMeditationTimer } from '@/contexts/MeditationTimerContext';
 import { useAuth } from '@/hooks/useAuth';
+import { usePaymentResult } from '@/hooks/usePaymentResult';
 import { supabase } from '@/integrations/supabase/client';
 import {
   usePrayerFormats,
@@ -72,6 +73,7 @@ import { PaletteList } from '@/components/settings/PaletteList';
 import { AudioUploader } from '@/components/settings/AudioUploader';
 import { CustomTrackList } from '@/components/settings/CustomTrackList';
 import { MeditationTimerSettings } from '@/components/settings/MeditationTimerSettings';
+import { UpgradeSection } from '@/components/subscription/UpgradeSection';
 import { useCustomAudioTracks, CustomAudioTrack } from '@/hooks/useCustomAudioTracks';
 
 const TRACK_OPTIONS: { value: AudioTrack; label: string }[] = [
@@ -84,6 +86,7 @@ const isDev = import.meta.env.DEV;
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isDonor, isLoading: isDonorLoading, refetchDonorStatus } = useDonor();
   const { data: formats = [], isLoading } = usePrayerFormats();
@@ -95,6 +98,10 @@ export default function Settings() {
   const [customTracksAtLimit, setCustomTracksAtLimit] = useState(false);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
   const [togglingDonor, setTogglingDonor] = useState(false);
+  const supportSectionRef = useRef<HTMLDivElement>(null);
+
+  // Handle payment result toasts
+  usePaymentResult();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -104,6 +111,15 @@ export default function Settings() {
   const [newDescription, setNewDescription] = useState('');
   const [newPhases, setNewPhases] = useState<PrayerPhase[]>([...prayerPhases]);
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
+
+  // Scroll to support section if requested
+  useEffect(() => {
+    if (searchParams.get('scroll') === 'support' && supportSectionRef.current) {
+      setTimeout(() => {
+        supportSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [searchParams]);
 
   const handleCreateFormat = async () => {
     if (!newName.trim()) {
@@ -521,37 +537,10 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Consolidated Premium Features Section - Free users only */}
-        {!isDonor && (
-          <section className="mt-4">
-            <div className="p-4 rounded-lg border border-dashed border-border bg-muted/20">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <Heart className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-foreground">Premium Features</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Unlock these features with a one-time donation:
-                  </p>
-                  <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                    <li>• Custom color palettes</li>
-                    <li>• Upload your own ambient audio</li>
-                    <li>• Create custom prayer formats</li>
-                    <li>• Meditation timer</li>
-                  </ul>
-                  <Link 
-                    to="/donate" 
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-3"
-                  >
-                    Learn more about supporting Selah
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
+        {/* Support/Upgrade Section */}
+        <div ref={supportSectionRef}>
+          <UpgradeSection />
+        </div>
 
       </main>
 

@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
+import { UpgradePrompt } from '@/components/subscription/UpgradePrompt';
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
@@ -162,6 +163,9 @@ const Index = () => {
           </blockquote>
           <cite className="text-primary font-body text-sm">— {randomVerse.reference}</cite>
         </section>
+
+        {/* Upgrade Prompt for non-donors */}
+        <UpgradePrompt />
       </main>
 
       <AddRequestDialog
