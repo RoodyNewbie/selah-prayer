@@ -338,6 +338,12 @@ export type Database = {
           is_donor: boolean
           meditation_timer_duration: number
           meditation_timer_enabled: boolean
+          stripe_customer_id: string | null
+          subscription_cancel_at_period_end: boolean | null
+          subscription_current_period_end: string | null
+          subscription_id: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -348,6 +354,12 @@ export type Database = {
           is_donor?: boolean
           meditation_timer_duration?: number
           meditation_timer_enabled?: boolean
+          stripe_customer_id?: string | null
+          subscription_cancel_at_period_end?: boolean | null
+          subscription_current_period_end?: string | null
+          subscription_id?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -358,6 +370,12 @@ export type Database = {
           is_donor?: boolean
           meditation_timer_duration?: number
           meditation_timer_enabled?: boolean
+          stripe_customer_id?: string | null
+          subscription_cancel_at_period_end?: boolean | null
+          subscription_current_period_end?: string | null
+          subscription_id?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }
