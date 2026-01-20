@@ -30,8 +30,12 @@ interface PrayerPhases {
 
 // Input validation constants
 const VALID_PHASE_KEYS = ['praise', 'will', 'needs', 'forgiveness', 'protection', 'worship'];
-const MAX_PHASE_LENGTH = 1000; // Max characters per phase
-const MAX_TOTAL_LENGTH = 5000; // Max total characters across all phases
+const MAX_PHASE_LENGTH = 1000;
+const MAX_TOTAL_LENGTH = 5000;
+
+// Daily generation limits
+const FREE_USER_DAILY_LIMIT = 5;
+const DONOR_DAILY_LIMIT = 10;
 
 function validatePrayerPhases(phases: unknown): { valid: boolean; error?: string; sanitized?: PrayerPhases } {
   if (!phases || typeof phases !== 'object' || Array.isArray(phases)) {
@@ -42,22 +46,18 @@ function validatePrayerPhases(phases: unknown): { valid: boolean; error?: string
   let totalLength = 0;
 
   for (const [key, value] of Object.entries(phases)) {
-    // Validate phase key
     if (!VALID_PHASE_KEYS.includes(key)) {
       return { valid: false, error: `Invalid phase key: ${key}` };
     }
 
-    // Skip empty/null values
     if (value === null || value === undefined || value === '') {
       continue;
     }
 
-    // Validate value is a string
     if (typeof value !== 'string') {
       return { valid: false, error: `Phase "${key}" must be a string` };
     }
 
-    // Trim and validate length
     const trimmedValue = value.trim();
     if (trimmedValue.length > MAX_PHASE_LENGTH) {
       return { valid: false, error: `Phase "${key}" exceeds maximum length of ${MAX_PHASE_LENGTH} characters` };
@@ -74,6 +74,51 @@ function validatePrayerPhases(phases: unknown): { valid: boolean; error?: string
   }
 
   return { valid: true, sanitized };
+}
+
+async function checkDailyLimit(
+  supabaseAdmin: any,
+  userId: string,
+  isDonor: boolean
+): Promise<{ allowed: boolean; remaining: number; limit: number }> {
+  const limit = isDonor ? DONOR_DAILY_LIMIT : FREE_USER_DAILY_LIMIT;
+  
+  // Get count of generations in the last 24 hours
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  
+  const { count, error } = await supabaseAdmin
+    .from('prayer_generations')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', twentyFourHoursAgo);
+  
+  if (error) {
+    console.error('Error checking daily limit:', error);
+    // On error, allow the request but log it
+    return { allowed: true, remaining: limit, limit };
+  }
+  
+  const usedCount = count || 0;
+  const remaining = Math.max(0, limit - usedCount);
+  
+  return {
+    allowed: usedCount < limit,
+    remaining,
+    limit,
+  };
+}
+
+async function recordGeneration(
+  supabaseAdmin: any,
+  userId: string
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('prayer_generations')
+    .insert({ user_id: userId });
+  
+  if (error) {
+    console.error('Error recording generation:', error);
+  }
 }
 
 serve(async (req) => {
@@ -95,10 +140,17 @@ serve(async (req) => {
       );
     }
 
+    // Create user-context client for auth
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Create admin client for checking limits and recording generations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
@@ -111,6 +163,40 @@ serve(async (req) => {
     }
 
     console.log("Authenticated user:", user.id);
+
+    // Check if user is a donor
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('is_donor')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+    }
+    
+    const isDonor = profile?.is_donor ?? false;
+    console.log("User donor status:", isDonor);
+
+    // Check daily generation limit
+    const limitCheck = await checkDailyLimit(supabaseAdmin, user.id, isDonor);
+    
+    if (!limitCheck.allowed) {
+      const errorMessage = isDonor 
+        ? "Daily limit reached. Try again tomorrow!"
+        : "Daily limit reached. Upgrade to donor for more generations!";
+      
+      console.log(`User ${user.id} hit daily limit: ${limitCheck.limit} generations`);
+      
+      return new Response(
+        JSON.stringify({ 
+          error: errorMessage,
+          remaining: 0,
+          limit: limitCheck.limit,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const body = await req.json();
     
@@ -147,8 +233,15 @@ serve(async (req) => {
       .join("\n\n");
 
     if (!prayerContext.trim()) {
+      // Still record this as a generation
+      await recordGeneration(supabaseAdmin, user.id);
+      
       return new Response(
-        JSON.stringify({ prayer: "Lord, thank You for this moment of quiet reflection. Be with me in all that I do. Amen." }),
+        JSON.stringify({ 
+          prayer: "Lord, thank You for this moment of quiet reflection. Be with me in all that I do. Amen.",
+          remaining: limitCheck.remaining - 1,
+          limit: limitCheck.limit,
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -212,10 +305,17 @@ ${prayerContext}`;
     const data = await response.json();
     const generatedPrayer = data.choices?.[0]?.message?.content || "Lord, hear my prayer. Amen.";
 
+    // Record the successful generation
+    await recordGeneration(supabaseAdmin, user.id);
+
     console.log("Prayer generated successfully for user:", user.id);
 
     return new Response(
-      JSON.stringify({ prayer: generatedPrayer }),
+      JSON.stringify({ 
+        prayer: generatedPrayer,
+        remaining: limitCheck.remaining - 1,
+        limit: limitCheck.limit,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
