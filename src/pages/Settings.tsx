@@ -553,8 +553,8 @@ export default function Settings() {
           </section>
         )}
 
-        {/* Developer Tools - Dev only */}
-        {isDev && (
+        {/* Developer Tools - visible in dev/preview, remove before production */}
+        {(
           <section className="mt-8">
             <Collapsible open={devToolsOpen} onOpenChange={setDevToolsOpen}>
               <CollapsibleTrigger asChild>
