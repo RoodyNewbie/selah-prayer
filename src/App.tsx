@@ -1,7 +1,7 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { DonorProvider } from "@/contexts/DonorContext";
@@ -36,6 +36,14 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
+  console.log('[PROTECTED_ROUTE] render', {
+    path: location.pathname + location.search,
+    loading,
+    hasUser: Boolean(user),
+    userId: user?.id ?? null,
+  });
 
   if (loading) {
     return (
@@ -46,6 +54,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    console.log('[PROTECTED_ROUTE] redirect -> /auth', {
+      path: location.pathname + location.search,
+      reason: 'no_user_after_loading',
+    });
     return <Navigate to="/auth" replace />;
   }
 

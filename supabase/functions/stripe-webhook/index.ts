@@ -24,6 +24,12 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET is not set");
 
+    // Debug: confirm which secret is loaded without leaking it
+    logStep("Webhook secret loaded", {
+      prefix: webhookSecret.slice(0, 10),
+      length: webhookSecret.length,
+    });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     const supabaseAdmin = createClient(
@@ -37,7 +43,14 @@ serve(async (req) => {
       throw new Error("No Stripe signature found");
     }
 
-    const body = await req.text();
+    // Stripe signature verification requires the exact raw request payload.
+    const rawBodyBytes = await req.arrayBuffer();
+    const body = new TextDecoder().decode(rawBodyBytes);
+    logStep("Received request", {
+      hasSignature: true,
+      signaturePrefix: signature.slice(0, 10),
+      bodyLength: body.length,
+    });
     let event: Stripe.Event;
 
     try {
