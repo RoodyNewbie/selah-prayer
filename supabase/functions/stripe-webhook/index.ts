@@ -54,7 +54,17 @@ serve(async (req) => {
     let event: Stripe.Event;
 
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      // Use constructEventAsync with SubtleCrypto provider for Deno compatibility.
+      // The synchronous constructEvent relies on Node.js crypto which doesn't work
+      // correctly in Deno/Supabase Edge Functions via esm.sh polyfills.
+      const cryptoProvider = Stripe.createSubtleCryptoProvider();
+      event = await stripe.webhooks.constructEventAsync(
+        body,
+        signature,
+        webhookSecret,
+        undefined,
+        cryptoProvider
+      );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       logStep("Webhook signature verification failed", { error: errorMessage });
