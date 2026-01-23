@@ -12,6 +12,21 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Safely convert a Stripe timestamp to an ISO string.
+// Handles both Unix seconds (number) and ISO strings (newer API versions).
+const toISOString = (timestamp: unknown): string | null => {
+  if (timestamp == null) return null;
+  if (typeof timestamp === "number") {
+    return new Date(timestamp * 1000).toISOString();
+  }
+  if (typeof timestamp === "string") {
+    const d = new Date(timestamp);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
+  return null;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -94,10 +109,15 @@ serve(async (req) => {
           break;
         }
 
+        if (!subscriptionId) {
+          logStep("No subscription on checkout session, skipping");
+          break;
+        }
+
         // Get subscription details
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const priceId = subscription.items.data[0]?.price.id;
-        const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const periodEnd = toISOString(subscription.current_period_end);
 
         // Update user profile with subscription info
         const { error: updateError } = await supabaseAdmin
@@ -131,7 +151,7 @@ serve(async (req) => {
 
         const customerId = subscription.customer as string;
         const priceId = subscription.items.data[0]?.price.id;
-        const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const periodEnd = toISOString(subscription.current_period_end);
         const cancelAtPeriodEnd = subscription.cancel_at_period_end;
 
         // Map Stripe status to our status
@@ -179,7 +199,7 @@ serve(async (req) => {
         });
 
         const customerId = subscription.customer as string;
-        const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const periodEnd = toISOString(subscription.current_period_end);
 
         // Find user by stripe_customer_id
         const { data: profile, error: profileError } = await supabaseAdmin
@@ -227,7 +247,7 @@ serve(async (req) => {
 
         // Get subscription details for updated period end
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const periodEnd = toISOString(subscription.current_period_end);
 
         // Find user by stripe_customer_id
         const { data: profile, error: profileError } = await supabaseAdmin
