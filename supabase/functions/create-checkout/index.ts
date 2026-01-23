@@ -107,6 +107,11 @@ serve(async (req) => {
       logStep("Created new Stripe customer", { customerId });
     }
 
+    // IMPORTANT: Return the user to the SAME origin that initiated checkout.
+    // If we redirect to a different domain (e.g. published vs preview), the auth session
+    // stored in localStorage will not exist there and the user will appear logged out.
+    const returnBaseUrl = corsHeaders["Access-Control-Allow-Origin"];
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -118,8 +123,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: "https://selah-prayer.lovable.app/settings?payment=success",
-      cancel_url: "https://selah-prayer.lovable.app/settings?payment=canceled",
+      success_url: `${returnBaseUrl}/settings?payment=success`,
+      cancel_url: `${returnBaseUrl}/settings?payment=canceled`,
       allow_promotion_codes: true,
     });
 
