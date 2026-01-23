@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDonor } from '@/contexts/DonorContext';
 
 export function usePaymentResult() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { refetchDonorStatus } = useDonor();
   const hasHandled = useRef(false);
 
@@ -26,9 +28,14 @@ export function usePaymentResult() {
       });
     }
 
-    // Remove the payment param from URL
+    // Remove the payment param from URL and replace history entry
+    // This ensures the Stripe checkout URL is removed from the back button history
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('payment');
-    setSearchParams(newParams, { replace: true });
-  }, [searchParams, setSearchParams, refetchDonorStatus]);
+    const newSearch = newParams.toString();
+    const newPath = newSearch ? `${location.pathname}?${newSearch}` : location.pathname;
+    
+    // Use navigate with replace to remove Stripe from history stack
+    navigate(newPath, { replace: true });
+  }, [searchParams, location.pathname, navigate, refetchDonorStatus]);
 }
