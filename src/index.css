@@ -148,12 +148,12 @@
 
 /* Apply tint to cards and containers */
 .custom-palette-active .bg-card,
-.custom-palette-active [class*="card"] {
+.custom-palette-active [class*="card"]:not([role="dialog"]):not([data-radix-dialog-content]) {
   background-color: hsl(var(--custom-background-tint) / 0.15);
 }
 
 .custom-palette-active.dark .bg-card,
-.custom-palette-active.dark [class*="card"] {
+.custom-palette-active.dark [class*="card"]:not([role="dialog"]):not([data-radix-dialog-content]) {
   background-color: hsl(var(--custom-background-tint) / 0.12);
 }
 
@@ -168,10 +168,17 @@
   background-color: hsl(var(--custom-background-tint) / 0.18);
 }
 
-/* Apply tint to dialogs and modals */
+/* Dialogs and modals get solid backgrounds for readability */
 .custom-palette-active [role="dialog"],
-.custom-palette-active [data-radix-dialog-content] {
-  background-color: hsl(var(--custom-background-tint) / 0.20);
+.custom-palette-active [data-radix-dialog-content],
+.custom-palette-active [data-radix-popper-content-wrapper] [role="dialog"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+.custom-palette-active.dark [role="dialog"],
+.custom-palette-active.dark [data-radix-dialog-content],
+.custom-palette-active.dark [data-radix-popper-content-wrapper] [role="dialog"] {
+  background-color: hsl(var(--background)) !important;
 }
 
 @layer base {
