@@ -160,10 +160,11 @@ const Index = () => {
 
         {/* Scripture of encouragement */}
         <section className="scripture-block text-center">
-          <blockquote className="font-display text-lg text-foreground/80 italic mb-3 leading-relaxed">
+          <div className="scripture-glow" />
+          <blockquote className="font-display text-lg md:text-xl text-foreground/85 italic mb-3 leading-relaxed tracking-wide">
             "{randomVerse.text}"
           </blockquote>
-          <cite className="text-primary font-body text-sm not-italic">— {randomVerse.reference}</cite>
+          <cite className="text-primary font-body text-sm not-italic font-medium tracking-wide">— {randomVerse.reference}</cite>
         </section>
 
         {/* Upgrade Prompt for non-donors */}
