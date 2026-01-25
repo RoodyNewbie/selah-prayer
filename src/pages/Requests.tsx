@@ -6,7 +6,7 @@ import { RequestCard } from '@/components/prayer/RequestCard';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Loader2, RefreshCw, Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -48,10 +48,10 @@ export default function Requests() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="p-4 pt-6 border-b border-border">
+    <div className="page-background pb-24">
+      <header className="relative z-10 p-4 pt-6 border-b border-border/30">
         <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl text-foreground">Prayer Requests</h1>
+          <h1 className="font-display text-2xl text-foreground tracking-wide">Prayer Requests</h1>
           <div className="flex items-center gap-1">
             <GlobalAudioButton />
             <Button variant="warm" size="icon" onClick={() => setShowAddDialog(true)}>
@@ -62,15 +62,13 @@ export default function Requests() {
       </header>
 
       {/* Filter Tags */}
-      <div className="p-4 overflow-x-auto">
+      <div className="relative z-10 p-4 overflow-x-auto">
         <div className="flex gap-2">
           <button
             onClick={() => setSelectedTag('all')}
             className={cn(
-              "px-4 py-2 rounded-full text-sm font-body whitespace-nowrap transition-all",
-              selectedTag === 'all'
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+              "filter-pill press-scale",
+              selectedTag === 'all' ? "filter-pill-active" : "filter-pill-inactive"
             )}
           >
             All
@@ -80,10 +78,8 @@ export default function Requests() {
               key={tag.id}
               onClick={() => setSelectedTag(tag.id)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-body whitespace-nowrap transition-all",
-                selectedTag === tag.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                "filter-pill press-scale",
+                selectedTag === tag.id ? "filter-pill-active" : "filter-pill-inactive"
               )}
             >
               {tag.label}
@@ -94,7 +90,7 @@ export default function Requests() {
 
       {/* Error State */}
       {error && (
-        <div className="mx-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+        <div className="relative z-10 mx-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
           <p className="text-destructive font-body text-sm">
             {error instanceof Error ? error.message : 'Failed to load requests'}
           </p>
@@ -106,15 +102,16 @@ export default function Requests() {
       )}
 
       {/* Requests List */}
-      <main className="px-4 space-y-3">
+      <main className="relative z-10 px-4 space-y-3">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : !error && filteredRequests.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground font-body">
-              No prayer requests yet. Add one to get started.
+          <div className="empty-state">
+            <Inbox className="w-12 h-12 mx-auto empty-state-icon" />
+            <p className="text-muted-foreground font-body leading-relaxed">
+              No prayer requests yet.<br />Add one to get started.
             </p>
           </div>
         ) : !error && (

@@ -14,15 +14,35 @@ export function BottomNavItem({ to, icon: Icon, label }: BottomNavItemProps) {
       to={to}
       className={({ isActive }) =>
         cn(
-          "flex flex-col items-center justify-center gap-1 py-2 px-3 transition-all",
+          "flex flex-col items-center justify-center gap-1 py-2.5 px-4 transition-all duration-200 relative min-w-[64px]",
           isActive
             ? "text-primary"
-            : "text-muted-foreground hover:text-foreground"
+            : "text-muted-foreground/70 hover:text-foreground"
         )
       }
     >
-      <Icon className="w-5 h-5" />
-      <span className="text-xs font-body">{label}</span>
+      {({ isActive }) => (
+        <>
+          <div className={cn(
+            "relative p-1.5 rounded-xl transition-all duration-200",
+            isActive && "bg-primary/10"
+          )}>
+            <Icon className={cn(
+              "w-5 h-5 transition-all duration-200",
+              isActive && "drop-shadow-sm"
+            )} />
+            {isActive && (
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-glow" />
+            )}
+          </div>
+          <span className={cn(
+            "text-xs font-body transition-all duration-200",
+            isActive ? "font-medium" : "font-normal"
+          )}>
+            {label}
+          </span>
+        </>
+      )}
     </RouterNavLink>
   );
 }

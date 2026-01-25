@@ -205,10 +205,10 @@ export default function History() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="flex items-center justify-between p-4 pt-6 border-b border-border">
+    <div className="page-background pb-24">
+      <header className="relative z-10 flex items-center justify-between p-4 pt-6 border-b border-border/30">
         <div>
-          <h1 className="font-display text-2xl text-foreground">Prayer History</h1>
+          <h1 className="font-display text-2xl text-foreground tracking-wide">Prayer History</h1>
           <p className="text-muted-foreground font-body text-sm mt-1">
             Your prayer journey over time
           </p>
@@ -217,7 +217,7 @@ export default function History() {
       </header>
 
       {/* Search and Filter Bar */}
-      <div className="px-4 py-3 space-y-3 border-b border-border">
+      <div className="relative z-10 px-4 py-3 space-y-3 border-b border-border/30">
         {/* Search Input */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -257,7 +257,7 @@ export default function History() {
         </div>
       </div>
 
-      <main className="px-4 py-4 space-y-3">
+      <main className="relative z-10 px-4 py-4 space-y-3">
         {/* Error State */}
         {error && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
@@ -284,9 +284,9 @@ export default function History() {
           </div>
         ) : !error && sessions.length === 0 ? (
           /* Empty state - differentiate between free user with old sessions vs truly empty */
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <HistoryIcon className="w-8 h-8 text-muted-foreground" />
+          <div className="empty-state">
+            <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <HistoryIcon className="w-8 h-8 empty-state-icon" />
             </div>
             {!isDonor && hasOlderSessions ? (
               <>
@@ -316,8 +316,8 @@ export default function History() {
           </div>
         ) : !error && filteredSessions.length === 0 && sessions.length > 0 ? (
           /* No Results from Search/Filter */
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <div className="empty-state">
+            <Search className="w-12 h-12 empty-state-icon mx-auto mb-3" />
             <p className="text-muted-foreground font-body">No prayers match your search</p>
             <Button variant="ghost" onClick={clearFilters} className="mt-2">
               Clear filters

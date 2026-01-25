@@ -49,11 +49,17 @@
     --phase-protect: 260 35% 60%;
     --phase-worship: 25 55% 60%;
 
+    /* Enhanced shadows for depth */
     --shadow-soft: 0 2px 8px -2px hsl(220 25% 20% / 0.06),
                    0 4px 16px -4px hsl(220 25% 20% / 0.04);
-    --shadow-lifted: 0 4px 12px -3px hsl(220 25% 20% / 0.08),
-                     0 8px 24px -6px hsl(220 25% 20% / 0.06);
+    --shadow-lifted: 0 8px 20px -4px hsl(220 25% 20% / 0.1),
+                     0 4px 12px -2px hsl(220 25% 20% / 0.06);
+    --shadow-glow: 0 0 20px -5px hsl(var(--primary) / 0.25);
 
+    /* Card styling tokens */
+    --card-border-opacity: 0.1;
+    --card-highlight-opacity: 0.05;
+    
     --sidebar-background: 40 25% 95%;
     --sidebar-foreground: 220 25% 20%;
     --sidebar-primary: 215 55% 45%;
@@ -106,10 +112,16 @@
     --phase-protect: 260 20% 35%;
     --phase-worship: 15 35% 40%;
 
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3),
-                   0 4px 16px -4px hsl(0 0% 0% / 0.25);
-    --shadow-lifted: 0 4px 12px -3px hsl(0 0% 0% / 0.35),
-                     0 8px 24px -6px hsl(0 0% 0% / 0.3);
+    /* Enhanced shadows for dark mode */
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.4),
+                   0 4px 16px -4px hsl(0 0% 0% / 0.3);
+    --shadow-lifted: 0 8px 20px -4px hsl(0 0% 0% / 0.5),
+                     0 4px 12px -2px hsl(0 0% 0% / 0.35);
+    --shadow-glow: 0 0 20px -5px hsl(var(--primary) / 0.35);
+
+    /* Card styling tokens */
+    --card-border-opacity: 0.12;
+    --card-highlight-opacity: 0.04;
 
     --sidebar-background: 25 18% 12%;
     --sidebar-foreground: 35 20% 92%;
@@ -193,8 +205,76 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', serif;
+    letter-spacing: 0.02em;
+  }
+
+  /* Global typography rhythm */
+  p, li, span {
+    line-height: 1.65;
+  }
+
+  /* Subtle text depth */
+  .text-foreground {
+    text-shadow: 0 0.5px 1px hsl(var(--foreground) / 0.04);
   }
 }
+
+/* ============================================
+   GLOBAL BACKGROUND TREATMENT
+   ============================================ */
+
+/* Base page background with subtle radial warmth */
+.page-background {
+  position: relative;
+  min-height: 100vh;
+  background: 
+    radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      hsl(var(--background) / 1) 0%,
+      hsl(var(--background)) 100%
+    );
+}
+
+.page-background::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('/textures/noise.png');
+  background-repeat: repeat;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .page-background::before {
+  opacity: 0.025;
+}
+
+/* Radial warmth overlay */
+.page-background::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 100% 60% at 50% -10%,
+    hsl(var(--primary) / 0.03) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .page-background::after {
+  background: radial-gradient(
+    ellipse 100% 60% at 50% -10%,
+    hsl(var(--primary) / 0.05) 0%,
+    transparent 70%
+  );
+}
+
+/* ============================================
+   COMPONENT UTILITIES
+   ============================================ */
 
 @layer utilities {
   .font-display {
@@ -205,6 +285,7 @@
     font-family: 'DM Sans', sans-serif;
   }
 
+  /* Shadow utilities */
   .shadow-soft {
     box-shadow: var(--shadow-soft);
   }
@@ -213,6 +294,203 @@
     box-shadow: var(--shadow-lifted);
   }
 
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Card polish - enhanced styling */
+  .card-polished {
+    position: relative;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid hsl(var(--foreground) / var(--card-border-opacity));
+    transition: all 0.25s ease;
+  }
+
+  .card-polished::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      to bottom,
+      hsl(0 0% 100% / var(--card-highlight-opacity)),
+      transparent 50%
+    );
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .card-polished:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lifted);
+  }
+
+  .card-polished:active {
+    transform: translateY(0);
+  }
+
+  /* List item with left accent */
+  .list-item-accent {
+    position: relative;
+    padding-left: 1rem;
+  }
+
+  .list-item-accent::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 3px;
+    background: hsl(var(--primary) / 0.5);
+    border-radius: 2px;
+  }
+
+  /* Scripture decorative container */
+  .scripture-block {
+    position: relative;
+    padding: 2rem 1.5rem;
+  }
+
+  .scripture-block::before,
+  .scripture-block::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--foreground) / 0.15) 50%,
+      transparent 100%
+    );
+  }
+
+  .scripture-block::before {
+    top: 0;
+  }
+
+  .scripture-block::after {
+    bottom: 0;
+  }
+
+  /* Button polish - gradient and depth */
+  .btn-polished {
+    position: relative;
+    background-image: linear-gradient(
+      to bottom,
+      hsl(var(--primary) / 1.1) 0%,
+      hsl(var(--primary)) 100%
+    );
+    box-shadow: 
+      0 4px 12px -2px hsl(var(--primary) / 0.4),
+      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+  }
+
+  .btn-polished:hover {
+    box-shadow: 
+      0 6px 16px -2px hsl(var(--primary) / 0.5),
+      inset 0 1px 0 hsl(0 0% 100% / 0.2);
+  }
+
+  .btn-polished:active {
+    box-shadow: 
+      inset 0 2px 4px hsl(0 0% 0% / 0.15),
+      0 1px 2px hsl(var(--primary) / 0.3);
+    transform: scale(0.98);
+  }
+
+  /* Secondary/ghost button polish */
+  .btn-ghost-polished {
+    border: 1px solid hsl(var(--foreground) / 0.15);
+    transition: all 0.2s ease;
+  }
+
+  .btn-ghost-polished:hover {
+    background: hsl(var(--foreground) / 0.05);
+    border-color: hsl(var(--foreground) / 0.2);
+  }
+
+  .btn-ghost-polished:active {
+    transform: scale(0.98);
+    background: hsl(var(--foreground) / 0.08);
+  }
+
+  /* Icon button with shadow */
+  .icon-btn-lifted {
+    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.1);
+    transition: all 0.2s ease;
+  }
+
+  .icon-btn-lifted:hover {
+    box-shadow: 0 4px 12px -2px hsl(var(--foreground) / 0.15);
+    transform: translateY(-1px);
+  }
+
+  .icon-btn-lifted:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px -1px hsl(var(--foreground) / 0.1);
+  }
+
+  /* Input field polish */
+  .input-polished {
+    box-shadow: 
+      inset 0 2px 4px -2px hsl(var(--foreground) / 0.06),
+      0 1px 0 hsl(0 0% 100% / 0.5);
+    border: 1px solid hsl(var(--foreground) / 0.12);
+    transition: all 0.2s ease;
+  }
+
+  .input-polished:focus {
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 
+      inset 0 2px 4px -2px hsl(var(--foreground) / 0.06),
+      0 0 0 3px hsl(var(--primary) / 0.1);
+  }
+
+  .dark .input-polished {
+    box-shadow: 
+      inset 0 2px 4px -2px hsl(0 0% 0% / 0.2),
+      0 1px 0 hsl(0 0% 100% / 0.02);
+  }
+
+  /* Navigation item active glow */
+  .nav-item-active {
+    position: relative;
+  }
+
+  .nav-item-active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: hsl(var(--primary));
+    border-radius: 2px;
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.5);
+  }
+
+  /* Empty state styling */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .empty-state-icon {
+    opacity: 0.4;
+    margin-bottom: 1rem;
+  }
+
+  /* Animations */
   .animate-fade-in {
     animation: fadeIn 0.4s ease-out;
   }
@@ -224,7 +502,63 @@
   .animate-gentle-pulse {
     animation: gentlePulse 3s ease-in-out infinite;
   }
+
+  .animate-success-pop {
+    animation: successPop 0.4s ease-out;
+  }
+
+  /* Micro-interactions */
+  .interactive-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .interactive-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .interactive-lift:active {
+    transform: translateY(0);
+  }
+
+  .press-scale {
+    transition: transform 0.15s ease;
+  }
+
+  .press-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* Filter pill styling */
+  .filter-pill {
+    @apply px-4 py-2 rounded-full text-sm font-body whitespace-nowrap transition-all duration-200;
+    border: 1px solid transparent;
+  }
+
+  .filter-pill-inactive {
+    @apply bg-muted text-muted-foreground;
+    border-color: hsl(var(--foreground) / 0.05);
+  }
+
+  .filter-pill-inactive:hover {
+    @apply bg-muted/80;
+    border-color: hsl(var(--foreground) / 0.1);
+  }
+
+  .filter-pill-active {
+    @apply bg-primary text-primary-foreground;
+    box-shadow: 0 2px 8px -2px hsl(var(--primary) / 0.4);
+  }
+
+  /* Separator line styling */
+  .separator-subtle {
+    height: 1px;
+    background: hsl(var(--foreground) / 0.05);
+  }
 }
+
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
 
 @keyframes fadeIn {
   from {
@@ -253,4 +587,39 @@
   50% {
     opacity: 1;
   }
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Loading shimmer effect */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }

@@ -10,24 +10,24 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-soft hover:shadow-lifted hover:brightness-110 active:scale-[0.98]",
+          "bg-primary text-primary-foreground btn-polished",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-soft hover:shadow-lifted hover:brightness-105 active:scale-[0.98]",
         outline:
-          "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
+          "btn-ghost-polished bg-transparent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "bg-secondary text-secondary-foreground shadow-soft hover:bg-secondary/80 hover:shadow-lifted active:scale-[0.98]",
+        ghost: "hover:bg-accent/80 hover:text-accent-foreground active:scale-[0.98]",
         link: "text-primary underline-offset-4 hover:underline",
-        warm: "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30",
-        soft: "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+        warm: "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 icon-btn-lifted active:scale-[0.98]",
+        soft: "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground active:scale-[0.98]",
       },
       size: {
         default: "h-11 px-5 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-12 rounded-lg px-8 text-base",
         xl: "h-14 rounded-xl px-10 text-lg",
-        icon: "h-10 w-10",
+        icon: "h-10 w-10 min-w-[44px] min-h-[44px]",
       },
     },
     defaultVariants: {

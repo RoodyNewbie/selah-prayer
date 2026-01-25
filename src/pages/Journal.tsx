@@ -74,13 +74,13 @@ export default function Journal() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="page-background pb-24">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 pt-6 border-b border-border">
+      <header className="relative z-10 flex items-center justify-between p-4 pt-6 border-b border-border/30">
         <div>
           <div className="flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-primary" />
-            <h1 className="font-display text-2xl text-foreground">Journal</h1>
+            <BookOpen className="w-6 h-6 text-primary drop-shadow-sm" />
+            <h1 className="font-display text-2xl text-foreground tracking-wide">Journal</h1>
           </div>
           <p className="text-muted-foreground text-sm mt-1">
             {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
@@ -90,16 +90,14 @@ export default function Journal() {
       </header>
 
       {/* Filter Pills */}
-      <div className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
+      <div className="relative z-10 flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
         {filters.map((f) => (
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
             className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
-              filter === f.id
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              'filter-pill press-scale',
+              filter === f.id ? 'filter-pill-active' : 'filter-pill-inactive'
             )}
           >
             {f.label}
@@ -107,19 +105,19 @@ export default function Journal() {
         ))}
       </div>
 
-      <main className="px-4 py-4 space-y-3 max-w-lg mx-auto">
+      <main className="relative z-10 px-4 py-4 space-y-3 max-w-lg mx-auto">
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : filteredEntries.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <BookOpen className="w-8 h-8 text-muted-foreground" />
+          <div className="empty-state">
+            <div className="mx-auto w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+              <BookOpen className="w-8 h-8 empty-state-icon" />
             </div>
             <div className="space-y-1">
               <p className="font-display text-lg text-foreground">
                 {filter === 'all' ? 'Your journal is empty' : `No ${filter === 'fulfilled' ? 'fulfilled entries' : filter + 's'} yet`}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Record dreams and words from God here
               </p>
             </div>
@@ -230,7 +228,7 @@ export default function Journal() {
       {/* FAB */}
       <Button
         size="lg"
-        className="fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-lg z-40"
+        className="fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-lifted z-40 btn-polished"
         onClick={() => setShowAddDialog(true)}
       >
         <Plus className="w-6 h-6" />
