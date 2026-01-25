@@ -545,13 +545,13 @@ export default function Answered() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="p-4 pt-6 border-b border-border">
+    <div className="page-background pb-24">
+      <header className="relative z-10 p-4 pt-6 border-b border-border/30">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Milestone className="w-6 h-6 text-primary" />
-              <h1 className="font-display text-2xl text-foreground">
+              <Milestone className="w-6 h-6 text-primary drop-shadow-sm" />
+              <h1 className="font-display text-2xl text-foreground tracking-wide">
                 Stones of Remembrance
               </h1>
               <Tooltip>
@@ -618,16 +618,14 @@ export default function Answered() {
 
       {/* Sort & Filter Options */}
       {answeredRequests && answeredRequests.length > 0 && (
-        <div className="px-4 py-3 flex gap-2 overflow-x-auto border-b border-border/50">
+        <div className="relative z-10 px-4 py-3 flex gap-2 overflow-x-auto border-b border-border/30">
           {(['newest', 'oldest', 'favorites'] as SortMode[]).map((mode) => (
             <button
               key={mode}
               onClick={() => setSortMode(mode)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-body whitespace-nowrap transition-all',
-                sortMode === mode
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                'filter-pill press-scale text-xs',
+                sortMode === mode ? 'filter-pill-active' : 'filter-pill-inactive'
               )}
             >
               {mode === 'newest' && 'Most Recent'}
@@ -639,10 +637,10 @@ export default function Answered() {
           <button
             onClick={() => setFilterMode(filterMode === 'all' ? 'favorites' : 'all')}
             className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-body whitespace-nowrap transition-all flex items-center gap-1.5',
+              'filter-pill press-scale text-xs flex items-center gap-1.5',
               filterMode === 'favorites'
                 ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                : 'filter-pill-inactive'
             )}
           >
             <Star
@@ -656,7 +654,7 @@ export default function Answered() {
         </div>
       )}
 
-      <main className="px-4 py-4 space-y-4">
+      <main className="relative z-10 px-4 py-4 space-y-4">
         {/* Error State */}
         {error && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
@@ -676,22 +674,22 @@ export default function Answered() {
           </div>
         ) : !error && answeredRequests.length === 0 ? (
           // Empty state
-          <div className="text-center py-16">
+          <div className="empty-state">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Milestone className="w-10 h-10 text-primary/60" />
+              <Milestone className="w-10 h-10 empty-state-icon" />
             </div>
             <h2 className="font-display text-xl text-foreground mb-2">
               Your story of God's faithfulness starts here
             </h2>
-            <p className="text-muted-foreground font-body text-sm max-w-xs mx-auto">
+            <p className="text-muted-foreground font-body text-sm max-w-xs mx-auto leading-relaxed">
               When God answers a prayer, record it as a stone of remembrance to
               encourage your faith in the future.
             </p>
           </div>
         ) : !error && processedRequests.length === 0 ? (
           // No results after filtering
-          <div className="text-center py-12">
-            <Star className="w-10 h-10 text-muted-foreground/30 mx-auto mb-4" />
+          <div className="empty-state">
+            <Star className="w-10 h-10 empty-state-icon mx-auto mb-4" />
             <p className="text-muted-foreground font-body">No favorite testimonies yet</p>
             <Button
               variant="link"

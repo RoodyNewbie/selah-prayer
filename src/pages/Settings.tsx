@@ -201,19 +201,19 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="page-background pb-20">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 pt-6 border-b border-border">
+      <header className="relative z-10 flex items-center justify-between p-4 pt-6 border-b border-border/30">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-display text-xl text-foreground">Settings</h1>
+          <h1 className="font-display text-xl text-foreground tracking-wide">Settings</h1>
         </div>
         <GlobalAudioButton />
       </header>
 
-      <main className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+      <main className="relative z-10 px-4 py-6 space-y-6 max-w-lg mx-auto">
         {/* Appearance Section */}
         <section>
           <h2 className="font-display text-lg text-foreground mb-4">Appearance</h2>

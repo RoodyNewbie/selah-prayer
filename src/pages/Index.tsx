@@ -68,32 +68,32 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="page-background pb-24">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 pt-6">
+      <header className="relative z-10 flex items-center justify-between p-4 pt-6 border-b border-border/30">
         <div className="flex items-center gap-2">
-          <BookHeart className="w-6 h-6 text-primary" />
-          <h1 className="font-display text-2xl text-foreground">Selah</h1>
+          <BookHeart className="w-6 h-6 text-primary drop-shadow-sm" />
+          <h1 className="font-display text-2xl text-foreground tracking-wide">Selah</h1>
         </div>
         <div className="flex items-center gap-1">
           <GlobalAudioButton />
-          <Button variant="ghost" size="icon" onClick={() => navigate('/history')} className="text-muted-foreground">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/history')} className="text-muted-foreground hover:text-foreground">
             <Clock className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="text-muted-foreground">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="text-muted-foreground hover:text-foreground">
             <Settings className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-muted-foreground">
+          <Button variant="ghost" size="icon" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
             <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="px-4 space-y-6 animate-slide-up">
+      <main className="relative z-10 px-4 space-y-6 animate-slide-up">
         {/* Welcome Section */}
-        <section className="text-center pt-8 pb-4">
-          <h2 className="font-display text-3xl md:text-4xl text-foreground mb-2">
+        <section className="text-center pt-10 pb-4">
+          <h2 className="font-display text-3xl md:text-4xl text-foreground mb-2 tracking-wide">
             Peace be with you
           </h2>
           <p className="text-muted-foreground font-body">
@@ -101,10 +101,10 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Start Prayer Card */}
-        <Card className="p-6 text-center space-y-4">
+        {/* Start Prayer Card - Hero card with more prominence */}
+        <Card className="p-6 text-center space-y-4 shadow-lifted">
           <div className="space-y-2">
-            <p className="text-muted-foreground font-body text-sm">
+            <p className="text-muted-foreground font-body text-sm leading-relaxed">
               Take a moment to pause, breathe, and connect.
             </p>
           </div>
@@ -119,16 +119,16 @@ const Index = () => {
 
         {/* Quick Add Request */}
         <Card
-          className="p-4 flex items-center justify-between cursor-pointer hover:shadow-lifted"
+          className="p-5 flex items-center justify-between cursor-pointer group"
           onClick={() => setShowAddRequest(true)}
         >
-          <div>
+          <div className="list-item-accent">
             <h3 className="font-display text-base text-foreground">Add Prayer Request</h3>
             <p className="text-muted-foreground font-body text-sm">
               Capture what's on your heart
             </p>
           </div>
-          <Button variant="warm" size="icon">
+          <Button variant="warm" size="icon" className="group-hover:shadow-glow transition-shadow">
             <Plus className="w-5 h-5" />
           </Button>
         </Card>
@@ -136,18 +136,20 @@ const Index = () => {
         {/* Testimony of the Day - Stones of Remembrance */}
         {randomTestimony && (
           <Card 
-            className="p-4 bg-primary/5 border-primary/20 cursor-pointer hover:shadow-lifted transition-all"
+            className="p-5 bg-primary/5 border-primary/20 cursor-pointer interactive-lift"
             onClick={() => navigate('/answered')}
           >
             <div className="flex items-start gap-3">
-              <Heart className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-primary font-medium mb-1">Stone of Remembrance</p>
-                <p className="font-body text-sm text-foreground line-clamp-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Heart className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-primary font-medium mb-1 tracking-wide uppercase">Stone of Remembrance</p>
+                <p className="font-body text-sm text-foreground line-clamp-2 leading-relaxed">
                   "{randomTestimony.title}"
                 </p>
                 {randomTestimony.answeredDate && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-2">
                     Answered {formatDistanceToNow(new Date(randomTestimony.answeredDate), { addSuffix: true })}
                   </p>
                 )}
@@ -157,11 +159,11 @@ const Index = () => {
         )}
 
         {/* Scripture of encouragement */}
-        <section className="text-center py-6 px-4">
-          <blockquote className="font-display text-lg text-foreground/80 italic mb-2">
+        <section className="scripture-block text-center">
+          <blockquote className="font-display text-lg text-foreground/80 italic mb-3 leading-relaxed">
             "{randomVerse.text}"
           </blockquote>
-          <cite className="text-primary font-body text-sm">— {randomVerse.reference}</cite>
+          <cite className="text-primary font-body text-sm not-italic">— {randomVerse.reference}</cite>
         </section>
 
         {/* Upgrade Prompt for non-donors */}

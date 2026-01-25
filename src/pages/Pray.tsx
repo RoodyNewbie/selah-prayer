@@ -310,20 +310,20 @@ export default function Pray() {
     }));
 
     return (
-      <div className="min-h-screen bg-background flex flex-col p-4 max-w-2xl mx-auto">
+      <div className="page-background flex flex-col p-4 max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6 pt-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
+        <div className="relative z-10 text-center mb-6 pt-8 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4 shadow-glow">
             <CheckCircle className="w-7 h-7 text-primary" />
           </div>
-          <h1 className="font-display text-2xl text-foreground">Amen</h1>
-          <p className="text-muted-foreground font-body mt-1">
+          <h1 className="font-display text-2xl text-foreground tracking-wide">Amen</h1>
+          <p className="text-muted-foreground font-body mt-1 leading-relaxed">
             Your prayer session is complete. May peace be with you.
           </p>
         </div>
 
         {/* Phase Notes Reference (Collapsible) */}
-        <div className="mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
+        <div className="relative z-10 mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
           <Collapsible open={showPhaseNotes} onOpenChange={setShowPhaseNotes}>
             <CollapsibleTrigger asChild>
               <Button 
@@ -362,7 +362,7 @@ export default function Pray() {
         </div>
 
         {/* AI Generated Prayer Section - Conditional */}
-        <div className="mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
+        <div className="relative z-10 mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
           {generatedPrayer ? (
             <>
               <div className="flex items-center justify-between mb-2">
@@ -458,7 +458,7 @@ export default function Pray() {
         </div>
 
         {/* Personal Prayer Section */}
-        <div className="mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
+        <div className="relative z-10 mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">Add Your Own Words</span>
             <span className="text-xs text-muted-foreground">Optional</span>
@@ -472,7 +472,7 @@ export default function Pray() {
         </div>
 
         {/* Meditation Section - donor only */}
-        <div className="mb-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
+        <div className="relative z-10 mb-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
           {isDonor ? (
             <div className="p-4 rounded-lg bg-muted/20 border border-border">
               <div className="flex items-center gap-3 mb-3">
@@ -521,7 +521,7 @@ export default function Pray() {
         </div>
 
         {/* Return Home Button */}
-        <div className="mt-auto pt-4 animate-fade-in" style={{ animationDelay: '500ms' }}>
+        <div className="relative z-10 mt-auto pt-4 animate-fade-in" style={{ animationDelay: '500ms' }}>
           <Button 
             className="w-full" 
             size="lg"
@@ -545,7 +545,7 @@ export default function Pray() {
   // Save error state - show retry option
   if (saveError && !createSessionMutation.isPending) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="page-background flex items-center justify-center p-4">
         <Card className="p-6 md:p-8 text-center space-y-6 max-w-lg w-full animate-fade-in">
           <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
             <AlertCircle className="w-8 h-8 text-destructive" />
@@ -574,12 +574,12 @@ export default function Pray() {
 
   return (
     <div 
-      className="min-h-screen bg-background relative"
+      className="page-background relative"
       onClick={handleUserInteraction}
       onKeyDown={handleUserInteraction}
     >
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-border">
+      <header className="relative z-10 flex items-center justify-between p-4 border-b border-border/30">
         <Button variant="ghost" size="icon" onClick={handleExit}>
           <X className="w-5 h-5" />
         </Button>
@@ -591,7 +591,7 @@ export default function Pray() {
       </header>
 
       {/* Progress */}
-      <div className="py-4">
+      <div className="relative z-10 py-4">
         <PhaseProgress
           currentPhase={currentPhaseIndex}
           totalPhases={activePhases.length}
@@ -600,7 +600,7 @@ export default function Pray() {
       </div>
 
       {/* Phase Content */}
-      <main className="px-4 py-6 max-w-lg mx-auto">
+      <main className="relative z-10 px-4 py-6 max-w-lg mx-auto">
         {/* Show recurring requests in the Practical Needs phase */}
         {currentPhase.id === 'needs' && recurringRequests.length > 0 && (
           <div className={cn(
