@@ -1,14 +1,21 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { getSignedAudioUrl } from '@/hooks/useCustomAudioTracks';
+import {
+  type AudioTrack,
+  type AudioSettings,
+  AUDIO_SOURCES,
+  FADE_IN_DURATION,
+  FADE_OUT_DURATION,
+  getStoredAudioSettings,
+  saveAudioSettings,
+  isCustomTrackId,
+  createFadeController,
+  fadeVolume as sharedFadeVolume,
+  prefersReducedMotion,
+} from '@/lib/audioUtils';
 
-export type AudioTrack = 'silence' | 'rain' | 'piano' | string; // string for custom track IDs
-
-export interface AudioSettings {
-  track: AudioTrack;
-  volume: number; // 0-100
-  enabled: boolean; // Whether audio should play globally
-  customTrackPath?: string; // File path for custom tracks
-}
+// Re-export types for backwards compatibility
+export type { AudioTrack, AudioSettings };
 
 export interface CustomTrackInfo {
   id: string;
@@ -28,110 +35,27 @@ interface AudioContextType {
   isCustomTrack: (track: AudioTrack) => boolean;
 }
 
-const STORAGE_KEY = 'selah_audio_settings';
-const FADE_IN_DURATION = 2000;
-const FADE_OUT_DURATION = 1500;
-const FADE_INTERVAL = 50;
-
-const AUDIO_SOURCES: Record<Exclude<AudioTrack, 'silence'>, string> = {
-  rain: '/audio/rain_thunder.mp3',
-  piano: '/audio/ambient_piano.mp3',
-};
-
-const defaultSettings: AudioSettings = {
-  track: 'silence',
-  volume: 50,
-  enabled: false,
-  customTrackPath: undefined,
-};
-
-// Check if a track is a custom track (UUID format)
-const isCustomTrackId = (track: AudioTrack): boolean => {
-  if (track === 'silence' || track === 'rain' || track === 'piano') return false;
-  // UUID pattern check
-  return /^[a-f0-9-]{36}$/i.test(track) || track.startsWith('custom-');
-};
-
-function getStoredSettings(): AudioSettings {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return {
-        track: parsed.track || 'silence',
-        volume: typeof parsed.volume === 'number' ? parsed.volume : 50,
-        enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : false,
-      };
-    }
-  } catch (e) {
-    console.error('Failed to parse audio settings:', e);
-  }
-  return defaultSettings;
-}
-
-function saveSettings(settings: AudioSettings): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch (e) {
-    console.error('Failed to save audio settings:', e);
-  }
-}
-
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<AudioSettings>(getStoredSettings);
+  const [settings, setSettings] = useState<AudioSettings>(getStoredAudioSettings);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fadeIntervalRef = useRef<number | null>(null);
+  const fadeControllerRef = useRef(createFadeController());
   const targetVolumeRef = useRef<number>(settings.volume / 100);
   const hasUserInteractedRef = useRef(false);
 
-  const prefersReducedMotion = typeof window !== 'undefined'
-    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    : false;
+  const reducedMotion = prefersReducedMotion();
 
-  // Clear any ongoing fade
-  const clearFade = useCallback(() => {
-    if (fadeIntervalRef.current !== null) {
-      clearInterval(fadeIntervalRef.current);
-      fadeIntervalRef.current = null;
-    }
-  }, []);
-
-  // Fade volume to target
+  // Wrapper for fadeVolume that uses our controller
   const fadeVolume = useCallback((
     audio: HTMLAudioElement,
     targetVolume: number,
     duration: number,
     onComplete?: () => void
   ) => {
-    clearFade();
-
-    if (prefersReducedMotion || duration === 0) {
-      audio.volume = targetVolume;
-      onComplete?.();
-      return;
-    }
-
-    const startVolume = audio.volume;
-    const volumeDiff = targetVolume - startVolume;
-    const steps = duration / FADE_INTERVAL;
-    const volumeStep = volumeDiff / steps;
-    let currentStep = 0;
-
-    fadeIntervalRef.current = window.setInterval(() => {
-      currentStep++;
-      const newVolume = Math.max(0, Math.min(1, startVolume + volumeStep * currentStep));
-      audio.volume = newVolume;
-
-      if (currentStep >= steps) {
-        clearFade();
-        audio.volume = targetVolume;
-        onComplete?.();
-      }
-    }, FADE_INTERVAL);
-  }, [clearFade, prefersReducedMotion]);
+    sharedFadeVolume(audio, targetVolume, duration, fadeControllerRef.current, onComplete);
+  }, []);
 
   // Start playing audio from URL
   const startAudioFromUrl = useCallback(async (url: string) => {
@@ -145,8 +69,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     audio.volume = 0;
     audioRef.current = audio;
 
-    audio.addEventListener('error', (e) => {
-      console.error('Audio failed to load:', e);
+    audio.addEventListener('error', () => {
       setIsPlaying(false);
     });
 
@@ -154,8 +77,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       await audio.play();
       setIsPlaying(true);
       fadeVolume(audio, targetVolumeRef.current, FADE_IN_DURATION);
-    } catch (err) {
-      console.log('Autoplay blocked, waiting for user interaction');
+    } catch {
+      // Autoplay blocked - will retry on user interaction
       hasUserInteractedRef.current = false;
     }
   }, [fadeVolume]);
@@ -170,7 +93,6 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const startCustomAudio = useCallback(async (filePath: string) => {
     const url = await getSignedAudioUrl(filePath);
     if (!url) {
-      console.error('Failed to get signed URL for custom track');
       setIsPlaying(false);
       return;
     }
@@ -185,8 +107,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (immediate || prefersReducedMotion) {
-      clearFade();
+    if (immediate || reducedMotion) {
+      fadeControllerRef.current.clear();
       audio.pause();
       audioRef.current = null;
       setIsPlaying(false);
@@ -198,13 +120,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       audioRef.current = null;
       setIsPlaying(false);
     });
-  }, [fadeVolume, clearFade, prefersReducedMotion]);
+  }, [fadeVolume, reducedMotion]);
 
   // Change track (for default tracks only)
   const changeTrack = useCallback((newTrack: AudioTrack, customTrackPath?: string) => {
-    const newSettings = { ...settings, track: newTrack, customTrackPath };
+    const newSettings: AudioSettings = { ...settings, track: newTrack, customTrackPath };
     setSettings(newSettings);
-    saveSettings(newSettings);
+    saveAudioSettings(newSettings);
 
     if (!settings.enabled) return;
 
@@ -221,7 +143,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             startAudio(newTrack);
           }
         }
-      }, prefersReducedMotion ? 0 : FADE_OUT_DURATION);
+      }, reducedMotion ? 0 : FADE_OUT_DURATION);
     } else {
       if (isCustomTrackId(newTrack) && customTrackPath) {
         startCustomAudio(customTrackPath);
@@ -229,13 +151,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         startAudio(newTrack);
       }
     }
-  }, [settings, stopAudio, startAudio, startCustomAudio, prefersReducedMotion]);
+  }, [settings, stopAudio, startAudio, startCustomAudio, reducedMotion]);
 
   // Change volume
   const changeVolume = useCallback((newVolume: number) => {
-    const newSettings = { ...settings, volume: newVolume };
+    const newSettings: AudioSettings = { ...settings, volume: newVolume };
     setSettings(newSettings);
-    saveSettings(newSettings);
+    saveAudioSettings(newSettings);
     targetVolumeRef.current = newVolume / 100;
 
     if (audioRef.current && isPlaying) {
@@ -257,9 +179,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // Toggle enabled
   const toggleEnabled = useCallback(() => {
     const newEnabled = !settings.enabled;
-    const newSettings = { ...settings, enabled: newEnabled };
+    const newSettings: AudioSettings = { ...settings, enabled: newEnabled };
     setSettings(newSettings);
-    saveSettings(newSettings);
+    saveAudioSettings(newSettings);
 
     if (newEnabled && settings.track !== 'silence') {
       hasUserInteractedRef.current = true;
@@ -271,9 +193,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Set enabled directly
   const setEnabled = useCallback((enabled: boolean) => {
-    const newSettings = { ...settings, enabled };
+    const newSettings: AudioSettings = { ...settings, enabled };
     setSettings(newSettings);
-    saveSettings(newSettings);
+    saveAudioSettings(newSettings);
 
     if (enabled && settings.track !== 'silence') {
       hasUserInteractedRef.current = true;
@@ -303,19 +225,17 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     return isCustomTrackId(track);
   }, []);
 
-  // Start/stop based on enabled state
+  // Start/stop based on enabled state - runs on mount to restore audio state
   useEffect(() => {
-    if (settings.enabled && settings.track !== 'silence') {
+    // Get fresh settings from storage on mount
+    const storedSettings = getStoredAudioSettings();
+    if (storedSettings.enabled && storedSettings.track !== 'silence') {
       hasUserInteractedRef.current = true;
-      startTrackAudio(settings.track, settings.customTrackPath);
-    } else if (!settings.enabled || settings.track === 'silence') {
-      stopAudio();
+      startTrackAudio(storedSettings.track, storedSettings.customTrackPath);
     }
-
-    return () => {
-      // Don't stop on cleanup - we want audio to persist
-    };
-  }, []); // Only run on mount
+    // Note: We intentionally only run on mount to restore persisted state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update target volume ref when settings change
   useEffect(() => {
@@ -324,14 +244,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // Cleanup on unmount
   useEffect(() => {
+    const fadeController = fadeControllerRef.current;
     return () => {
-      clearFade();
+      fadeController.clear();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [clearFade]);
+  }, []);
 
   return (
     <AudioContext.Provider

@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import { AudioTrack, AudioSettings } from '@/hooks/useAmbientAudio';
+import { AudioTrack, AudioSettings } from '@/lib/audioUtils';
 
 interface AudioControlButtonProps {
   settings: AudioSettings;

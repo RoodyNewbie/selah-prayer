@@ -3,43 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Pause, Play, X, Plus, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/db';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
+import { playMeditationChime } from '@/lib/audioUtils';
 
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
-// Generate a gentle chime using Web Audio API
-const playChime = () => {
-  try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // 528 Hz - known as the "love frequency" / healing tone
-    oscillator.frequency.value = 528;
-    oscillator.type = 'sine';
-    
-    const now = audioContext.currentTime;
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.4, now + 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 2.5);
-    
-    oscillator.start(now);
-    oscillator.stop(now + 2.5);
-    
-    setTimeout(() => audioContext.close(), 3000);
-  } catch (err) {
-    console.warn('Could not play chime:', err);
-  }
 };
 
 interface MeditateState {
@@ -63,6 +37,7 @@ export default function Meditate() {
   
   // UI state
   const [showPrayer, setShowPrayer] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   
   // Track actual meditation time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -76,11 +51,7 @@ export default function Meditate() {
   // Redirect if no state
   useEffect(() => {
     if (!state?.duration || !state?.sessionId) {
-      toast({
-        title: "Invalid session",
-        description: "Please start meditation from a prayer session",
-        variant: "destructive"
-      });
+      toast.error("Please start meditation from a prayer session");
       navigate('/', { replace: true });
     }
   }, [state, navigate]);
@@ -107,7 +78,7 @@ export default function Meditate() {
           
           if (!chimePlayedRef.current) {
             chimePlayedRef.current = true;
-            playChime();
+            playMeditationChime();
           }
           return 0;
         }
@@ -130,8 +101,8 @@ export default function Meditate() {
         if ('wakeLock' in navigator && isRunning && !isPaused) {
           wakeLockRef.current = await navigator.wakeLock.request('screen');
         }
-      } catch (err) {
-        console.log('Wake lock not supported or failed:', err);
+      } catch {
+        // Wake lock not supported or failed - not critical
       }
     };
 
@@ -174,20 +145,21 @@ export default function Meditate() {
     setIsComplete(false);
     setIsRunning(true);
     chimePlayedRef.current = false;
-    toast({
-      title: "Time added",
-      description: "5 minutes added to your meditation"
-    });
+    toast.success("5 minutes added to your meditation");
   }, []);
 
-  const handleExit = useCallback(() => {
+  const handleExitClick = useCallback(() => {
     if (isRunning && !isComplete) {
-      if (!confirm('Exit meditation? Your meditation time will not be saved.')) {
-        return;
-      }
+      setShowExitConfirm(true);
+    } else {
+      navigate('/');
     }
-    navigate('/');
   }, [isRunning, isComplete, navigate]);
+
+  const handleConfirmExit = useCallback(() => {
+    setShowExitConfirm(false);
+    navigate('/');
+  }, [navigate]);
 
   const handleFinish = useCallback(async () => {
     if (!state?.sessionId) {
@@ -198,19 +170,10 @@ export default function Meditate() {
     try {
       // Save meditation time to the session
       await db.updateSessionMeditation(state.sessionId, elapsedSeconds);
-      
-      toast({
-        title: "Meditation complete",
-        description: "Peace be with you."
-      });
+      toast.success("Peace be with you.");
       navigate('/');
-    } catch (error) {
-      console.error('Failed to save meditation time:', error);
-      toast({
-        title: "Could not save",
-        description: "Meditation time could not be saved",
-        variant: "destructive"
-      });
+    } catch {
+      toast.error("Meditation time could not be saved");
       navigate('/');
     }
   }, [state?.sessionId, elapsedSeconds, navigate]);
@@ -223,10 +186,10 @@ export default function Meditate() {
     <div className="fixed inset-0 bg-background flex flex-col">
       {/* Top bar with exit and audio */}
       <div className="flex items-center justify-between p-4 pb-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleExit}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleExitClick}
           className="text-muted-foreground"
         >
           <X className="h-4 w-4 mr-1" />
@@ -345,14 +308,26 @@ export default function Meditate() {
 
       {/* Finish button - always visible at bottom */}
       <div className="p-4 shrink-0">
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           size="lg"
           onClick={handleFinish}
         >
           {isComplete ? "Finish Session" : "End Early"}
         </Button>
       </div>
+
+      {/* Exit confirmation dialog */}
+      <ConfirmDialog
+        open={showExitConfirm}
+        onOpenChange={setShowExitConfirm}
+        title="Exit Meditation?"
+        description="Your meditation time will not be saved."
+        confirmLabel="Exit"
+        cancelLabel="Stay"
+        variant="destructive"
+        onConfirm={handleConfirmExit}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { DonorProvider } from "@/contexts/DonorContext";
 import { ColorPaletteProvider } from "@/contexts/ColorPaletteContext";
 import { MeditationTimerProvider } from "@/contexts/MeditationTimerContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { createDebugLogger } from "@/lib/debug";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -24,6 +25,8 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+const routeDebug = createDebugLogger('PROTECTED_ROUTE');
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -38,11 +41,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  console.log('[PROTECTED_ROUTE] render', {
+  routeDebug.log('render', {
     path: location.pathname + location.search,
     loading,
     hasUser: Boolean(user),
-    userId: user?.id ?? null,
   });
 
   if (loading) {
@@ -54,10 +56,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    console.log('[PROTECTED_ROUTE] redirect -> /auth', {
-      path: location.pathname + location.search,
-      reason: 'no_user_after_loading',
-    });
+    routeDebug.log('redirect -> /auth', { path: location.pathname });
     return <Navigate to="/auth" replace />;
   }
 

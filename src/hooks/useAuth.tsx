@@ -1,6 +1,9 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { createDebugLogger } from '@/lib/debug';
+
+const authDebug = createDebugLogger('AUTH');
 
 interface AuthContextType {
   user: User | null;
@@ -23,28 +26,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let initialCheckDone = false;
 
     // Debug helpers for Stripe redirect/session restoration issues
-    const debugPrefix = '[AUTH]';
     try {
-      // Don't log tokens; just whether storage appears to contain something
       const keys = Object.keys(localStorage);
       const sbKey = keys.find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      console.log(debugPrefix, 'mount', {
-        origin: window.location.origin,
-        path: window.location.pathname + window.location.search,
+      authDebug.log('mount', {
+        path: window.location.pathname,
         hasSbAuthKey: Boolean(sbKey),
       });
     } catch {
-      // ignore
+      // localStorage not available
     }
-    
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log(debugPrefix, 'onAuthStateChange', {
+        authDebug.log('onAuthStateChange', {
           event,
-          initialCheckDone,
           hasSession: Boolean(newSession),
-          userId: newSession?.user?.id ?? null,
         });
 
         // Only update state after initial session check is done
@@ -60,10 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check for existing session from storage
     supabase.auth.getSession().then(({ data: { session: existingSession }, error }) => {
-      console.log(debugPrefix, 'getSession resolved', {
+      authDebug.log('getSession resolved', {
         hasSession: Boolean(existingSession),
-        userId: existingSession?.user?.id ?? null,
-        error: error ? { name: error.name, message: error.message } : null,
+        error: error?.message ?? null,
       });
 
       setSession(existingSession);

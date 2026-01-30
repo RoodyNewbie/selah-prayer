@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDonor } from '@/contexts/DonorContext';
 import { toast } from 'sonner';
+import { playMeditationChime } from '@/lib/audioUtils';
 
 interface MeditationTimerContextType {
   // Settings (from database)
@@ -10,61 +11,25 @@ interface MeditationTimerContextType {
   defaultDuration: number; // in minutes
   setEnabled: (enabled: boolean) => Promise<void>;
   setDefaultDuration: (minutes: number) => Promise<void>;
-  
+
   // Active timer state (in-memory, during prayer session)
   isRunning: boolean;
   isPaused: boolean;
   remainingSeconds: number;
   totalSeconds: number;
-  
+
   // Timer controls
   startTimer: (durationMinutes?: number) => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
   stopTimer: () => void;
   resetTimer: () => void;
-  
+
   // Loading state
   isLoading: boolean;
 }
 
 const MeditationTimerContext = createContext<MeditationTimerContextType | undefined>(undefined);
-
-const CHIME_PATH = '/audio/meditation-chime.mp3';
-
-// Generate a simple bell-like chime using Web Audio API as fallback
-const playWebAudioChime = () => {
-  try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
-    // Create oscillator for the main tone
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Bell-like frequency
-    oscillator.frequency.value = 528; // Solfeggio frequency - healing tone
-    oscillator.type = 'sine';
-    
-    // Gentle fade in and out for a soft bell sound
-    const now = audioContext.currentTime;
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.4, now + 0.1); // Quick attack
-    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 2.5); // Slow decay
-    
-    oscillator.start(now);
-    oscillator.stop(now + 2.5);
-    
-    // Cleanup
-    setTimeout(() => {
-      audioContext.close();
-    }, 3000);
-  } catch (err) {
-    console.warn('Could not play Web Audio chime:', err);
-  }
-};
 
 export function MeditationTimerProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -126,18 +91,7 @@ export function MeditationTimerProvider({ children }: { children: React.ReactNod
   }, []);
 
   const playChime = useCallback(() => {
-    // Try to play MP3 file first, fall back to Web Audio API
-    const audio = new Audio(CHIME_PATH);
-    audio.volume = 0.6;
-    
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        console.warn('Could not play MP3 chime, using Web Audio fallback:', err);
-        playWebAudioChime();
-      });
-    }
+    playMeditationChime();
   }, []);
 
   // Timer countdown logic

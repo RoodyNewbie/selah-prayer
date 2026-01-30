@@ -1,15 +1,19 @@
-// Stripe configuration
-export const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SrTgcB4wZgpJYym6Z2fqfvlXkBFACMOu4tNbzs440Bf9q5wstWvGnKn7LZUinqsqx4ljZSBqr6V7XnHidmbbp2A00jWsPU7jN';
+// Stripe configuration - loaded from environment variables
+export const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+
+if (!STRIPE_PUBLISHABLE_KEY && import.meta.env.MODE !== 'test') {
+  console.warn('VITE_STRIPE_PUBLISHABLE_KEY is not set. Stripe payments will not work.');
+}
 
 export const STRIPE_PRICES = {
   monthly: {
-    id: 'price_1SrktXB4wZgpJYymA82rzwhh',
+    id: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || 'price_monthly',
     amount: 5,
     interval: 'month' as const,
     label: '$5/month',
   },
   yearly: {
-    id: 'price_1SrktXB4wZgpJYymIlcvwlWQ',
+    id: import.meta.env.VITE_STRIPE_PRICE_YEARLY || 'price_yearly',
     amount: 40,
     interval: 'year' as const,
     label: '$40/year',
@@ -17,12 +21,12 @@ export const STRIPE_PRICES = {
   },
 } as const;
 
-// Admin emails that always have donor access
-export const ADMIN_EMAILS = [
-  'dane.vicars@gmail.com',
-  'selah.prayer.app@gmail.com',
-  'brielhill412@gmail.com',
-];
+// Admin emails that always have donor access - loaded from environment variable
+// Format: comma-separated list of emails in VITE_ADMIN_EMAILS
+const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS || '';
+export const ADMIN_EMAILS: string[] = adminEmailsEnv
+  ? adminEmailsEnv.split(',').map((email: string) => email.trim()).filter(Boolean)
+  : [];
 
 // Grace period duration in milliseconds (3 days)
 export const GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000;

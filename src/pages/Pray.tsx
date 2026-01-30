@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrayerPhase } from '@/lib/prayerData';
 import { useRecurringRequests } from '@/hooks/usePrayerRequests';
@@ -23,43 +23,47 @@ import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, Aler
 import { TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { usePrayerSession, GENERATION_COOLDOWN_MS } from '@/hooks/usePrayerSession';
 
 export default function Pray() {
   const navigate = useNavigate();
-  const [selectedFormat, setSelectedFormat] = useState<PrayerFormat | null>(null);
-  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
-  const [phaseContent, setPhaseContent] = useState<Record<string, string>>({});
-  const [skippedPhases, setSkippedPhases] = useState<Set<string>>(new Set());
-  const [isComplete, setIsComplete] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPrayer, setGeneratedPrayer] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
-  
-  // New state for completion screen
-  const [personalPrayer, setPersonalPrayer] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState(10);
-  const [isSavingPersonal, setIsSavingPersonal] = useState(false);
-  const [showPhaseNotes, setShowPhaseNotes] = useState(false);
-  
-  // Rate limiting for prayer generation
-  const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
-  const GENERATION_COOLDOWN_MS = 30000; // 30 seconds between generations
-  
-  // Daily generation limit tracking
-  const [remainingGenerations, setRemainingGenerations] = useState<number | null>(null);
-  const [dailyLimit, setDailyLimit] = useState<number | null>(null);
+
+  // Use the consolidated state hook
+  const { state, actions } = usePrayerSession();
+  const {
+    selectedFormat,
+    currentPhaseIndex,
+    phaseContent,
+    skippedPhases,
+    isComplete,
+    saveError,
+    isGenerating,
+    generatedPrayer,
+    copied,
+    savedSessionId,
+    personalPrayer,
+    selectedDuration,
+    isSavingPersonal,
+    showPhaseNotes,
+    lastGeneratedAt,
+    remainingGenerations,
+    dailyLimit,
+  } = state;
 
   // Track if transition is in progress to prevent double-clicks
   const isTransitioning = useRef(false);
 
   // Global audio - just for user interaction handling
   const { handleUserInteraction } = useGlobalAudio();
-  
+
   // Meditation timer settings (for default duration)
   const { isDonor } = useDonor();
   const { defaultDuration } = useMeditationTimer();
+
+  // Update duration when defaultDuration changes
+  if (defaultDuration && selectedDuration !== defaultDuration && !isComplete) {
+    actions.setDuration(defaultDuration);
+  }
 
   const { data: recurringRequests = [] } = useRecurringRequests();
   const createSessionMutation = useCreateSession();
@@ -78,11 +82,8 @@ export default function Pray() {
 
   // Handle format change - reset phase index and content when format changes
   const handleFormatChange = useCallback((format: PrayerFormat | null) => {
-    setSelectedFormat(format);
-    setCurrentPhaseIndex(0);
-    setPhaseContent({});
-    setSkippedPhases(new Set());
-  }, []);
+    actions.setFormat(format);
+  }, [actions]);
 
   // Handle exit - MUST be defined before any early returns
   const handleExit = useCallback(() => {
@@ -90,64 +91,58 @@ export default function Pray() {
   }, [navigate]);
 
   const handleContentChange = useCallback((value: string) => {
-    setPhaseContent((prev) => ({
-      ...prev,
-      [currentPhase.id]: value,
-    }));
-  }, [currentPhase.id]);
+    actions.setPhaseContent(currentPhase.id, value);
+  }, [currentPhase.id, actions]);
 
   const handleCopy = useCallback(async () => {
     if (generatedPrayer) {
       await navigator.clipboard.writeText(generatedPrayer);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      actions.setCopied(true);
+      setTimeout(() => actions.setCopied(false), 2000);
       toast.success('Prayer copied to clipboard');
     }
-  }, [generatedPrayer]);
+  }, [generatedPrayer, actions]);
 
   const handleNext = useCallback(() => {
     if (isTransitioning.current) return;
-    
+
     if (currentPhaseIndex < activePhases.length - 1) {
       isTransitioning.current = true;
-      setCurrentPhaseIndex((prev) => prev + 1);
-      
+      actions.nextPhase();
+
       // Reset transition lock after animation completes
       setTimeout(() => {
         isTransitioning.current = false;
       }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
     }
-  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion]);
+  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, actions]);
 
   const handleSkip = useCallback(() => {
     if (isTransitioning.current) return;
-    
-    // Mark current phase as skipped
-    setSkippedPhases(prev => new Set(prev).add(currentPhase.id));
-    
+
     if (currentPhaseIndex < activePhases.length - 1) {
       isTransitioning.current = true;
-      setCurrentPhaseIndex((prev) => prev + 1);
-      
+      actions.skipPhase(currentPhase.id);
+
       // Reset transition lock after animation completes
       setTimeout(() => {
         isTransitioning.current = false;
       }, prefersReducedMotion ? 0 : TOTAL_TRANSITION_TIME);
     }
-  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, currentPhase.id]);
+  }, [currentPhaseIndex, activePhases.length, prefersReducedMotion, currentPhase.id, actions]);
 
   const generatePrayer = async () => {
     if (!savedSessionId) return;
-    
+
     // Check if daily limit reached (client-side check)
     if (remainingGenerations !== null && remainingGenerations <= 0) {
-      const message = isDonor 
+      const message = isDonor
         ? "Daily limit reached. Try again tomorrow!"
         : "Daily limit reached. Upgrade to donor for more generations!";
       toast.error(message);
       return;
     }
-    
+
     // Rate limiting check
     const now = Date.now();
     if (now - lastGeneratedAt < GENERATION_COOLDOWN_MS) {
@@ -155,91 +150,64 @@ export default function Pray() {
       toast.error(`Please wait ${remainingSeconds} seconds before generating again`);
       return;
     }
-    
-    setLastGeneratedAt(now);
-    setIsGenerating(true);
+
+    actions.startGenerating();
     try {
       const { data, error } = await supabase.functions.invoke('generate-prayer', {
         body: { phases: phaseContent },
       });
 
       if (error) {
-        console.error('Error generating prayer:', error);
         toast.error('Could not generate prayer. Please try again.');
+        actions.generationError();
         return;
       }
 
       // Handle rate limit response (429)
       if (data?.error) {
         toast.error(data.error);
-        // Update remaining count if provided
-        if (typeof data.remaining === 'number') {
-          setRemainingGenerations(data.remaining);
-        }
-        if (typeof data.limit === 'number') {
-          setDailyLimit(data.limit);
-        }
+        actions.generationError(data.remaining, data.limit);
         return;
       }
 
-      setGeneratedPrayer(data.prayer);
+      actions.generationSuccess(data.prayer, data.remaining, data.limit);
       toast.success('Prayer generated');
-      
-      // Update remaining generations from response
-      if (typeof data.remaining === 'number') {
-        setRemainingGenerations(data.remaining);
-      }
-      if (typeof data.limit === 'number') {
-        setDailyLimit(data.limit);
-      }
-      
+
       // Save the generated prayer to the session
       try {
         await updateSessionPrayerMutation.mutateAsync({
           sessionId: savedSessionId,
           generatedPrayer: data.prayer,
         });
-      } catch (saveErr) {
-        console.error('Error saving generated prayer:', saveErr);
+      } catch {
+        // Non-critical - prayer was still generated
       }
-    } catch (err) {
-      console.error('Error:', err);
+    } catch {
       toast.error('Could not generate prayer. Please try again.');
-    } finally {
-      setIsGenerating(false);
+      actions.generationError();
     }
   };
 
   const handleComplete = async () => {
-    setSaveError(null);
-    
+    actions.clearSaveError();
+
     try {
-      const session = await createSessionMutation.mutateAsync({ 
+      const session = await createSessionMutation.mutateAsync({
         phases: phaseContent,
         formatId: selectedFormat?.id,
       });
-      setSavedSessionId(session.id);
-      setIsComplete(true);
-      
+      actions.setComplete(session.id);
+
       // Initialize duration from user preference
       if (defaultDuration) {
-        setSelectedDuration(defaultDuration);
+        actions.setDuration(defaultDuration);
       }
-      
+
       // Save prayer topics for session memory (non-blocking)
-      saveTopicsMutation.mutate(
-        { sessionId: session.id, phases: phaseContent },
-        {
-          onError: (err) => {
-            console.error('Failed to save prayer topics:', err);
-          },
-        }
-      );
-      
-      // Note: AI prayer generation is now optional - user can trigger it from the completion screen
+      saveTopicsMutation.mutate({ sessionId: session.id, phases: phaseContent });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save your prayer session';
-      setSaveError(message);
+      actions.setSaveError(message);
       toast.error(message);
     }
   };
@@ -268,13 +236,13 @@ export default function Pray() {
   // Handle return home - save personal prayer if entered
   const handleReturnHome = async () => {
     if (personalPrayer.trim() && savedSessionId) {
-      setIsSavingPersonal(true);
+      actions.setSavingPersonal(true);
       try {
         await db.updateSessionPersonalPrayer(savedSessionId, personalPrayer.trim());
-      } catch (err) {
-        console.error('Failed to save personal prayer:', err);
+      } catch {
+        // Non-critical - continue navigation
       } finally {
-        setIsSavingPersonal(false);
+        actions.setSavingPersonal(false);
       }
     }
     navigate('/');
@@ -286,11 +254,11 @@ export default function Pray() {
     if (personalPrayer.trim() && savedSessionId) {
       try {
         await db.updateSessionPersonalPrayer(savedSessionId, personalPrayer.trim());
-      } catch (err) {
-        console.error('Failed to save personal prayer:', err);
+      } catch {
+        // Non-critical - continue to meditation
       }
     }
-    
+
     navigate('/pray/meditate', {
       state: {
         duration: selectedDuration,
@@ -324,7 +292,7 @@ export default function Pray() {
 
         {/* Phase Notes Reference (Collapsible) */}
         <div className="relative z-10 mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <Collapsible open={showPhaseNotes} onOpenChange={setShowPhaseNotes}>
+          <Collapsible open={showPhaseNotes} onOpenChange={actions.togglePhaseNotes}>
             <CollapsibleTrigger asChild>
               <Button 
                 variant="ghost" 
@@ -466,7 +434,7 @@ export default function Pray() {
           <Textarea
             placeholder="Write your own prayers and reflections..."
             value={personalPrayer}
-            onChange={(e) => setPersonalPrayer(e.target.value)}
+            onChange={(e) => actions.setPersonalPrayer(e.target.value)}
             className="min-h-[100px] resize-y"
           />
         </div>
@@ -492,7 +460,7 @@ export default function Pray() {
                     key={min}
                     variant={selectedDuration === min ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedDuration(min)}
+                    onClick={() => actions.setDuration(min)}
                   >
                     {min} min
                   </Button>
