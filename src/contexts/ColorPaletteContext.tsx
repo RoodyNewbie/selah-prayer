@@ -28,6 +28,11 @@ interface ColorPaletteContextType {
 
 const ColorPaletteContext = createContext<ColorPaletteContextType | undefined>(undefined);
 
+// Validate hex color format
+function isValidHex(hex: string): boolean {
+  return /^#?[0-9a-fA-F]{6}$/.test(hex);
+}
+
 // Helper to convert hex to HSL values for CSS variables
 function hexToHsl(hex: string): string {
   // Remove # if present
@@ -68,6 +73,11 @@ function applyColorsToDOM(palette: ColorPalette | null) {
   const root = document.documentElement;
   
   if (palette) {
+    // Validate all colors before applying to DOM
+    if (!isValidHex(palette.primaryColor) || !isValidHex(palette.accentColor) || !isValidHex(palette.backgroundTint)) {
+      console.error('Invalid hex color in palette, skipping apply');
+      return;
+    }
     // Convert hex to HSL for CSS variables
     const primaryHsl = hexToHsl(palette.primaryColor);
     const accentHsl = hexToHsl(palette.accentColor);
@@ -103,10 +113,13 @@ export function ColorPaletteProvider({ children }: { children: React.ReactNode }
     }
 
     try {
+      // Defense-in-depth: filter by user_id in addition to RLS
       const { data, error } = await supabase
         .from('color_palettes')
         .select('*')
-        .order('created_at', { ascending: true });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(5);
 
       if (error) throw error;
 
@@ -182,6 +195,12 @@ export function ColorPaletteProvider({ children }: { children: React.ReactNode }
 
     if (palettes.length >= 5) {
       toast.error("You've reached the maximum of 5 palettes");
+      return;
+    }
+
+    // Validate hex colors
+    if (!isValidHex(palette.primaryColor) || !isValidHex(palette.accentColor) || !isValidHex(palette.backgroundTint)) {
+      toast.error("Invalid color format. Please use valid hex colors.");
       return;
     }
 

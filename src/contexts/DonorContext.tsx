@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { hasActiveDonorStatus, ADMIN_EMAILS } from '@/lib/stripe';
+import { hasActiveDonorStatus } from '@/lib/stripe';
 
 interface SubscriptionInfo {
   status: string | null;
@@ -68,11 +68,11 @@ export function DonorProvider({ children }: { children: React.ReactNode }) {
         setSubscription(subInfo);
 
         // Calculate effective donor status
+        // Admin bypass is handled server-side by the check_admin_donor_status trigger
         const effectiveDonor = hasActiveDonorStatus(
           data?.is_donor ?? false,
           subInfo.status,
           subInfo.periodEnd,
-          user.email ?? null
         );
         setIsDonor(effectiveDonor);
       }

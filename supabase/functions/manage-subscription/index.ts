@@ -10,10 +10,10 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.some(allowed => 
-    origin === allowed || origin.includes('.lovable.app')
-  ) ? origin : ALLOWED_ORIGINS[0];
-  
+  // Strict origin check - only exact matches, no substring matching
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+    ? origin : ALLOWED_ORIGINS[0];
+
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -61,7 +61,7 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
 
     // Get user's stripe_customer_id
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -79,10 +79,13 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
+    // Use the same origin that initiated the request for the return URL
+    const returnBaseUrl = corsHeaders["Access-Control-Allow-Origin"];
+
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: "https://selah-prayer.lovable.app/settings",
+      return_url: `${returnBaseUrl}/settings`,
     });
 
     logStep("Created portal session", { sessionId: portalSession.id, url: portalSession.url });
@@ -94,7 +97,11 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in manage-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    // Don't leak internal error details to the client
+    const safeMessage = errorMessage.includes("Authentication") || errorMessage.includes("No Stripe customer")
+      ? errorMessage
+      : "An error occurred while managing your subscription. Please try again.";
+    return new Response(JSON.stringify({ error: safeMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

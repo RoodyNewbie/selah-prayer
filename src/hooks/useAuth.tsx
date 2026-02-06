@@ -22,31 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let initialCheckDone = false;
 
-    // Debug helpers for Stripe redirect/session restoration issues
-    const debugPrefix = '[AUTH]';
-    try {
-      // Don't log tokens; just whether storage appears to contain something
-      const keys = Object.keys(localStorage);
-      const sbKey = keys.find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      console.log(debugPrefix, 'mount', {
-        origin: window.location.origin,
-        path: window.location.pathname + window.location.search,
-        hasSbAuthKey: Boolean(sbKey),
-      });
-    } catch {
-      // ignore
-    }
-    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log(debugPrefix, 'onAuthStateChange', {
-          event,
-          initialCheckDone,
-          hasSession: Boolean(newSession),
-          userId: newSession?.user?.id ?? null,
-        });
-
+      (_event, newSession) => {
         // Only update state after initial session check is done
         // This prevents race conditions where onAuthStateChange fires with null
         // before getSession() has restored the session from storage
@@ -59,13 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // Check for existing session from storage
-    supabase.auth.getSession().then(({ data: { session: existingSession }, error }) => {
-      console.log(debugPrefix, 'getSession resolved', {
-        hasSession: Boolean(existingSession),
-        userId: existingSession?.user?.id ?? null,
-        error: error ? { name: error.name, message: error.message } : null,
-      });
-
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
       initialCheckDone = true;

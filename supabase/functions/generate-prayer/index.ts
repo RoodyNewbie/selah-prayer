@@ -10,12 +10,14 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o.replace(/\/$/, '')))
-    ? origin 
+  // Strict origin check - only exact matches
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+    ? origin
     : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 };
 
@@ -94,8 +96,8 @@ async function checkDailyLimit(
   
   if (error) {
     console.error('Error checking daily limit:', error);
-    // On error, allow the request but log it
-    return { allowed: true, remaining: limit, limit };
+    // On error, DENY the request to prevent rate limit bypass
+    return { allowed: false, remaining: 0, limit };
   }
   
   const usedCount = count || 0;
@@ -320,8 +322,9 @@ ${prayerContext}`;
     );
   } catch (error) {
     console.error("Error in generate-prayer:", error);
+    // Don't leak internal error details to the client
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "Unable to generate prayer. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
