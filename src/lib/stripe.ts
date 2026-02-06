@@ -1,15 +1,20 @@
-// Stripe configuration - keys loaded from environment variables
-export const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+// Stripe configuration
+// The publishable key is NOT a secret -- it's designed to be in frontend code.
+// Env var override is available for local dev; Lovable builds use the fallback values.
+// When going LIVE: replace these test values with your live Stripe keys.
+export const STRIPE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
+  'pk_test_51SrTgcB4wZgpJYym6Z2fqfvlXkBFACMOu4tNbzs440Bf9q5wstWvGnKn7LZUinqsqx4ljZSBqr6V7XnHidmbbp2A00jWsPU7jN';
 
 export const STRIPE_PRICES = {
   monthly: {
-    id: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || '',
+    id: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || 'price_1SrktXB4wZgpJYymA82rzwhh',
     amount: 5,
     interval: 'month' as const,
     label: '$5/month',
   },
   yearly: {
-    id: import.meta.env.VITE_STRIPE_PRICE_YEARLY || '',
+    id: import.meta.env.VITE_STRIPE_PRICE_YEARLY || 'price_1SrktXB4wZgpJYymIlcvwlWQ',
     amount: 40,
     interval: 'year' as const,
     label: '$40/year',
