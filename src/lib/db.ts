@@ -59,7 +59,8 @@ export const db = {
     const { data, error } = await supabase
       .from('prayer_requests')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
     if (error) {
       throw new DatabaseError('Failed to load your prayer requests. Please check your connection and try again.', error);
@@ -145,7 +146,7 @@ export const db = {
       query = query.gte('created_at', thirtyDaysAgo.toISOString());
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(500);
 
     if (error) {
       throw new DatabaseError('Failed to load your prayer history. Please try again.', error);
@@ -262,7 +263,8 @@ export const db = {
     const { data, error } = await supabase
       .from('journal_entries')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(500);
 
     if (error) {
       throw new DatabaseError('Failed to load your journal entries. Please try again.', error);

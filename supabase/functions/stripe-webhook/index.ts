@@ -2,9 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Stripe webhooks are server-to-server -- restrict CORS to production origin only.
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "https://selah-prayer.lovable.app",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -39,11 +40,7 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET is not set");
 
-    // Debug: confirm which secret is loaded without leaking it
-    logStep("Webhook secret loaded", {
-      prefix: webhookSecret.slice(0, 10),
-      length: webhookSecret.length,
-    });
+    logStep("Webhook secret loaded");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
@@ -61,11 +58,7 @@ serve(async (req) => {
     // Stripe signature verification requires the exact raw request payload.
     const rawBodyBytes = await req.arrayBuffer();
     const body = new TextDecoder().decode(rawBodyBytes);
-    logStep("Received request", {
-      hasSignature: true,
-      signaturePrefix: signature.slice(0, 10),
-      bodyLength: body.length,
-    });
+    logStep("Received request", { bodyLength: body.length });
     let event: Stripe.Event;
 
     try {

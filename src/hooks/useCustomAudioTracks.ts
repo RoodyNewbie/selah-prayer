@@ -157,7 +157,7 @@ export function useDeleteAudioTrack() {
 export async function getSignedAudioUrl(filePath: string): Promise<string | null> {
   const { data, error } = await supabase.storage
     .from('custom-audio')
-    .createSignedUrl(filePath, 60 * 60 * 24); // 24 hour expiry
+    .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
 
   if (error) {
     console.error('Failed to get signed URL:', error);
