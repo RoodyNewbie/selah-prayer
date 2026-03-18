@@ -82,7 +82,7 @@ export function MeditationTimerProvider({ children }: { children: React.ReactNod
   const [totalSeconds, setTotalSeconds] = useState(0);
   
   // Refs
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimePlayedRef = useRef(false);
 
   // Fetch settings on mount

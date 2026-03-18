@@ -66,7 +66,7 @@ export default function Meditate() {
   
   // Track actual meditation time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimePlayedRef = useRef(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
