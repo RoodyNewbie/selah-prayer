@@ -1,5 +1,5 @@
 // Stripe configuration - keys loaded from environment variables
-export const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+export const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51SrTgLBAwfR8W0DxuVL0FY9z4tTnDway3e5kT1tYMFfxgiJZ16IyfEEu7pJDz4HcQjm3IfEbZOk93rTW3pJIyaJK00Cv49oeJl';
 
 export const STRIPE_PRICES = {
   monthly: {
