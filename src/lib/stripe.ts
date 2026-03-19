@@ -3,13 +3,13 @@ export const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KE
 
 export const STRIPE_PRICES = {
   monthly: {
-    id: import.meta.env.VITE_STRIPE_PRICE_MONTHLY || '',
+    id: 'price_1TC8v2BAwfR8W0DxStp8uNy8',
     amount: 5,
     interval: 'month' as const,
     label: '$5/month',
   },
   yearly: {
-    id: import.meta.env.VITE_STRIPE_PRICE_YEARLY || '',
+    id: 'price_1TC8v1BAwfR8W0Dxskg5vUDZ',
     amount: 40,
     interval: 'year' as const,
     label: '$40/year',
