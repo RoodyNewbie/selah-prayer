@@ -74,8 +74,9 @@ export default function Landing() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground font-body">Loading...</div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
+        <BookHeart className="w-8 h-8 text-primary animate-pulse" />
+        <div className="text-muted-foreground font-body text-sm">Loading...</div>
       </div>
     );
   }
