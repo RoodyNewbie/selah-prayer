@@ -65,6 +65,16 @@ serve(async (req) => {
 
     const { priceId } = await req.json();
     if (!priceId) throw new Error("priceId is required");
+
+    // Allowlist: only accept known Selah Supporter price IDs
+    const VALID_PRICE_IDS = new Set([
+      'price_1TC8v2BAwfR8W0DxStp8uNy8', // monthly
+      'price_1TC8v1BAwfR8W0Dxskg5vUDZ', // yearly
+    ]);
+    if (!VALID_PRICE_IDS.has(priceId)) {
+      throw new Error("Invalid price selected");
+    }
+
     logStep("Received priceId", { priceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
