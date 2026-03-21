@@ -4,9 +4,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const ALLOWED_ORIGINS = [
   "https://selah-prayer.lovable.app",
-  "http://localhost:5173",
-  "http://localhost:8080",
-  "http://localhost:3000",
 ];
 
 function getCorsHeaders(origin: string | null) {
