@@ -4,9 +4,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const ALLOWED_ORIGINS = [
   "https://selah-prayer.lovable.app",
-  "http://localhost:5173",
-  "http://localhost:8080",
-  "http://localhost:3000",
 ];
 
 function getCorsHeaders(origin: string | null) {
@@ -76,6 +73,15 @@ serve(async (req) => {
     }
 
     logStep("Received priceId", { priceId });
+
+    // Validate priceId against allowed live prices to prevent checkout manipulation
+    const ALLOWED_PRICES = ['price_1TC8v2BAwfR8W0DxStp8uNy8', 'price_1TC8v1BAwfR8W0Dxskg5vUDZ'];
+    if (!ALLOWED_PRICES.includes(priceId)) {
+      return new Response(JSON.stringify({ error: 'Invalid price selected' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
