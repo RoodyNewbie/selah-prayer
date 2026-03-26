@@ -44,7 +44,7 @@ export function DonorGate({ children, fallback, featureName }: DonorGateProps) {
           Unlock {featureName || 'this feature'}
         </h3>
         <p className="mb-4 max-w-sm text-sm text-muted-foreground">
-          Support Selah with a one-time donation to access premium features.
+          Support Selah to unlock premium features.
         </p>
         <Button asChild variant="outline" size="sm" className="gap-2">
           <Link to="/donate">
