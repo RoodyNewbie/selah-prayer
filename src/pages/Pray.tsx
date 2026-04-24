@@ -86,7 +86,7 @@ export default function Pray() {
 
   // Handle exit - MUST be defined before any early returns
   const handleExit = useCallback(() => {
-    navigate('/');
+    navigate('/home');
   }, [navigate]);
 
   const handleContentChange = useCallback((value: string) => {
@@ -277,7 +277,7 @@ export default function Pray() {
         setIsSavingPersonal(false);
       }
     }
-    navigate('/');
+    navigate('/home');
   };
 
   // Handle begin meditation
@@ -562,7 +562,7 @@ export default function Pray() {
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
             </Button>
-            <Button variant="outline" onClick={() => navigate('/')} size="lg" className="w-full">
+            <Button variant="outline" onClick={() => navigate('/home')} size="lg" className="w-full">
               Return Home
             </Button>
           </div>
