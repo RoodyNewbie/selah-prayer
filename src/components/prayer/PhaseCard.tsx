@@ -241,12 +241,7 @@ export function PhaseCard({
           placeholder="Write your thoughts here... (optional)"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={cn(
-            "min-h-[220px] rounded-2xl bg-transparent border-border/30",
-            "placeholder:text-muted-foreground/75",
-            "focus-visible:border-primary/30",
-            "journal-textarea"
-          )}
+          className="min-h-[180px] journal-textarea"
           disabled={transitionState !== 'visible'}
         />
       </div>
