@@ -585,7 +585,7 @@ export default function Pray() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between p-4 border-b border-border/10">
+      <header className="relative z-10 flex items-center justify-between p-4 border-b border-border/20">
         <Button variant="ghost" size="icon" onClick={handleExit}>
           <X className="w-5 h-5" />
         </Button>
@@ -597,12 +597,14 @@ export default function Pray() {
       </header>
 
       {/* Progress */}
-      <div className="relative z-10 px-4 pt-4 pb-2">
-        <PhaseProgress
-          currentPhase={currentPhaseIndex}
-          totalPhases={activePhases.length}
-          phaseNames={phaseNames}
-        />
+      <div className="relative z-10 px-4 pt-4">
+        <div className="mx-auto max-w-lg prayer-shell px-4 py-3">
+          <PhaseProgress
+            currentPhase={currentPhaseIndex}
+            totalPhases={activePhases.length}
+            phaseNames={phaseNames}
+          />
+        </div>
       </div>
 
       {/* Phase Content */}
@@ -610,7 +612,7 @@ export default function Pray() {
         {/* Show recurring requests in the Practical Needs phase */}
         {currentPhase.id === 'needs' && recurringRequests.length > 0 && (
           <div className={cn(
-            "mb-8 p-4 bg-background/25 rounded-2xl",
+            "mb-8 p-4 bg-card/35 rounded-2xl border border-border/25 prayer-shell",
             "transition-opacity duration-300",
             prefersReducedMotion ? "duration-0" : "duration-300"
           )}>

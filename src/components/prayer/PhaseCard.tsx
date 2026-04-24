@@ -197,7 +197,7 @@ export function PhaseCard({
   const supportsMemory = MEMORY_PHASES.includes(phase.id) && !wasSkipped;
 
   return (
-    <div className="space-y-10 px-1 py-3 md:px-6">
+    <div className="space-y-8 prayer-shell px-5 py-7 md:px-6 md:py-8">
       {/* Phase Header */}
       <div className={cn("text-center space-y-4", getContentStyles(showHeader))}>
         <div className="flex items-center justify-center gap-3">
@@ -218,10 +218,13 @@ export function PhaseCard({
 
       {/* Prompt */}
       <div className={cn(
-        "px-2 md:px-8",
+        "prayer-prompt px-5 py-6",
         getContentStyles(showPrompt)
       )}>
-        <p className="font-display text-2xl md:text-[2rem] text-foreground/90 italic text-center leading-[1.8]">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-center mb-3">
+          Reflection Prompt
+        </p>
+        <p className="font-display text-xl text-foreground italic text-center leading-relaxed">
           "{phase.prompts[currentPromptIndex]}"
         </p>
       </div>
@@ -238,13 +241,7 @@ export function PhaseCard({
           placeholder="Write your thoughts here... (optional)"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={cn(
-            "min-h-[250px] md:min-h-[280px] rounded-none px-0 py-2 text-[1.02rem]",
-            "bg-transparent border-0 border-b border-foreground/15 shadow-none",
-            "placeholder:text-muted-foreground/65 leading-8",
-            "focus-visible:border-b focus-visible:border-primary/35 focus-visible:ring-0",
-            "journal-textarea"
-          )}
+          className="min-h-[180px] journal-textarea"
           disabled={transitionState !== 'visible'}
         />
       </div>
@@ -262,7 +259,7 @@ export function PhaseCard({
 
       {/* Actions */}
       <div className={cn(
-        "flex items-center justify-between gap-3 pt-3 border-t border-border/20",
+        "flex items-center justify-between gap-3 pt-1",
         getContentStyles(showContent, false)
       )}>
         <Button 
