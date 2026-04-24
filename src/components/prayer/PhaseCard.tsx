@@ -238,7 +238,7 @@ export function PhaseCard({
           placeholder="Write your thoughts here... (optional)"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="min-h-[180px]"
+          className="min-h-[180px] journal-textarea"
           disabled={transitionState !== 'visible'}
         />
       </div>

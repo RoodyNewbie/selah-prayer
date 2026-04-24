@@ -5,6 +5,8 @@ import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { UpgradePrompt } from '@/components/subscription/UpgradePrompt';
+import { ContentSection } from '@/components/layout/ContentSection';
+import { ScriptureHero } from '@/components/design/ScriptureHero';
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAnsweredRequests } from '@/hooks/usePrayerRequests';
@@ -90,85 +92,89 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 px-4 space-y-6 animate-slide-up">
+      <main className="relative z-10 section-stack animate-slide-up pb-6">
         {/* Welcome Section */}
-        <section className="text-center pt-10 pb-4">
+        <ContentSection className="text-center pt-10 pb-2">
           <h2 className="font-display text-3xl md:text-4xl text-foreground mb-2 tracking-wide">
             Peace be with you
           </h2>
           <p className="text-muted-foreground font-body">
             {getLastPrayedText()}
           </p>
-        </section>
+        </ContentSection>
 
         {/* Start Prayer Card - Hero card with more prominence */}
-        <Card className="p-6 text-center space-y-4 shadow-lifted">
-          <div className="space-y-2">
-            <p className="text-muted-foreground font-body text-sm leading-relaxed">
-              Take a moment to pause, breathe, and connect.
-            </p>
-          </div>
-          <Button
-            size="xl"
-            onClick={() => navigate('/pray')}
-            className="w-full max-w-xs mx-auto"
-          >
-            Begin Prayer
-          </Button>
-        </Card>
+        <ContentSection>
+          <Card className="p-6 text-center space-y-4 shadow-lifted">
+            <div className="space-y-2">
+              <p className="text-muted-foreground font-body text-sm leading-relaxed">
+                Take a moment to pause, breathe, and connect.
+              </p>
+            </div>
+            <Button
+              size="xl"
+              onClick={() => navigate('/pray')}
+              className="w-full max-w-xs mx-auto"
+            >
+              Begin Prayer
+            </Button>
+          </Card>
+        </ContentSection>
 
         {/* Quick Add Request */}
-        <Card
-          className="p-5 flex items-center justify-between cursor-pointer group"
-          onClick={() => setShowAddRequest(true)}
-        >
-          <div className="list-item-accent">
-            <h3 className="font-display text-base text-foreground">Add Prayer Request</h3>
-            <p className="text-muted-foreground font-body text-sm">
-              Capture what's on your heart
-            </p>
-          </div>
-          <Button variant="warm" size="icon" className="group-hover:shadow-glow transition-shadow">
-            <Plus className="w-5 h-5" />
-          </Button>
-        </Card>
+        <ContentSection>
+          <Card
+            className="p-5 flex items-center justify-between cursor-pointer group"
+            onClick={() => setShowAddRequest(true)}
+          >
+            <div className="list-item-accent">
+              <h3 className="font-display text-base text-foreground">Add Prayer Request</h3>
+              <p className="text-muted-foreground font-body text-sm">
+                Capture what's on your heart
+              </p>
+            </div>
+            <Button variant="warm" size="icon" className="group-hover:shadow-glow transition-shadow">
+              <Plus className="w-5 h-5" />
+            </Button>
+          </Card>
+        </ContentSection>
 
         {/* Testimony of the Day - Stones of Remembrance */}
         {randomTestimony && (
-          <Card 
-            className="p-5 bg-primary/5 border-primary/20 cursor-pointer interactive-lift"
-            onClick={() => navigate('/answered')}
-          >
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Heart className="w-4 h-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-primary font-medium mb-1 tracking-wide uppercase">Stone of Remembrance</p>
-                <p className="font-body text-sm text-foreground line-clamp-2 leading-relaxed">
-                  "{randomTestimony.title}"
-                </p>
-                {randomTestimony.answeredDate && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Answered {formatDistanceToNow(new Date(randomTestimony.answeredDate), { addSuffix: true })}
+          <ContentSection>
+            <Card 
+              className="p-5 bg-primary/5 border-primary/20 cursor-pointer interactive-lift"
+              onClick={() => navigate('/answered')}
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Heart className="w-4 h-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-primary font-medium mb-1 tracking-wide uppercase">Stone of Remembrance</p>
+                  <p className="font-body text-sm text-foreground line-clamp-2 leading-relaxed">
+                    "{randomTestimony.title}"
                   </p>
-                )}
+                  {randomTestimony.answeredDate && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Answered {formatDistanceToNow(new Date(randomTestimony.answeredDate), { addSuffix: true })}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </ContentSection>
         )}
 
         {/* Scripture of encouragement */}
-        <section className="scripture-block text-center">
-          <div className="scripture-glow" />
-          <blockquote className="font-display text-lg md:text-xl text-foreground/85 italic mb-3 leading-relaxed tracking-wide">
-            "{randomVerse.text}"
-          </blockquote>
-          <cite className="text-primary font-body text-sm not-italic font-medium tracking-wide">— {randomVerse.reference}</cite>
-        </section>
+        <ContentSection>
+          <ScriptureHero text={randomVerse.text} reference={randomVerse.reference} />
+        </ContentSection>
 
         {/* Upgrade Prompt for non-donors */}
-        <UpgradePrompt />
+        <ContentSection>
+          <UpgradePrompt />
+        </ContentSection>
       </main>
 
       <AddRequestDialog

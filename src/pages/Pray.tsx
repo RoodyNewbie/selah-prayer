@@ -467,7 +467,7 @@ export default function Pray() {
             placeholder="Write your own prayers and reflections..."
             value={personalPrayer}
             onChange={(e) => setPersonalPrayer(e.target.value)}
-            className="min-h-[100px] resize-y"
+            className="min-h-[100px] resize-y journal-textarea"
           />
         </div>
 

@@ -14,7 +14,7 @@ export function BottomNavItem({ to, icon: Icon, label }: BottomNavItemProps) {
       to={to}
       className={({ isActive }) =>
         cn(
-          "flex flex-col items-center justify-center gap-1 py-2.5 px-4 transition-all duration-200 relative min-w-[64px]",
+          "flex flex-col items-center justify-center gap-1 py-2 px-2 transition-all duration-200 motion-reduce:transition-none relative min-w-[60px]",
           isActive
             ? "text-primary"
             : "text-muted-foreground/70 hover:text-foreground"
@@ -25,6 +25,7 @@ export function BottomNavItem({ to, icon: Icon, label }: BottomNavItemProps) {
         <>
           <div className={cn(
             "relative p-1.5 rounded-xl transition-all duration-200",
+            "motion-reduce:transition-none",
             isActive && "bg-primary/10"
           )}>
             <Icon className={cn(
