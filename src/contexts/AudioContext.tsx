@@ -61,6 +61,7 @@ function getStoredSettings(): AudioSettings {
         track: parsed.track || 'silence',
         volume: typeof parsed.volume === 'number' ? parsed.volume : 50,
         enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : false,
+        customTrackPath: typeof parsed.customTrackPath === 'string' ? parsed.customTrackPath : undefined,
       };
     }
   } catch (e) {
