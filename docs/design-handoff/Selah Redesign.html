@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selah — Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+/* ── DESIGN TOKENS ───────────────────────────────────────── */
+:root {
+  --bg:   hsl(42 30% 97%);
+  --bg1:  hsl(40 24% 94%);
+  --bg2:  hsl(40 20% 90%);
+  --fg:   hsl(232 22% 17%);
+  --fg2:  hsl(232 12% 50%);
+  --fg3:  hsl(40 10% 66%);
+  --pri:  hsl(220 52% 40%);
+  --acc:  hsl(42 48% 58%);
+  --rule: hsl(40 22% 86%);
+  --pri-shadow: hsl(220 52% 40% / 0.28);
+
+  /* Phase tints — barely-there color washes */
+  --ph-praise:     hsl(44  60% 97.5%);
+  --ph-will:       hsl(150 42% 97.5%);
+  --ph-needs:      hsl(222 38% 97.5%);
+  --ph-forgiveness:hsl(340 45% 97.5%);
+  --ph-protection: hsl(268 35% 97.5%);
+  --ph-worship:    hsl(42  52% 97.5%);
+}
+
+.dark {
+  --bg:   hsl(240 28% 11%);
+  --bg1:  hsl(240 24% 16%);
+  --bg2:  hsl(240 20% 20%);
+  --fg:   hsl(44 20% 93%);
+  --fg2:  hsl(240 10% 60%);
+  --fg3:  hsl(240  8% 40%);
+  --pri:  hsl(26 56% 64%);
+  --acc:  hsl(43 50% 70%);
+  --rule: hsl(240 18% 22%);
+  --pri-shadow: hsl(26 56% 64% / 0.22);
+
+  --ph-praise:     hsl(44  38% 13%);
+  --ph-will:       hsl(148 32% 13%);
+  --ph-needs:      hsl(220 30% 13%);
+  --ph-forgiveness:hsl(338 35% 13%);
+  --ph-protection: hsl(268 28% 13%);
+  --ph-worship:    hsl(42  38% 13%);
+}
+
+/* ── RESET ───────────────────────────────────────────────── */
+*,*::before,*::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #0c0c18;
+  height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; padding: 0;
+}
+
+@media (max-width: 430px) {
+  body { background: var(--bg); }
+  .phone { border-radius: 0 !important; width: 100vw !important; height: 100dvh !important; }
+}
+
+/* ── PHONE SHELL ─────────────────────────────────────────── */
+.phone {
+  width: 390px; height: 844px;
+  background: var(--bg); color: var(--fg);
+  border-radius: 44px; overflow: hidden;
+  position: relative;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow:
+    0 0 0 1px oklch(65% 0.015 265 / 0.18),
+    0 40px 100px oklch(5% 0.03 265 / 0.8);
+  transition: background 350ms, color 350ms;
+}
+
+/* Dynamic Island */
+.notch {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 34px; background: #0c0c18;
+  border-radius: 20px; z-index: 200; pointer-events: none;
+}
+@media (max-width: 430px) { .notch { background: #000; } }
+
+/* ── SCREENS ─────────────────────────────────────────────── */
+.screen {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  background: var(--bg); color: var(--fg);
+  transition: background 350ms;
+}
+.screen::-webkit-scrollbar { display: none; }
+
+/* Fade-up entrance */
+.sin { animation: sIn 280ms cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes sIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide-in for phase content */
+/* Breath easing — the signature Selah motion */
+.phin { animation: phIn 620ms cubic-bezier(0.37,0,0.63,1) both; }
+@keyframes phIn {
+  from { opacity: 0; transform: translateX(22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── UTILITIES ───────────────────────────────────────────── */
+.rule  { height: 1px; background: var(--rule); flex-shrink: 0; }
+.df    { font-family: 'Playfair Display', serif; }
+.dfi   { font-family: 'Playfair Display', serif; font-style: italic; }
+.noscroll::-webkit-scrollbar { display: none; }
+.noscroll { scrollbar-width: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="selah-screens.jsx"></script>
+<script type="text/babel" src="selah-pray.jsx"></script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dark": false,
+  "accentPreset": "Garden"
+}/*EDITMODE-END*/;
+
+function TweaksPanel({ dark, onToggleDark, onClose }) {
+  const PRESETS = [
+    { name:'Dawn',        pri:'hsl(220 52% 40%)', acc:'hsl(42 48% 58%)',  label:'Morning' },
+    { name:'Candlelight', pri:'hsl(26 56% 56%)',  acc:'hsl(43 52% 70%)',  label:'Flame' },
+    { name:'Cathedral',   pri:'hsl(262 44% 44%)', acc:'hsl(42 40% 60%)',  label:'Indigo' },
+    { name:'Garden',      pri:'hsl(155 44% 36%)', acc:'hsl(80 42% 52%)',  label:'Sage' },
+  ];
+  const [active, setActive] = React.useState('Dawn');
+
+  const applyPreset = (p) => {
+    document.documentElement.style.setProperty('--pri', p.pri);
+    document.documentElement.style.setProperty('--pri-shadow', p.pri.replace(')', ' / 0.28)'));
+    document.documentElement.style.setProperty('--acc', p.acc);
+    setActive(p.name);
+    window.parent.postMessage({ type:'__edit_mode_set_keys', edits:{ accentPreset: p.name } }, '*');
+  };
+
+  return (
+    <div onClick={e => e.target===e.currentTarget && onClose()}
+      style={{ position:'absolute', inset:0, zIndex:300,
+        background:'hsl(0 0% 0% / 0.45)', display:'flex', alignItems:'flex-end' }}>
+      <div style={{ width:'100%', background:'var(--bg1)',
+        borderRadius:'24px 24px 44px 44px', padding:'24px 24px 52px',
+        animation:'sIn 220ms ease-out both' }}>
+
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
+          <span className="df" style={{ fontSize:20, fontWeight:500, color:'var(--fg)' }}>Tweaks</span>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--fg2)', fontSize:20 }}>✕</button>
+        </div>
+
+        {/* Dark mode */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+          padding:'12px 0', borderBottom:'1px solid var(--rule)' }}>
+          <div>
+            <div style={{ fontSize:14, fontWeight:500, color:'var(--fg)' }}>Dark mode</div>
+            <div style={{ fontSize:12, color:'var(--fg2)', marginTop:2 }}>Evening atmosphere</div>
+          </div>
+          <div onClick={onToggleDark} style={{ width:48, height:28, borderRadius:14,
+            background: dark ? 'var(--pri)' : 'var(--bg2)',
+            position:'relative', cursor:'pointer', transition:'background 220ms',
+            border:'1px solid var(--rule)', flexShrink:0 }}>
+            <div style={{ position:'absolute', top:3, left: dark ? 22 : 3,
+              width:20, height:20, borderRadius:'50%', background:'white',
+              transition:'left 220ms', boxShadow:'0 1px 4px rgba(0,0,0,0.25)' }} />
+          </div>
+        </div>
+
+        {/* Palette presets */}
+        <div style={{ paddingTop:16, marginBottom:16 }}>
+          <div style={{ fontSize:10, fontWeight:600, letterSpacing:'0.1em',
+            textTransform:'uppercase', color:'var(--fg2)', marginBottom:12 }}>Accent colour</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
+            {PRESETS.map(p => (
+              <button key={p.name} onClick={() => applyPreset(p)} style={{
+                padding:'10px 4px', borderRadius:10, cursor:'pointer',
+                border: active===p.name ? `2px solid ${p.pri}` : '1.5px solid var(--rule)',
+                background: active===p.name ? 'var(--bg2)' : 'var(--bg1)',
+                display:'flex', flexDirection:'column', alignItems:'center', gap:7,
+                transition:'all 150ms' }}>
+                <div style={{ width:24, height:24, borderRadius:'50%', background:p.pri,
+                  boxShadow: active===p.name ? `0 2px 10px ${p.pri.replace(')', ' / 0.45)')}` : 'none',
+                  transition:'box-shadow 150ms' }} />
+                <span style={{ fontSize:9, fontWeight:600, letterSpacing:'0.05em',
+                  textTransform:'uppercase', color:'var(--fg2)' }}>{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p style={{ fontSize:12, color:'var(--fg3)', lineHeight:1.6 }}>
+          Tap the cross button in the nav to begin praying. AI composer is live on the completion screen.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem('selah-r-dark');
+    return saved !== null ? saved === '1' : TWEAK_DEFAULTS.dark;
+  });
+  const [tab, setTab] = useState(() => localStorage.getItem('selah-r-tab') || 'home');
+  const [prayState, setPrayState] = useState(null);
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+
+  useEffect(() => { localStorage.setItem('selah-r-dark', dark ? '1' : '0'); }, [dark]);
+  useEffect(() => { localStorage.setItem('selah-r-tab', tab); }, [tab]);
+
+  useEffect(() => {
+    const fn = e => {
+      if (e.data?.type === '__activate_edit_mode')   setTweaksOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweaksOpen(false);
+    };
+    window.addEventListener('message', fn);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', fn);
+  }, []);
+
+  const toggleDark = () => setDark(d => !d);
+  const startPray  = () => setPrayState({ step:'format', phaseIdx:0, content:{}, format:null });
+  const endPray    = () => setPrayState(null);
+
+  const SV = window.ScreenView;
+  const BN = window.BottomNav;
+  const PF = window.PrayFlow;
+
+  return (
+    <div className={`phone${dark ? ' dark' : ''}`}>
+      <div className="notch" />
+
+      {prayState && PF
+        ? <PF state={prayState} setState={setPrayState} onEnd={endPray} dark={dark} />
+        : <>
+            {SV && <SV tab={tab} onNav={setTab} onStartPray={startPray} dark={dark} toggleDark={toggleDark} />}
+            {BN && <BN tab={tab} onNav={setTab} onPray={startPray} />}
+          </>
+      }
+
+      {tweaksOpen && <TweaksPanel dark={dark} onToggleDark={toggleDark} onClose={() => setTweaksOpen(false)} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+<script>
+(function() {
+  function scalePhone() {
+    var el = document.querySelector('.phone');
+    if (!el) { requestAnimationFrame(scalePhone); return; }
+    var s = Math.min(window.innerWidth / 390, window.innerHeight / 844, 1);
+    // zoom affects layout box (unlike transform), so flex centering works correctly
+    el.style.zoom = s;
+    el.style.transform = '';
+  }
+  scalePhone();
+  window.addEventListener('resize', scalePhone);
+  setTimeout(scalePhone, 300);
+  setTimeout(scalePhone, 800);
+})();
+</script>
+</body>
+</html>
