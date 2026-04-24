@@ -128,7 +128,7 @@ export function PrayerMemoryCard({
     <>
       <div 
         className={cn(
-          "bg-muted/30 rounded-xl p-4 border border-border/30 space-y-3",
+          "bg-background/20 rounded-2xl p-4 space-y-3",
           "transition-all",
           prefersReducedMotion ? "duration-0" : "duration-300 animate-slide-up",
           className
@@ -157,7 +157,7 @@ export function PrayerMemoryCard({
             return (
               <div 
                 key={topic.id} 
-                className="bg-background/50 rounded-lg p-3 space-y-2"
+                className="bg-background/35 rounded-xl p-3 space-y-2"
               >
                 <p className="text-sm text-foreground font-body line-clamp-2">
                   {displaySummary}
