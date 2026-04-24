@@ -4,11 +4,8 @@ import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { UpgradePrompt } from '@/components/subscription/UpgradePrompt';
-<<<<<<< codex/add-design-documentation-files-and-implementation-plan-u05ojy
 import { PullQuote } from '@/components/design/PullQuote';
 import { SectionRule } from '@/components/design/SectionRule';
-=======
->>>>>>> main
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ScriptureHero } from '@/components/design/ScriptureHero';
 import { storage } from '@/lib/storage';
@@ -96,7 +93,6 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-<<<<<<< codex/add-design-documentation-files-and-implementation-plan-u05ojy
       <main className="relative z-10 section-stack animate-slide-up pb-8">
         {/* Devotional Opening */}
         <ContentSection className="text-center pt-8 space-y-4">
@@ -104,18 +100,11 @@ const Index = () => {
             Daily Return
           </p>
           <h2 className="font-display text-3xl md:text-4xl text-foreground tracking-wide">
-=======
-      <main className="relative z-10 section-stack animate-slide-up pb-6">
-        {/* Welcome Section */}
-        <ContentSection className="text-center pt-10 pb-2">
-          <h2 className="font-display text-3xl md:text-4xl text-foreground mb-2 tracking-wide">
->>>>>>> main
             Peace be with you
           </h2>
           <p className="text-muted-foreground font-body text-sm">
             {getLastPrayedText()}
           </p>
-<<<<<<< codex/add-design-documentation-files-and-implementation-plan-u05ojy
           <SectionRule />
         </ContentSection>
 
@@ -134,18 +123,6 @@ const Index = () => {
             <p className="text-muted-foreground font-body text-sm leading-relaxed mb-5 max-w-sm mx-auto">
               Pause, breathe, and enter a guided prayer journey in your own words.
             </p>
-=======
-        </ContentSection>
-
-        {/* Start Prayer Card - Hero card with more prominence */}
-        <ContentSection>
-          <Card className="p-6 text-center space-y-4 shadow-lifted">
-            <div className="space-y-2">
-              <p className="text-muted-foreground font-body text-sm leading-relaxed">
-                Take a moment to pause, breathe, and connect.
-              </p>
-            </div>
->>>>>>> main
             <Button
               size="xl"
               onClick={() => navigate('/pray')}
@@ -153,7 +130,6 @@ const Index = () => {
             >
               Begin Prayer
             </Button>
-<<<<<<< codex/add-design-documentation-files-and-implementation-plan-u05ojy
           </section>
         </ContentSection>
 
@@ -176,33 +152,11 @@ const Index = () => {
               </span>
             </div>
           </button>
-=======
-          </Card>
-        </ContentSection>
-
-        {/* Quick Add Request */}
-        <ContentSection>
-          <Card
-            className="p-5 flex items-center justify-between cursor-pointer group"
-            onClick={() => setShowAddRequest(true)}
-          >
-            <div className="list-item-accent">
-              <h3 className="font-display text-base text-foreground">Add Prayer Request</h3>
-              <p className="text-muted-foreground font-body text-sm">
-                Capture what's on your heart
-              </p>
-            </div>
-            <Button variant="warm" size="icon" className="group-hover:shadow-glow transition-shadow">
-              <Plus className="w-5 h-5" />
-            </Button>
-          </Card>
->>>>>>> main
         </ContentSection>
 
         {/* Stone of Remembrance */}
         {randomTestimony && (
           <ContentSection>
-<<<<<<< codex/add-design-documentation-files-and-implementation-plan-u05ojy
             <section
               className="rounded-2xl border border-primary/20 bg-primary/[0.07] p-5 cursor-pointer interactive-lift"
               onClick={() => navigate('/answered')}
@@ -231,37 +185,6 @@ const Index = () => {
           </ContentSection>
         )}
 
-=======
-            <Card 
-              className="p-5 bg-primary/5 border-primary/20 cursor-pointer interactive-lift"
-              onClick={() => navigate('/answered')}
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Heart className="w-4 h-4 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-primary font-medium mb-1 tracking-wide uppercase">Stone of Remembrance</p>
-                  <p className="font-body text-sm text-foreground line-clamp-2 leading-relaxed">
-                    "{randomTestimony.title}"
-                  </p>
-                  {randomTestimony.answeredDate && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Answered {formatDistanceToNow(new Date(randomTestimony.answeredDate), { addSuffix: true })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-          </ContentSection>
-        )}
-
-        {/* Scripture of encouragement */}
-        <ContentSection>
-          <ScriptureHero text={randomVerse.text} reference={randomVerse.reference} />
-        </ContentSection>
-
->>>>>>> main
         {/* Upgrade Prompt for non-donors */}
         <ContentSection>
           <UpgradePrompt />
