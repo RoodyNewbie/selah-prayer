@@ -44,6 +44,7 @@ export function PhaseProgress({ currentPhase, totalPhases, phaseNames }: PhasePr
   }, [currentPhase, prefersReducedMotion]);
 
   const progressWidth = ((animatedPhase + 1) / totalPhases) * 100;
+  const currentPhaseName = phaseNames[currentPhase] ?? `Phase ${currentPhase + 1}`;
 
   return (
     <div className="w-full">

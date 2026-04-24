@@ -579,6 +579,11 @@ export default function Pray() {
       onClick={handleUserInteraction}
       onKeyDown={handleUserInteraction}
     >
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute inset-x-0 top-0 h-[44vh] bg-gradient-to-b from-background/55 via-transparent to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[35vh] bg-gradient-to-t from-background/40 via-transparent to-transparent" />
+      </div>
+
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-4 border-b border-border/20">
         <Button variant="ghost" size="icon" onClick={handleExit}>
@@ -603,7 +608,7 @@ export default function Pray() {
       </div>
 
       {/* Phase Content */}
-      <main className="relative z-10 px-4 py-6 max-w-lg mx-auto">
+      <main className="relative z-10 px-5 md:px-8 py-6 max-w-3xl mx-auto">
         {/* Show recurring requests in the Practical Needs phase */}
         {currentPhase.id === 'needs' && recurringRequests.length > 0 && (
           <div className={cn(
