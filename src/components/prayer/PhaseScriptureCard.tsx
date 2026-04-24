@@ -68,7 +68,7 @@ export function PhaseScriptureCard({ phaseId, className }: PhaseScriptureCardPro
   const hasMultipleScriptures = (phaseScriptures[phaseId]?.length ?? 0) > 1;
 
   return (
-    <div className={cn("text-center space-y-1", className)}>
+    <div className={cn("text-center rounded-2xl bg-card/30 border border-border/20 px-4 py-4 space-y-1", className)}>
       <div 
         className={cn(
           "transition-opacity",
@@ -76,11 +76,11 @@ export function PhaseScriptureCard({ phaseId, className }: PhaseScriptureCardPro
           isFading ? "opacity-0" : "opacity-100"
         )}
       >
-        <p className="text-muted-foreground font-body text-sm leading-relaxed italic">
+        <p className="text-muted-foreground font-body text-[0.95rem] leading-relaxed italic">
           "{currentScripture.text}"
         </p>
-        <div className="flex items-center justify-center gap-2 mt-1">
-          <p className="text-primary font-body text-xs font-medium">
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <p className="text-primary font-body text-xs font-medium tracking-wide">
             — {currentScripture.reference}
           </p>
           {hasMultipleScriptures && (

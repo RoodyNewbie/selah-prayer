@@ -46,32 +46,32 @@ export function PhaseProgress({ currentPhase, totalPhases, phaseNames }: PhasePr
   const progressWidth = ((animatedPhase + 1) / totalPhases) * 100;
 
   return (
-    <div className="w-full px-4">
-      <div className="flex items-center justify-between mb-2">
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-3 px-1">
         {phaseNames.map((name, index) => (
           <div
             key={name}
             className={cn(
               "flex flex-col items-center transition-opacity",
               prefersReducedMotion ? "duration-0" : "duration-300",
-              index <= currentPhase ? "opacity-100" : "opacity-40"
+              index <= currentPhase ? "opacity-90" : "opacity-35"
             )}
           >
             <div
               className={cn(
-                "w-3 h-3 rounded-full transition-all",
+                "w-2.5 h-2.5 rounded-full transition-all",
                 prefersReducedMotion ? "duration-0" : "duration-300",
                 index < currentPhase && "bg-primary",
                 index === currentPhase && "bg-primary",
-                index === currentPhase && isPulsing && !prefersReducedMotion && "ring-4 ring-primary/30 scale-125",
-                index === currentPhase && !isPulsing && "ring-4 ring-primary/20",
+                index === currentPhase && isPulsing && !prefersReducedMotion && "ring-2 ring-primary/30 scale-110",
+                index === currentPhase && !isPulsing && "ring-2 ring-primary/15",
                 index > currentPhase && "bg-muted-foreground/30"
               )}
             />
             <span className={cn(
               "hidden md:block text-xs mt-2 text-muted-foreground font-body transition-all",
               prefersReducedMotion ? "duration-0" : "duration-300",
-              index === currentPhase && "text-foreground font-medium"
+              index === currentPhase && "text-foreground/85 font-medium"
             )}>
               {name}
             </span>
@@ -80,11 +80,11 @@ export function PhaseProgress({ currentPhase, totalPhases, phaseNames }: PhasePr
       </div>
       
       {/* Progress bar with smooth fill */}
-      <div className="relative h-1 bg-muted rounded-full overflow-hidden">
+      <div className="relative h-[3px] bg-muted/65 rounded-full overflow-hidden">
         <div
           className={cn(
             "absolute left-0 top-0 h-full bg-primary rounded-full",
-            prefersReducedMotion ? "transition-none" : "transition-all duration-500 ease-out"
+            prefersReducedMotion ? "transition-none" : "transition-all duration-700 ease-out"
           )}
           style={{ width: `${progressWidth}%` }}
         />
@@ -94,7 +94,7 @@ export function PhaseProgress({ currentPhase, totalPhases, phaseNames }: PhasePr
           <div
             className={cn(
               "absolute top-0 h-full w-4 rounded-full transition-all duration-500 ease-out",
-              "bg-gradient-to-r from-transparent via-primary/50 to-transparent",
+              "bg-gradient-to-r from-transparent via-primary/40 to-transparent",
               isPulsing && "opacity-100",
               !isPulsing && "opacity-0"
             )}

@@ -695,6 +695,52 @@
     height: 1px;
     background: hsl(var(--foreground) / 0.05);
   }
+
+  .prayer-shell {
+    border-radius: 1.5rem;
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--card) / 0.42) 0%,
+      hsl(var(--card) / 0.24) 100%
+    );
+    border: 1px solid hsl(var(--foreground) / 0.08);
+    box-shadow: 0 12px 28px -18px hsl(var(--foreground) / 0.35);
+  }
+
+  .prayer-prompt {
+    border-radius: 1.25rem;
+    background: hsl(var(--card) / 0.35);
+    border: 1px solid hsl(var(--foreground) / 0.08);
+  }
+
+  .prayer-phase-atmosphere {
+    position: relative;
+  }
+
+  .prayer-phase-atmosphere::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 85% 55% at 50% 0%,
+      var(--phase-atmosphere-color, hsl(var(--primary) / 0.08)) 0%,
+      transparent 72%
+    );
+    opacity: 0.9;
+    transition: opacity 500ms ease;
+  }
+
+  .dark .prayer-phase-atmosphere::before {
+    opacity: 0.75;
+  }
+
+  .phase-atmosphere-praise { --phase-atmosphere-color: hsl(45 70% 62% / 0.2); }
+  .phase-atmosphere-will { --phase-atmosphere-color: hsl(150 45% 58% / 0.18); }
+  .phase-atmosphere-needs { --phase-atmosphere-color: hsl(205 55% 58% / 0.19); }
+  .phase-atmosphere-forgiveness { --phase-atmosphere-color: hsl(325 45% 66% / 0.2); }
+  .phase-atmosphere-protection { --phase-atmosphere-color: hsl(260 45% 64% / 0.2); }
+  .phase-atmosphere-worship { --phase-atmosphere-color: hsl(22 58% 60% / 0.22); }
 }
 
 /* ============================================
