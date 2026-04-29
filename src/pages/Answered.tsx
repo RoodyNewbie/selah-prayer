@@ -206,7 +206,7 @@ function StoneCard({
   );
 }
 
-// Timeline view for stones
+// Timeline view for stones — ink rail with days-carried hero number
 function TimelineView({
   requests,
   onDelete,
@@ -219,43 +219,65 @@ function TimelineView({
   onView: (request: PrayerRequest) => void;
 }) {
   return (
-    <div className="relative">
-      {/* Vertical line */}
-      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent" />
+    <div className="relative pl-2">
+      {/* Ink rail */}
+      <div
+        aria-hidden="true"
+        className="absolute left-[18px] top-3 bottom-3 w-px bg-border"
+      />
 
-      <div className="space-y-6">
+      <div className="space-y-9">
         {requests.map((request) => {
           const daysToAnswer =
             request.answeredDate && request.createdAt
-              ? differenceInDays(
-                  new Date(request.answeredDate),
-                  new Date(request.createdAt)
-                )
+              ? differenceInDays(new Date(request.answeredDate), new Date(request.createdAt))
               : null;
 
           return (
-            <div
-              key={request.id}
-              className="relative pl-10 cursor-pointer"
-              onClick={() => onView(request)}
-            >
-              {/* Timeline stone */}
-              <div className="absolute left-2 top-2 w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/20 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-background" />
+            <div key={request.id} className="relative flex gap-4">
+              {/* Stone marker on the rail */}
+              <div className="relative z-10 flex-shrink-0 mt-1.5">
+                <div
+                  className={cn(
+                    'w-[26px] h-[26px] rounded-full flex items-center justify-center',
+                    'border-2 transition-all duration-300 ease-breath motion-reduce:transition-none',
+                    request.isFavorite
+                      ? 'border-primary bg-primary'
+                      : 'border-border bg-background'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'w-[7px] h-[7px] rounded-full',
+                      request.isFavorite ? 'bg-primary-foreground' : 'bg-border'
+                    )}
+                  />
+                </div>
               </div>
 
-              <Card className="p-4 space-y-2 hover:shadow-lifted transition-all border-l-4 border-l-primary/30">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-display text-base text-foreground">
+              {/* Content */}
+              <button
+                type="button"
+                onClick={() => onView(request)}
+                className="flex-1 text-left group focus:outline-none"
+              >
+                {request.answeredDate && (
+                  <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-muted-foreground/85 mb-1">
+                    {format(new Date(request.answeredDate), 'MMMM yyyy')}
+                  </p>
+                )}
+
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="font-display text-[1rem] font-semibold text-foreground leading-snug truncate">
                       {request.title}
                     </h3>
                     {request.isFavorite && (
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
                     )}
                   </div>
                   <div
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-0.5"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Button
@@ -263,6 +285,9 @@ function TimelineView({
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => onToggleFavorite(request)}
+                      aria-label={
+                        request.isFavorite ? 'Remove from favorites' : 'Add to favorites'
+                      }
                     >
                       <Star
                         className={cn(
@@ -297,25 +322,30 @@ function TimelineView({
                   </div>
                 </div>
 
-                {request.answeredDate && (
-                  <p className="text-sm text-primary font-body">
-                    {format(new Date(request.answeredDate), 'MMMM d, yyyy')}
-                  </p>
-                )}
-
+                {/* Days carried — hero number */}
                 {daysToAnswer !== null && daysToAnswer > 0 && (
-                  <p className="text-xs text-muted-foreground font-body flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    God answered after {daysToAnswer} day{daysToAnswer !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex items-baseline gap-1.5 mt-2">
+                    <span className="font-display text-[2.25rem] font-normal leading-none text-primary">
+                      {daysToAnswer}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-body">
+                      day{daysToAnswer !== 1 ? 's' : ''} carried
+                    </span>
+                  </div>
                 )}
 
+                {/* Testimony preview */}
                 {request.testimony && (
-                  <p className="font-body text-sm text-foreground/80 italic line-clamp-2">
+                  <p className="mt-3 font-display italic text-[13px] text-muted-foreground/95 leading-[1.7] line-clamp-3">
                     "{request.testimony}"
                   </p>
                 )}
-              </Card>
+                {!request.testimony && (
+                  <p className="mt-3 text-[11px] text-muted-foreground/70 font-body group-hover:text-primary transition-colors">
+                    Tap to view details →
+                  </p>
+                )}
+              </button>
             </div>
           );
         })}

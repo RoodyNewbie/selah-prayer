@@ -18,8 +18,8 @@ import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock, FileText, ChevronDown, Gift } from 'lucide-react';
+import { X, CheckCircle, Repeat, Loader2, Sparkles, Copy, Check, RefreshCw, AlertCircle, Timer, Lock, Gift } from 'lucide-react';
+import { Sigil } from '@/components/design/Sigil';
 import { TOTAL_TRANSITION_TIME } from '@/lib/transitionTimings';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -41,7 +41,6 @@ export default function Pray() {
   const [personalPrayer, setPersonalPrayer] = useState('');
   const [selectedDuration, setSelectedDuration] = useState(10);
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
-  const [showPhaseNotes, setShowPhaseNotes] = useState(false);
   
   // Rate limiting for prayer generation
   const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
@@ -75,6 +74,7 @@ export default function Pray() {
   const activePhases: PrayerPhase[] = selectedFormat?.phases || builtInFormats[0].phases;
   const currentPhase = activePhases[currentPhaseIndex];
   const phaseNames = activePhases.map((p) => p.name);
+  const phaseIds = activePhases.map((p) => p.id);
   const phaseAtmosphereClass = `phase-atmosphere-${currentPhase.id}`;
 
   // Handle format change - reset phase index and content when format changes
@@ -312,54 +312,53 @@ export default function Pray() {
 
     return (
       <div className="page-background flex flex-col p-4 max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="relative z-10 text-center mb-6 pt-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4 shadow-glow">
-            <CheckCircle className="w-7 h-7 text-primary" />
+        {/* Amen — drop-cap completion */}
+        <div className="relative z-10 text-center mb-7 pt-10 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary mb-5 shadow-[0_6px_24px_hsl(var(--primary)/0.32)]">
+            <CheckCircle className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h1 className="font-display text-2xl text-foreground tracking-wide">Amen</h1>
-          <p className="text-muted-foreground font-body mt-1 leading-relaxed">
-            Your prayer session is complete. May peace be with you.
+          <div className="drop-cap-amen">
+            <span className="cap">A</span>
+            <span className="rest">men.</span>
+          </div>
+          <p className="text-sm text-muted-foreground font-body mt-3 leading-relaxed">
+            Your prayer has been kept.
           </p>
         </div>
 
-        {/* Phase Notes Reference (Collapsible) */}
+        <div className="separator-subtle mx-2 mb-5" />
+
+        {/* Phase miniatures — six manuscript cards */}
         <div className="relative z-10 mb-6 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          <Collapsible open={showPhaseNotes} onOpenChange={setShowPhaseNotes}>
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-between"
-              >
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  View Your Phase Notes
-                </span>
-                <ChevronDown className={cn(
-                  "h-4 w-4 transition-transform",
-                  showPhaseNotes && "rotate-180"
-                )} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="mt-2 p-4 rounded-lg bg-muted/20 border border-border space-y-4 max-h-[300px] overflow-y-auto">
-                {phaseNotes.map((phase) => (
-                  <div key={phase.id}>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+          <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-muted-foreground mb-3">
+            Your reflections
+          </p>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
+            {phaseNotes.map((phase) => {
+              const trimmed = (phase.content || '').trim();
+              const preview = trimmed.length > 55 ? `${trimmed.slice(0, 55)}…` : trimmed;
+              return (
+                <div
+                  key={phase.id}
+                  className="flex-shrink-0 w-28 px-3 py-2.5 rounded-xl border border-border/60 bg-card/55"
+                >
+                  <div className="flex items-center gap-1.5 text-primary mb-1.5">
+                    <Sigil phase={phase.id} size={11} strokeWidth={1.6} />
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                       {phase.name}
-                    </p>
-                    {phase.content ? (
-                      <p className="text-sm whitespace-pre-wrap text-foreground">
-                        {phase.content}
-                      </p>
-                    ) : (
-                      <p className="text-sm italic text-muted-foreground">No notes</p>
-                    )}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+                  {trimmed ? (
+                    <p className="text-[11px] leading-snug text-foreground line-clamp-3">
+                      {preview}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] italic text-muted-foreground/70">Not written</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* AI Generated Prayer Section - Conditional */}
@@ -596,13 +595,14 @@ export default function Pray() {
         <GlobalAudioButton />
       </header>
 
-      {/* Progress */}
-      <div className="relative z-10 px-4 pt-4">
-        <div className="mx-auto max-w-lg prayer-shell px-4 py-3">
+      {/* Progress — illuminated rail with sigil markers */}
+      <div className="relative z-10 px-5 pt-3 pb-1">
+        <div className="mx-auto max-w-lg">
           <PhaseProgress
             currentPhase={currentPhaseIndex}
             totalPhases={activePhases.length}
             phaseNames={phaseNames}
+            phaseIds={phaseIds}
           />
         </div>
       </div>
