@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { TRANSITION_TIMINGS } from '@/lib/transitionTimings';
 import { PhaseScriptureCard } from './PhaseScriptureCard';
 import { PrayerMemoryCard } from './PrayerMemoryCard';
+import { Sigil, isKnownSigil } from '@/components/design/Sigil';
 
 interface PhaseCardProps {
   phase: PrayerPhase;
@@ -197,35 +198,33 @@ export function PhaseCard({
   const supportsMemory = MEMORY_PHASES.includes(phase.id) && !wasSkipped;
 
   return (
-    <div className="space-y-8 prayer-shell px-5 py-7 md:px-6 md:py-8">
+    <div className="space-y-7 px-1 md:px-2">
       {/* Phase Header */}
-      <div className={cn("text-center space-y-4", getContentStyles(showHeader))}>
-        <div className="flex items-center justify-center gap-3">
-          <div
-            className={cn(
-              "w-2.5 h-2.5 rounded-full transition-all duration-300",
-              phaseColors[phase.id] || "bg-primary"
-            )}
-          />
-          <h2 className="font-display text-3xl md:text-[2rem] text-foreground">
+      <div className={cn('text-center space-y-3', getContentStyles(showHeader))}>
+        <div className="flex items-center justify-center gap-2.5 text-primary">
+          {isKnownSigil(phase.id) ? (
+            <Sigil phase={phase.id} size={14} strokeWidth={1.6} />
+          ) : (
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full',
+                phaseColors[phase.id] || 'bg-primary'
+              )}
+            />
+          )}
+          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-muted-foreground">
             {phase.name}
-          </h2>
+          </p>
         </div>
-        <p className="text-muted-foreground font-body text-sm max-w-sm mx-auto">
-          {phase.description}
-        </p>
       </div>
 
-      {/* Prompt */}
-      <div className={cn(
-        "prayer-prompt px-5 py-6",
-        getContentStyles(showPrompt)
-      )}>
-        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground text-center mb-3">
-          Reflection Prompt
-        </p>
-        <p className="font-display text-xl text-foreground italic text-center leading-relaxed">
+      {/* Prompt — hero typography, borderless */}
+      <div className={cn('text-center space-y-2.5 px-2', getContentStyles(showPrompt))}>
+        <h2 className="font-display italic text-[1.55rem] md:text-[1.7rem] leading-[1.5] text-foreground tracking-[0.005em] text-pretty">
           "{phase.prompts[currentPromptIndex]}"
+        </h2>
+        <p className="text-[13px] italic text-muted-foreground/85 max-w-sm mx-auto">
+          {phase.description}
         </p>
       </div>
 
@@ -234,14 +233,14 @@ export function PhaseCard({
         <PhaseScriptureCard phaseId={phase.id} />
       </div>
 
-      {/* Text Area */}
+      {/* Ruled journal textarea — manuscript writing surface */}
       <div className={getContentStyles(showContent, false)}>
         <Textarea
           ref={textareaRef}
-          placeholder="Write your thoughts here... (optional)"
+          placeholder="Write freely…"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="min-h-[180px] journal-textarea"
+          className="min-h-[180px] journal-textarea-ruled"
           disabled={transitionState !== 'visible'}
         />
       </div>

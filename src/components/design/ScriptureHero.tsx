@@ -1,5 +1,4 @@
-import { PullQuote } from '@/components/design/PullQuote';
-import { SectionRule } from '@/components/design/SectionRule';
+import { OrnamentalDivider } from '@/components/design/OrnamentalDivider';
 import { cn } from '@/lib/utils';
 
 interface ScriptureHeroProps {
@@ -10,15 +9,29 @@ interface ScriptureHeroProps {
 
 export function ScriptureHero({ text, reference, className }: ScriptureHeroProps) {
   return (
-    <section className={cn('scripture-block text-center', className)}>
-      <div className="scripture-glow" aria-hidden="true" />
-      <SectionRule className="mb-5 opacity-70" />
-      <PullQuote
-        quote={text}
-        attribution={reference}
-        className="max-w-2xl mx-auto"
-      />
-      <SectionRule className="mt-5 opacity-70" />
+    <section className={cn('text-center px-2', className)}>
+      <OrnamentalDivider className="mb-5" />
+
+      <blockquote
+        className={cn(
+          'font-display italic text-foreground',
+          'text-[1.55rem] leading-[1.55] tracking-[0.005em]',
+          'max-w-[34ch] mx-auto text-pretty'
+        )}
+      >
+        "{text}"
+      </blockquote>
+
+      <cite
+        className={cn(
+          'mt-3 inline-block not-italic',
+          'text-[10px] font-semibold tracking-[0.16em] uppercase text-primary'
+        )}
+      >
+        — {reference}
+      </cite>
+
+      <OrnamentalDivider className="mt-5" />
     </section>
   );
 }

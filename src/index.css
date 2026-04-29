@@ -464,6 +464,34 @@
     line-height: 1.75;
   }
 
+  /* Ruled (lined) journal surface for prayer phase writing.
+     Borderless and transparent — depth comes from the horizontal rules behind the text. */
+  .journal-textarea-ruled {
+    background-color: transparent;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(1.75rem - 1px),
+      hsl(var(--foreground) / 0.08) calc(1.75rem - 1px),
+      hsl(var(--foreground) / 0.08) 1.75rem
+    );
+    background-position: 0 0.5rem;
+    border: none;
+    box-shadow: none;
+    line-height: 1.75rem;
+    caret-color: hsl(var(--primary));
+    padding-top: 0.5rem;
+  }
+  .journal-textarea-ruled:focus-visible {
+    outline: none;
+    box-shadow: none;
+    border: none;
+  }
+  .journal-textarea-ruled::placeholder {
+    color: hsl(var(--muted-foreground) / 0.6);
+    font-style: italic;
+  }
+
   .journal-textarea::placeholder {
     color: hsl(var(--muted-foreground) / 0.85);
   }
@@ -741,6 +769,47 @@
   .phase-atmosphere-forgiveness { --phase-atmosphere-color: hsl(325 45% 66% / 0.2); }
   .phase-atmosphere-protection { --phase-atmosphere-color: hsl(260 45% 64% / 0.2); }
   .phase-atmosphere-worship { --phase-atmosphere-color: hsl(22 58% 60% / 0.22); }
+
+  /* Hide native scrollbars while preserving scroll behavior. */
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* Breath easing — the signature contemplative motion curve. */
+  .ease-breath { transition-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+  .duration-breath { transition-duration: 620ms; }
+
+  /* Asymmetric "manuscript" tile corner — a Selah signature shape. */
+  .rounded-asymmetric {
+    border-radius: 1.25rem 0.5rem 1.25rem 0.5rem;
+  }
+
+  /* Drop-cap "A" used in the Amen completion treatment. */
+  .drop-cap-amen {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.06em;
+    line-height: 1;
+  }
+  .drop-cap-amen .cap {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 4.25rem;
+    line-height: 0.8;
+    color: hsl(var(--primary));
+    letter-spacing: -0.02em;
+  }
+  .drop-cap-amen .rest {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    color: hsl(var(--foreground));
+    letter-spacing: 0.04em;
+  }
+
+  /* Subtle separator line */
+  .separator-subtle {
+    height: 1px;
+    background: hsl(var(--foreground) / 0.1);
+  }
 }
 
 /* ============================================
