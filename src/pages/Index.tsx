@@ -145,19 +145,17 @@ const Index = () => {
           <button
             type="button"
             onClick={() => setShowAddRequest(true)}
-            className="w-full flex items-center justify-between gap-3 py-3 px-1 group"
+            className="w-full flex flex-col items-center gap-2 py-3 px-1 group"
           >
-            <span className="flex items-center gap-3">
-              <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <Plus className="w-4 h-4" />
+            <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Plus className="w-4 h-4" />
+            </span>
+            <span className="text-center">
+              <span className="block font-body text-[14px] text-foreground">
+                Add a prayer request
               </span>
-              <span>
-                <span className="block font-body text-[14px] text-foreground">
-                  Add a prayer request
-                </span>
-                <span className="block text-[11px] text-muted-foreground">
-                  Capture what is on your heart
-                </span>
+              <span className="block text-[11px] text-muted-foreground">
+                Capture what is on your heart
               </span>
             </span>
           </button>
