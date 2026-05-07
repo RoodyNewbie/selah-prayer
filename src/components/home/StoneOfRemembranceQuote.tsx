@@ -1,4 +1,4 @@
-import { formatDistanceToNow } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { PrayerRequest } from '@/lib/prayerData';
 import { cn } from '@/lib/utils';
 
@@ -13,8 +13,15 @@ export function StoneOfRemembranceQuote({
   onClick,
   className,
 }: StoneOfRemembranceQuoteProps) {
+  const daysCarried =
+    stone.answeredDate && stone.createdAt
+      ? Math.max(0, differenceInDays(new Date(stone.answeredDate), new Date(stone.createdAt)))
+      : null;
+
   const meta = stone.answeredDate
-    ? `Answered ${formatDistanceToNow(new Date(stone.answeredDate), { addSuffix: true })}`
+    ? `${format(new Date(stone.answeredDate), 'MMMM yyyy')}${
+        daysCarried !== null ? ` · ${daysCarried} day${daysCarried === 1 ? '' : 's'} carried` : ''
+      }`
     : null;
 
   return (
@@ -22,24 +29,23 @@ export function StoneOfRemembranceQuote({
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full text-center flex flex-col items-center py-3 group',
-        'transition-colors duration-200 motion-reduce:transition-none',
+        'w-full text-left flex items-stretch gap-4 py-1 group',
         className
       )}
     >
       <span
         aria-hidden="true"
-        className="w-10 h-[3px] mb-3 rounded-[2px] bg-primary"
+        className="w-[3px] self-stretch rounded-[2px] bg-primary flex-shrink-0"
       />
-      <div className="w-full">
+      <div className="min-w-0 flex-1">
         <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-muted-foreground mb-1.5">
           Stone of Remembrance
         </p>
-        <p className="font-display italic text-[1.05rem] leading-snug text-foreground line-clamp-2">
-          "{stone.title}"
+        <p className="font-body font-semibold text-[15px] leading-snug text-foreground line-clamp-2">
+          {stone.title}
         </p>
         {meta && (
-          <p className="mt-1.5 text-[11px] text-muted-foreground/80">{meta}</p>
+          <p className="mt-1 text-[12px] text-muted-foreground/80">{meta}</p>
         )}
       </div>
     </button>
