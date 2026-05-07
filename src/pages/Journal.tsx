@@ -51,13 +51,16 @@ export default function Journal() {
               Dreams and words to keep
             </p>
           </div>
-          <Button
-            size="icon"
-            onClick={() => setShowAddDialog(true)}
-            className="rounded-full w-11 h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_18px_hsl(var(--primary)/0.32)] flex-shrink-0"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              size="icon"
+              onClick={() => setShowAddDialog(true)}
+              className="rounded-full w-11 h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_18px_hsl(var(--primary)/0.32)]"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+            <HeaderActions />
+          </div>
         </div>
       </header>
 
