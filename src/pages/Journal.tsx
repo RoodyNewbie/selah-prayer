@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { AddJournalEntryDialog } from '@/components/journal/AddJournalEntryDialog';
 import { MarkFulfilledDialog } from '@/components/journal/MarkFulfilledDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
