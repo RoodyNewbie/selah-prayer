@@ -2,6 +2,7 @@ import { RequestTag, requestTags } from '@/lib/prayerData';
 import { useActiveRequests, useMarkAnswered, useDeleteRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { RequestCard } from '@/components/prayer/RequestCard';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
 import { Button } from '@/components/ui/button';
