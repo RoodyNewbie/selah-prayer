@@ -1,9 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { GlobalAudioButton } from '@/components/GlobalAudioButton';
-import { UpgradePrompt } from '@/components/subscription/UpgradePrompt';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ScriptureHero } from '@/components/design/ScriptureHero';
 import { BeginPrayerTile } from '@/components/home/BeginPrayerTile';
@@ -12,8 +10,6 @@ import { StoneOfRemembranceQuote } from '@/components/home/StoneOfRemembranceQuo
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAnsweredRequests, useRecurringRequests } from '@/hooks/usePrayerRequests';
-import { useAuth } from '@/hooks/useAuth';
-import { Plus, BookHeart, LogOut, Settings, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState, useMemo } from 'react';
 
