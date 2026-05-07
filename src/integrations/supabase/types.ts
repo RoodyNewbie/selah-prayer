@@ -386,6 +386,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_donor: { Args: { _user_id: string }; Returns: boolean }
       update_user_profile: {
         Args: {
           p_display_name?: string
