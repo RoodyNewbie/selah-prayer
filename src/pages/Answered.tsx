@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAnsweredRequests, useDeleteRequest, useUpdateRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -577,12 +578,17 @@ export default function Answered() {
   return (
     <div className="page-background pb-24">
       <header className="relative z-10 px-5 pt-8 pb-4 border-b border-border/30">
-        <h1 className="font-display text-[28px] font-medium text-foreground leading-tight">
-          Stones of Remembrance
-        </h1>
-        <p className="text-muted-foreground font-body text-[14px] mt-1">
-          Answered prayers, kept close
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-[28px] font-medium text-foreground leading-tight">
+              Stones of Remembrance
+            </h1>
+            <p className="text-muted-foreground font-body text-[14px] mt-1">
+              Answered prayers, kept close
+            </p>
+          </div>
+          <HeaderActions />
+        </div>
       </header>
 
       <main className="relative z-10 px-5 py-6 space-y-4">

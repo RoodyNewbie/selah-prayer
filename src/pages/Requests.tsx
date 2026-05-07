@@ -2,6 +2,7 @@ import { RequestTag, requestTags } from '@/lib/prayerData';
 import { useActiveRequests, useMarkAnswered, useDeleteRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
 import { RequestCard } from '@/components/prayer/RequestCard';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
 import { Button } from '@/components/ui/button';
@@ -51,13 +52,16 @@ export default function Requests() {
       <header className="relative z-10 px-5 pt-8 pb-4 border-b border-border/30">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-[28px] font-medium text-foreground">Requests</h1>
-          <Button
-            size="icon"
-            onClick={() => setShowAddDialog(true)}
-            className="rounded-full w-11 h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_18px_hsl(var(--primary)/0.32)]"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              onClick={() => setShowAddDialog(true)}
+              className="rounded-full w-11 h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_18px_hsl(var(--primary)/0.32)]"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+            <HeaderActions />
+          </div>
         </div>
       </header>
 

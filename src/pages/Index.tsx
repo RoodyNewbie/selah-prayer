@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ScriptureHero } from '@/components/design/ScriptureHero';
 import { BeginPrayerTile } from '@/components/home/BeginPrayerTile';
@@ -64,7 +64,7 @@ const Index = () => {
     <div className="page-background pb-28">
       <header className="relative z-10 flex items-center justify-between px-5 pt-8 pb-3">
         <h1 className="font-display text-[26px] font-medium text-foreground">Selah</h1>
-        <ThemeToggle />
+        <HeaderActions />
       </header>
 
       <main className="relative z-10 animate-slide-up space-y-7 pb-6">
