@@ -1,11 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { GlobalAudioButton } from '@/components/GlobalAudioButton';
-import { Button } from '@/components/ui/button';
-import { Settings as SettingsIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ScriptureHero } from '@/components/design/ScriptureHero';
 import { BeginPrayerTile } from '@/components/home/BeginPrayerTile';
