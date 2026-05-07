@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useAnsweredRequests, useDeleteRequest, useUpdateRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
+import { HeaderActions } from '@/components/navigation/HeaderActions';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
