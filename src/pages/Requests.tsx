@@ -1,7 +1,6 @@
 import { RequestTag, requestTags } from '@/lib/prayerData';
 import { useActiveRequests, useMarkAnswered, useDeleteRequest } from '@/hooks/usePrayerRequests';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { RequestCard } from '@/components/prayer/RequestCard';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { AnsweredData } from '@/components/prayer/MarkAnsweredDialog';
@@ -49,26 +48,26 @@ export default function Requests() {
 
   return (
     <div className="page-background pb-24">
-      <header className="relative z-10 p-4 pt-6 border-b border-border/30">
+      <header className="relative z-10 px-5 pt-8 pb-4 border-b border-border/30">
         <div className="flex items-center justify-between">
-          <h1 className="font-display text-2xl text-foreground tracking-wide">Prayer Requests</h1>
-          <div className="flex items-center gap-1">
-            <GlobalAudioButton />
-            <Button variant="warm" size="icon" onClick={() => setShowAddDialog(true)}>
-              <Plus className="w-5 h-5" />
-            </Button>
-          </div>
+          <h1 className="font-display text-[28px] font-medium text-foreground">Requests</h1>
+          <Button
+            size="icon"
+            onClick={() => setShowAddDialog(true)}
+            className="rounded-full w-11 h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_18px_hsl(var(--primary)/0.32)]"
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
         </div>
       </header>
 
-      {/* Filter Tags */}
-      <div className="relative z-10 p-4 overflow-x-auto">
+      <div className="relative z-10 px-5 py-4 overflow-x-auto no-scrollbar">
         <div className="flex gap-2">
           <button
             onClick={() => setSelectedTag('all')}
             className={cn(
-              "filter-pill press-scale",
-              selectedTag === 'all' ? "filter-pill-active" : "filter-pill-inactive"
+              'filter-pill press-scale',
+              selectedTag === 'all' ? 'filter-pill-active' : 'filter-pill-inactive'
             )}
           >
             All
@@ -78,8 +77,8 @@ export default function Requests() {
               key={tag.id}
               onClick={() => setSelectedTag(tag.id)}
               className={cn(
-                "filter-pill press-scale",
-                selectedTag === tag.id ? "filter-pill-active" : "filter-pill-inactive"
+                'filter-pill press-scale',
+                selectedTag === tag.id ? 'filter-pill-active' : 'filter-pill-inactive'
               )}
             >
               {tag.label}
@@ -88,9 +87,8 @@ export default function Requests() {
         </div>
       </div>
 
-      {/* Error State */}
       {error && (
-        <div className="relative z-10 mx-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
+        <div className="relative z-10 mx-5 p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
           <p className="text-destructive font-body text-sm">
             {error instanceof Error ? error.message : 'Failed to load requests'}
           </p>
@@ -101,8 +99,7 @@ export default function Requests() {
         </div>
       )}
 
-      {/* Requests List */}
-      <main className="relative z-10 px-4 space-y-3">
+      <main className="relative z-10 px-5 divide-y divide-border/40">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -126,10 +123,7 @@ export default function Requests() {
         )}
       </main>
 
-      <AddRequestDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-      />
+      <AddRequestDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
       <BottomNav />
     </div>
   );
