@@ -68,7 +68,13 @@ const Index = () => {
     <div className="page-background pb-28">
       <header className="relative z-10 flex items-center justify-between px-5 pt-8 pb-3">
         <h1 className="font-display text-[26px] font-medium text-foreground">Selah</h1>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <GlobalAudioButton />
+          <ThemeToggle />
+          <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" aria-label="Settings">
+            <Link to="/settings"><SettingsIcon className="w-5 h-5" /></Link>
+          </Button>
+        </div>
       </header>
 
       <main className="relative z-10 animate-slide-up space-y-7 pb-6">
