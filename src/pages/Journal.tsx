@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { AddJournalEntryDialog } from '@/components/journal/AddJournalEntryDialog';
 import { MarkFulfilledDialog } from '@/components/journal/MarkFulfilledDialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -11,18 +8,8 @@ import {
   useJournalEntries,
   useDeleteJournalEntry,
 } from '@/hooks/useJournalEntries';
-import { JournalEntry, JournalEntryType, journalTypeLabels } from '@/lib/prayerData';
-import {
-  BookOpen,
-  Plus,
-  Moon,
-  MessageCircle,
-  BookMarked,
-  CheckCircle2,
-  MoreVertical,
-  Trash2,
-  Sparkles,
-} from 'lucide-react';
+import { JournalEntry } from '@/lib/prayerData';
+import { Plus, MoreVertical, Trash2, Sparkles } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,26 +20,16 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type FilterType = 'all' | 'dream' | 'word' | 'fulfilled';
-
 export default function Journal() {
   const { data: entries = [], isLoading } = useJournalEntries();
   const deleteEntry = useDeleteJournalEntry();
 
-  const [filter, setFilter] = useState<FilterType>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [entryToFulfill, setEntryToFulfill] = useState<JournalEntry | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<JournalEntry | null>(null);
 
-  const filteredEntries = entries.filter((entry) => {
-    if (filter === 'all') return true;
-    if (filter === 'fulfilled') return entry.status === 'fulfilled';
-    return entry.entryType === filter && entry.status === 'active';
-  });
-
   const handleDelete = async () => {
     if (!entryToDelete) return;
-
     try {
       await deleteEntry.mutateAsync(entryToDelete.id);
       toast.success('Journal entry deleted');
@@ -62,144 +39,68 @@ export default function Journal() {
     }
   };
 
-  const filters: { id: FilterType; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'dream', label: 'Dreams' },
-    { id: 'word', label: 'Words' },
-    { id: 'fulfilled', label: 'Fulfilled' },
-  ];
-
-  const getTypeIcon = (type: JournalEntryType) => {
-    return type === 'dream' ? Moon : MessageCircle;
-  };
-
   return (
     <div className="page-background pb-24">
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between p-4 pt-6 border-b border-border/30">
-        <div>
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-primary drop-shadow-sm" />
-            <h1 className="font-display text-2xl text-foreground tracking-wide">Journal</h1>
+      <header className="relative z-10 px-5 pt-8 pb-4 border-b border-border/30">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-[28px] font-medium text-foreground leading-tight">
+              Journal
+            </h1>
+            <p className="text-muted-foreground text-[14px] mt-1">
+              Dreams and words to keep
+            </p>
           </div>
-          <p className="text-muted-foreground text-sm mt-1">
-            {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
-          </p>
+          <Button
+            size="icon"
+            onClick={() => setShowAddDialog(true)}
+            className="rounded-full w-11 h-11 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_18px_hsl(var(--primary)/0.32)] flex-shrink-0"
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
         </div>
-        <GlobalAudioButton />
       </header>
 
-      {/* Filter Pills */}
-      <div className="relative z-10 flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
-        {filters.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={cn(
-              'filter-pill press-scale',
-              filter === f.id ? 'filter-pill-active' : 'filter-pill-inactive'
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      <main className="relative z-10 px-4 py-4 space-y-3 max-w-lg mx-auto">
+      <main className="relative z-10 px-5 divide-y divide-border/40">
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
-        ) : filteredEntries.length === 0 ? (
+        ) : entries.length === 0 ? (
           <div className="empty-state">
-            <div className="mx-auto w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-              <BookOpen className="w-8 h-8 empty-state-icon" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-display text-lg text-foreground">
-                {filter === 'all' ? 'Your journal is empty' : `No ${filter === 'fulfilled' ? 'fulfilled entries' : filter + 's'} yet`}
-              </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Record dreams and words from God here
-              </p>
-            </div>
+            <p className="font-display text-lg text-foreground">Your journal is empty</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Record dreams and words from God here
+            </p>
           </div>
         ) : (
-          filteredEntries.map((entry) => {
-            const TypeIcon = getTypeIcon(entry.entryType);
+          entries.map((entry) => {
+            const isWord = entry.entryType === 'word';
             const isFulfilled = entry.status === 'fulfilled';
-
             return (
-              <Card
-                key={entry.id}
-                className={cn(
-                  'p-4 transition-all',
-                  isFulfilled && 'opacity-75'
+              <article key={entry.id} className={cn('py-5 group relative', isFulfilled && 'opacity-70')}>
+                <div className="flex items-baseline justify-between mb-2">
+                  <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-primary">
+                    {isWord ? 'Word' : 'Dream'}
+                  </p>
+                  <p className="text-[12px] text-muted-foreground/80">
+                    {format(new Date(entry.createdAt), 'MMM d')}
+                  </p>
+                </div>
+                {isWord ? (
+                  <p className="font-display italic text-[20px] leading-snug text-foreground">
+                    "{entry.title}"
+                  </p>
+                ) : (
+                  <p className="font-body text-[15.5px] leading-relaxed text-foreground">
+                    {entry.description || entry.title}
+                  </p>
                 )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    {/* Title and badges */}
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="font-display text-base text-foreground truncate">
-                        {entry.title}
-                      </h3>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          'text-xs',
-                          entry.entryType === 'dream'
-                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                        )}
-                      >
-                        <TypeIcon className="w-3 h-3 mr-1" />
-                        {journalTypeLabels[entry.entryType]}
-                      </Badge>
-                      {isFulfilled && (
-                        <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 dark:text-green-400">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Fulfilled
-                        </Badge>
-                      )}
-                    </div>
 
-                    {/* Date */}
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {format(new Date(entry.createdAt), 'MMM d, yyyy')}
-                      {isFulfilled && entry.fulfilledDate && (
-                        <span> • Fulfilled {format(new Date(entry.fulfilledDate), 'MMM d, yyyy')}</span>
-                      )}
-                    </p>
-
-                    {/* Description */}
-                    {entry.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                        {entry.description}
-                      </p>
-                    )}
-
-                    {/* Scripture reference */}
-                    {entry.scriptureReference && (
-                      <div className="flex items-center gap-1 text-xs text-primary">
-                        <BookMarked className="w-3 h-3" />
-                        {entry.scriptureReference}
-                      </div>
-                    )}
-
-                    {/* Fulfilled note */}
-                    {isFulfilled && entry.fulfilledNote && (
-                      <div className="mt-2 pt-2 border-t border-border">
-                        <p className="text-xs text-muted-foreground italic">
-                          "{entry.fulfilledNote}"
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions menu */}
+                {/* Hover actions */}
+                <div className="absolute top-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                        <MoreVertical className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <MoreVertical className="w-3.5 h-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -219,30 +120,18 @@ export default function Journal() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </Card>
+              </article>
             );
           })
         )}
       </main>
 
-      {/* FAB */}
-      <Button
-        size="lg"
-        className="fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-lifted z-40 btn-polished"
-        onClick={() => setShowAddDialog(true)}
-      >
-        <Plus className="w-6 h-6" />
-      </Button>
-
-      {/* Dialogs */}
       <AddJournalEntryDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
-      
       <MarkFulfilledDialog
         open={!!entryToFulfill}
         onOpenChange={(open) => !open && setEntryToFulfill(null)}
         entry={entryToFulfill}
       />
-
       <ConfirmDialog
         open={!!entryToDelete}
         onOpenChange={(open) => !open && setEntryToDelete(null)}

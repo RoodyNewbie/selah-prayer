@@ -576,116 +576,16 @@ export default function Answered() {
 
   return (
     <div className="page-background pb-24">
-      <header className="relative z-10 p-4 pt-6 border-b border-border/30">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Milestone className="w-6 h-6 text-primary drop-shadow-sm" />
-              <h1 className="font-display text-2xl text-foreground tracking-wide">
-                Stones of Remembrance
-              </h1>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button className="p-1 rounded-full hover:bg-muted transition-colors">
-                    <Info className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-center">
-                  <p className="font-body text-sm">
-                    A record of God's faithfulness
-                    <span className="block text-muted-foreground text-xs mt-1">
-                      Joshua 4:7 – "These stones are to be a memorial"
-                    </span>
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <p className="text-muted-foreground font-body text-sm mt-1">
-              {answeredRequests?.length || 0} testimon
-              {answeredRequests?.length === 1 ? 'y' : 'ies'} recorded
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <GlobalAudioButton />
-            {/* View Toggle */}
-            <div className="flex gap-1 bg-muted rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('h-8 w-8', viewMode === 'cards' && 'bg-background shadow-sm')}
-                onClick={() => setViewMode('cards')}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'h-8 w-8',
-                  viewMode === 'timeline' && 'bg-background shadow-sm'
-                )}
-                onClick={() => setViewMode('timeline')}
-              >
-                <AlignLeft className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats bar */}
-        {answeredRequests && answeredRequests.length > 0 && (
-          <div className="flex gap-4 mt-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Star className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-muted-foreground font-body">
-                {favoriteCount} favorite{favoriteCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-          </div>
-        )}
+      <header className="relative z-10 px-5 pt-8 pb-4 border-b border-border/30">
+        <h1 className="font-display text-[28px] font-medium text-foreground leading-tight">
+          Stones of Remembrance
+        </h1>
+        <p className="text-muted-foreground font-body text-[14px] mt-1">
+          Answered prayers, kept close
+        </p>
       </header>
 
-      {/* Sort & Filter Options */}
-      {answeredRequests && answeredRequests.length > 0 && (
-        <div className="relative z-10 px-4 py-3 flex gap-2 overflow-x-auto border-b border-border/30">
-          {(['newest', 'oldest', 'favorites'] as SortMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setSortMode(mode)}
-              className={cn(
-                'filter-pill press-scale text-xs',
-                sortMode === mode ? 'filter-pill-active' : 'filter-pill-inactive'
-              )}
-            >
-              {mode === 'newest' && 'Most Recent'}
-              {mode === 'oldest' && 'Oldest First'}
-              {mode === 'favorites' && 'Favorites First'}
-            </button>
-          ))}
-          <div className="w-px bg-border mx-1" />
-          <button
-            onClick={() => setFilterMode(filterMode === 'all' ? 'favorites' : 'all')}
-            className={cn(
-              'filter-pill press-scale text-xs flex items-center gap-1.5',
-              filterMode === 'favorites'
-                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                : 'filter-pill-inactive'
-            )}
-          >
-            <Star
-              className={cn(
-                'w-3 h-3',
-                filterMode === 'favorites' && 'fill-current'
-              )}
-            />
-            {filterMode === 'favorites' ? 'Favorites' : 'All'}
-          </button>
-        </div>
-      )}
-
-      <main className="relative z-10 px-4 py-4 space-y-4">
-        {/* Error State */}
+      <main className="relative z-10 px-5 py-6 space-y-4">
         {error && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
             <p className="text-destructive font-body text-sm">
@@ -703,7 +603,6 @@ export default function Answered() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : !error && answeredRequests.length === 0 ? (
-          // Empty state
           <div className="empty-state">
             <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
               <Milestone className="w-10 h-10 empty-state-icon" />
@@ -716,32 +615,7 @@ export default function Answered() {
               encourage your faith in the future.
             </p>
           </div>
-        ) : !error && processedRequests.length === 0 ? (
-          // No results after filtering
-          <div className="empty-state">
-            <Star className="w-10 h-10 empty-state-icon mx-auto mb-4" />
-            <p className="text-muted-foreground font-body">No favorite testimonies yet</p>
-            <Button
-              variant="link"
-              className="mt-2"
-              onClick={() => setFilterMode('all')}
-            >
-              View all testimonies
-            </Button>
-          </div>
-        ) : !error && viewMode === 'cards' ? (
-          processedRequests.map((request) => (
-            <StoneCard
-              key={request.id}
-              request={request}
-              expanded={expandedId === request.id}
-              onToggle={() => setExpandedId(expandedId === request.id ? null : request.id)}
-              onDelete={() => setRequestToDelete(request)}
-              onToggleFavorite={() => handleToggleFavorite(request)}
-              onView={() => setSelectedRequest(request)}
-            />
-          ))
-        ) : !error && viewMode === 'timeline' ? (
+        ) : !error ? (
           <TimelineView
             requests={processedRequests}
             onDelete={setRequestToDelete}

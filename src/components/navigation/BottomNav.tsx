@@ -1,4 +1,4 @@
-import { Home, ListChecks, Milestone, BookOpen } from 'lucide-react';
+import { Home, ListChecks, Star, BookOpen } from 'lucide-react';
 import { BottomNavItem } from './BottomNavItem';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -44,28 +44,23 @@ export function BottomNav() {
           }
         >
           {({ isActive }) => (
-            <>
-              <span
-                className={cn(
-                  'w-14 h-14 rounded-full flex items-center justify-center',
-                  'bg-primary text-primary-foreground',
-                  'shadow-[0_4px_18px_hsl(var(--primary)/0.32),0_10px_28px_-10px_hsl(var(--primary)/0.45)]',
-                  'border border-primary/35',
-                  'transition-all duration-300 ease-breath motion-reduce:transition-none',
-                  isActive && 'ring-2 ring-primary/25 ring-offset-2 ring-offset-card'
-                )}
-              >
-                <PrayCross className="text-primary-foreground" />
-              </span>
-              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/80">
-                Pray
-              </span>
-            </>
+            <span
+              className={cn(
+                'w-14 h-14 rounded-full flex items-center justify-center',
+                'bg-primary text-primary-foreground',
+                'shadow-[0_4px_18px_hsl(var(--primary)/0.32),0_10px_28px_-10px_hsl(var(--primary)/0.45)]',
+                'border border-primary/35',
+                'transition-all duration-300 ease-breath motion-reduce:transition-none',
+                isActive && 'ring-2 ring-primary/25 ring-offset-2 ring-offset-card'
+              )}
+            >
+              <PrayCross className="text-primary-foreground" />
+            </span>
           )}
         </NavLink>
 
         <BottomNavItem to="/journal" icon={BookOpen} label="Journal" />
-        <BottomNavItem to="/answered" icon={Milestone} label="Stones" />
+        <BottomNavItem to="/answered" icon={Star} label="Stones" />
       </div>
     </nav>
   );

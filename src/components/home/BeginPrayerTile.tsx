@@ -16,7 +16,7 @@ export function BeginPrayerTile({ onClick, meta, className }: BeginPrayerTilePro
       type="button"
       onClick={onClick}
       className={cn(
-        'group w-full text-center px-5 py-5 rounded-asymmetric',
+        'group w-full text-left px-5 py-5 rounded-asymmetric',
         'bg-card/55 border border-border/60',
         'transition-all duration-300 ease-breath motion-reduce:transition-none',
         'hover:bg-card/80 hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.28)]',
@@ -25,20 +25,18 @@ export function BeginPrayerTile({ onClick, meta, className }: BeginPrayerTilePro
       )}
       aria-label="Begin prayer"
     >
-      <div className="flex flex-col items-center gap-1">
-        <div className="flex items-center justify-center gap-2">
-          <p className="font-display text-[1.4rem] leading-tight text-foreground">Begin Prayer</p>
-          <ArrowRight
-            className="w-4 h-4 text-primary transition-transform duration-300 ease-breath group-hover:translate-x-0.5 motion-reduce:transition-none"
-            aria-hidden="true"
-          />
-        </div>
-        <p className="text-[12px] text-muted-foreground/90">
-          6 phases · ~10 minutes of guided reflection
-        </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-display text-[1.6rem] leading-tight text-foreground">Begin Prayer</p>
+        <ArrowRight
+          className="w-4 h-4 text-primary transition-transform duration-300 ease-breath group-hover:translate-x-0.5 motion-reduce:transition-none"
+          aria-hidden="true"
+        />
       </div>
+      <p className="mt-1 text-[12px] text-muted-foreground/90">
+        6 phases · ~10 minutes of guided reflection
+      </p>
 
-      <div className="mt-4 flex items-center justify-center gap-2.5 text-muted-foreground/70" aria-hidden="true">
+      <div className="mt-4 flex items-center justify-start gap-3 text-muted-foreground/70" aria-hidden="true">
         {PHASE_PREVIEW.map((id, idx) => (
           <Sigil
             key={id}

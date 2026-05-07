@@ -1,9 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { AddRequestDialog } from '@/components/prayer/AddRequestDialog';
 import { BottomNav } from '@/components/navigation/BottomNav';
-import { GlobalAudioButton } from '@/components/GlobalAudioButton';
-import { UpgradePrompt } from '@/components/subscription/UpgradePrompt';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { ScriptureHero } from '@/components/design/ScriptureHero';
 import { BeginPrayerTile } from '@/components/home/BeginPrayerTile';
@@ -12,8 +10,6 @@ import { StoneOfRemembranceQuote } from '@/components/home/StoneOfRemembranceQuo
 import { storage } from '@/lib/storage';
 import { useLastPrayed } from '@/hooks/usePrayerSessions';
 import { useAnsweredRequests, useRecurringRequests } from '@/hooks/usePrayerRequests';
-import { useAuth } from '@/hooks/useAuth';
-import { Plus, BookHeart, LogOut, Settings, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState, useMemo } from 'react';
 
@@ -32,7 +28,6 @@ const SCRIPTURE_VERSES = [
 
 const Index = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
   const [showAddRequest, setShowAddRequest] = useState(false);
   const [randomVerse, setRandomVerse] = useState(
     () => SCRIPTURE_VERSES[Math.floor(Math.random() * SCRIPTURE_VERSES.length)]
@@ -42,12 +37,10 @@ const Index = () => {
   const { data: answeredRequests = [] } = useAnsweredRequests();
   const { data: recurringRequests = [] } = useRecurringRequests();
 
-  // Refresh verse on every visit
   useEffect(() => {
     setRandomVerse(SCRIPTURE_VERSES[Math.floor(Math.random() * SCRIPTURE_VERSES.length)]);
   }, []);
 
-  // Pick a testimony to surface as the day's stone
   const randomTestimony = useMemo(() => {
     if (answeredRequests.length === 0) return null;
     const idx = Math.floor(Math.random() * answeredRequests.length);
@@ -67,70 +60,28 @@ const Index = () => {
     }
   }, [lastPrayed]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   return (
     <div className="page-background pb-28">
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-4 pt-6 pb-3">
-        <div className="flex items-center gap-2">
-          <BookHeart className="w-5 h-5 text-primary drop-shadow-sm" />
-          <h1 className="font-display text-[1.4rem] text-foreground tracking-wide">Selah</h1>
-        </div>
-        <div className="flex items-center gap-1">
-          <GlobalAudioButton />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/history')}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="History"
-          >
-            <Clock className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/settings')}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Settings"
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Sign out"
-          >
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
+      <header className="relative z-10 flex items-center justify-between px-5 pt-8 pb-3">
+        <h1 className="font-display text-[26px] font-medium text-foreground">Selah</h1>
+        <ThemeToggle />
       </header>
 
       <main className="relative z-10 animate-slide-up space-y-7 pb-6">
-        {/* Scripture Plate */}
-        <ContentSection className="pt-4">
+        <ContentSection className="pt-2">
           <ScriptureHero text={randomVerse.text} reference={randomVerse.reference} />
         </ContentSection>
 
-        {/* Begin Prayer — featured asymmetric tile */}
         <ContentSection>
           <BeginPrayerTile onClick={() => navigate('/pray')} meta={lastPrayedMeta} />
         </ContentSection>
 
-        {/* Ongoing Threads */}
         {recurringRequests.length > 0 && (
           <ContentSection>
             <ThreadsStrip threads={recurringRequests} />
           </ContentSection>
         )}
 
-        {/* Stone of Remembrance — pull-quote */}
         {randomTestimony && (
           <ContentSection>
             <StoneOfRemembranceQuote
@@ -139,32 +90,6 @@ const Index = () => {
             />
           </ContentSection>
         )}
-
-        {/* Quick add request — quiet utility row */}
-        <ContentSection>
-          <button
-            type="button"
-            onClick={() => setShowAddRequest(true)}
-            className="w-full flex flex-col items-center gap-2 py-3 px-1 group"
-          >
-            <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <Plus className="w-4 h-4" />
-            </span>
-            <span className="text-center">
-              <span className="block font-body text-[14px] text-foreground">
-                Add a prayer request
-              </span>
-              <span className="block text-[11px] text-muted-foreground">
-                Capture what is on your heart
-              </span>
-            </span>
-          </button>
-        </ContentSection>
-
-        {/* Donor invitation — preserved */}
-        <ContentSection>
-          <UpgradePrompt />
-        </ContentSection>
       </main>
 
       <AddRequestDialog open={showAddRequest} onOpenChange={setShowAddRequest} />
