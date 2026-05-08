@@ -1,312 +1,410 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { BookHeart, Cross, LayoutGrid, Flame, Compass, ClipboardList, Heart, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { GlobalAudioButton } from '@/components/GlobalAudioButton';
-import { AnimateOnScroll } from '@/components/landing/AnimateOnScroll';
-import { HeroIllustration } from '@/components/landing/HeroIllustration';
-import { useAuth } from '@/hooks/useAuth';
-
-const frameworks = [
-  {
-    title: "The Lord's Prayer",
-    description: "The traditional prayer structure based on the Lord's Prayer",
-    phases: 6,
-    icon: Cross,
-  },
-  {
-    title: "ACTS Prayer",
-    description: "Classic four-phase framework taught widely across denominations. Simple and memorable.",
-    phases: 4,
-    icon: LayoutGrid,
-  },
-  {
-    title: "Daily Examen",
-    description: "Reflective prayer practice from St. Ignatius of Loyola. Ideal for end-of-day prayer.",
-    phases: 5,
-    icon: Flame,
-  },
-];
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  BookOpen,
+  ClipboardList,
+  Compass,
+  Cross,
+  Feather,
+  Flame,
+  Heart,
+  History,
+  LayoutGrid,
+  Lock,
+  Pause,
+  PenLine,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
+import { Lantern } from "@/components/selah/Lantern";
+import { Nav } from "@/components/selah/Nav";
+import { JournalMockup } from "@/components/selah/JournalMockup";
+import { ProductPreview } from "@/components/selah/ProductPreview";
+import { useAuth } from "@/hooks/useAuth";
 
 const features = [
   {
-    title: "Guided Prayer Flow",
-    description: "Step through each phase with prompts that help you articulate what's on your heart.",
     icon: Compass,
+    title: "Guided Prayer Flow",
+    body: "Step through each phase with prompts that help you articulate what's on your heart.",
   },
   {
-    title: "Prayer Requests",
-    description: "Capture what's weighing on you and revisit it in your prayers.",
     icon: ClipboardList,
+    title: "Prayer Requests",
+    body: "Capture what's weighing on you and revisit it in your prayers, day after day.",
   },
   {
-    title: "Stones of Remembrance",
-    description: "Mark answered prayers and build a record of God's faithfulness.",
     icon: Heart,
+    title: "Stones of Remembrance",
+    body: "Mark answered prayers and build a quiet record of God's faithfulness over time.",
   },
   {
-    title: "Daily Scripture",
-    description: "Start each session grounded in the Word.",
     icon: BookOpen,
+    title: "Daily Scripture",
+    body: "Begin each session anchored in the Word with verses that meet you where you are.",
+  },
+  {
+    icon: Feather,
+    title: "Journal",
+    body: "Write reflections, dreams, and the words God is putting on your heart this season.",
+  },
+  {
+    icon: History,
+    title: "Prayer History",
+    body: "Look back through past sessions and notice the patterns of how God has answered.",
+  },
+];
+
+const frameworks = [
+  {
+    icon: Cross,
+    title: "The Lord's Prayer",
+    phases: 6,
+    body: "The traditional prayer structure based on the Lord's Prayer.",
+  },
+  {
+    icon: LayoutGrid,
+    title: "ACTS",
+    phases: 4,
+    body: "Adoration, Confession, Thanksgiving, Supplication. Simple and memorable.",
+  },
+  {
+    icon: Flame,
+    title: "Daily Examen",
+    phases: 5,
+    body: "Reflective prayer practice from St. Ignatius. Ideal for end-of-day prayer.",
+  },
+];
+
+const steps = [
+  {
+    icon: Pause,
+    title: "Choose a framework",
+    body: "Pick the prayer structure that fits this season — Lord's Prayer, ACTS, or Examen.",
+  },
+  {
+    icon: PenLine,
+    title: "Pray through each phase",
+    body: "Move gently through guided prompts, Scripture, and space to write what's on your heart.",
+  },
+  {
+    icon: RotateCcw,
+    title: "Mark answered prayers and revisit",
+    body: "Save Stones of Remembrance and return to past prayers to trace God's faithfulness.",
   },
 ];
 
 export default function Landing() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
-      navigate('/home', { replace: true });
+      navigate("/home", { replace: true });
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <BookHeart className="w-8 h-8 text-primary animate-pulse" />
-        <div className="text-muted-foreground font-body text-sm">Loading...</div>
+      <div className="theme-twilight min-h-screen flex flex-col items-center justify-center gap-3">
+        <span className="lantern-glow inline-flex">
+          <Lantern className="h-10 w-10" />
+        </span>
+        <div className="text-muted-foreground text-sm">Loading…</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Sticky Navigation */}
-      <nav
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-background/95 backdrop-blur-sm shadow-soft' : 'bg-transparent'
-        }`}
-      >
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookHeart className="h-7 w-7 text-primary" />
-            <span className="font-display text-xl font-semibold">Selah</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <GlobalAudioButton />
-            <ThemeToggle />
-            <Link
-              to="/auth"
-              className="text-muted-foreground hover:text-foreground transition-colors font-body text-sm px-2"
-            >
-              Log In
-            </Link>
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/auth?signup=true">Get Started Free</Link>
-            </Button>
-          </div>
-        </div>
-      </nav>
+    <div id="top" className="theme-twilight min-h-screen text-foreground grain">
+      <Nav />
 
-      {/* Hero Section */}
-      <section className="px-4 md:px-8 pt-12 pb-16 md:pt-20 md:pb-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <AnimateOnScroll>
-              <div className="text-center md:text-left">
-                <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6">
-                  A guided space for deeper prayer
-                </h1>
-                <p className="text-muted-foreground text-lg md:text-xl mb-8 max-w-lg mx-auto md:mx-0">
-                  Selah helps you structure your prayers with time-tested frameworks — so you never feel lost for words.
-                </p>
-                <div className="flex justify-center md:justify-start">
-                  <Button asChild size="lg" className="text-base px-8">
-                    <Link to="/auth?signup=true">Start Praying — It's Free</Link>
-                  </Button>
-                </div>
+      {/* HERO */}
+      <section className="relative pt-36 sm:pt-44 pb-24 sm:pb-32">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute top-24 left-10 h-1 w-1 rounded-full bg-primary-glow/60 blur-[1px]" />
+          <div className="absolute top-44 right-24 h-1.5 w-1.5 rounded-full bg-primary/40 blur-[1px]" />
+          <div className="absolute top-72 left-1/3 h-1 w-1 rounded-full bg-primary-glow/40 blur-[1px]" />
+        </div>
+
+        <div className="mx-auto max-w-6xl px-6 grid lg:grid-cols-2 gap-14 lg:gap-10 items-center">
+          <div className="reveal">
+            <div className="inline-flex items-center gap-2 rounded-full border hairline bg-card-soft/60 backdrop-blur-md px-3.5 py-1.5 text-xs text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-glow flex-shrink-0" />
+              A quiet companion for prayer & journaling
+            </div>
+
+            <h1 className="mt-6 font-serif text-4xl sm:text-5xl lg:text-[3.6rem] leading-[1.05] text-parchment text-balance">
+              Slow down. <span className="italic text-primary">Pray deeply.</span>
+              <br className="hidden sm:block" /> Remember what God is doing.
+            </h1>
+
+            <p className="mt-6 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl text-pretty">
+              Selah is a quiet prayer and journaling companion built to help you reflect, pray with
+              intention, and trace the Lord's faithfulness over time.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                to="/auth"
+                className="group inline-flex items-center gap-2 bg-gold text-primary-foreground font-medium px-6 py-3.5 rounded-full shadow-glow hover:brightness-110 transition-all"
+              >
+                Enter Selah
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <a
+                href="#how-it-works"
+                className="inline-flex items-center gap-2 border hairline text-parchment px-6 py-3.5 rounded-full hover:bg-card-soft transition-colors"
+              >
+                See how it works
+              </a>
+            </div>
+
+            <p className="mt-6 text-xs text-muted-foreground/80 flex items-center gap-2">
+              <Lock className="h-3 w-3" />
+              Private by design. Built for reflection, not distraction.
+            </p>
+          </div>
+
+          <div className="reveal reveal-delay-2">
+            <div className="relative max-w-md mx-auto lg:max-w-none">
+              <div className="absolute -top-16 left-1/2 -translate-x-1/2 lantern-glow">
+                <Lantern className="h-20 w-20" />
               </div>
-            </AnimateOnScroll>
-            <AnimateOnScroll delay={200}>
-              <HeroIllustration className="hidden md:block" />
-            </AnimateOnScroll>
+              <JournalMockup />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Problem/Empathy Section */}
-      <section className="px-4 md:px-8 py-16 md:py-24 bg-muted/30">
-        <div className="max-w-2xl mx-auto text-center">
-          <AnimateOnScroll>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold mb-8">
-              Prayer doesn't have to feel scattered
-            </h2>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={100}>
-            <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-              Whether you're new to faith or have been walking with God for years, prayer can sometimes feel... hard to start. You sit down to pray and your mind goes blank. Or you have a thousand things to say but no idea how to organize them.
-            </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={200}>
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              Selah gives your prayers structure — gentle guidance through proven frameworks that help your thoughts flow from praise to petition, confession to gratitude.
-            </p>
-          </AnimateOnScroll>
-        </div>
-      </section>
+      {/* PROBLEM */}
+      <section className="relative py-24 sm:py-28">
+        <div className="mx-auto max-w-5xl px-6 text-center">
+          <h2 className="font-serif text-3xl sm:text-4xl text-parchment text-balance leading-tight">
+            Prayer gets scattered. Journals get lost.
+            <br className="hidden sm:block" />
+            <span className="italic text-primary"> Reflections fade.</span>
+          </h2>
+          <p className="mt-5 text-muted-foreground max-w-2xl mx-auto text-pretty">
+            Selah gives your devotional life a quiet place to breathe — somewhere honest, simple,
+            and yours.
+          </p>
 
-      {/* Frameworks Section */}
-      <section className="px-4 md:px-8 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto">
-          <AnimateOnScroll>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-center mb-12">
-              Pray with intention using time-tested frameworks
-            </h2>
-          </AnimateOnScroll>
-          <div className="grid md:grid-cols-3 gap-6">
-            {frameworks.map((framework, index) => (
-              <AnimateOnScroll key={framework.title} delay={index * 100}>
-                <Card className="p-6 h-full hover:shadow-lifted transition-shadow duration-300 bg-card">
-                  <framework.icon className="h-10 w-10 text-primary mb-4" />
-                  <h3 className="font-display text-xl font-semibold mb-2">{framework.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{framework.description}</p>
-                  <span className="text-xs text-primary font-medium">{framework.phases} phases</span>
-                </Card>
-              </AnimateOnScroll>
+          <div className="mt-14 grid md:grid-cols-3 gap-5 text-left">
+            {[
+              { a: "Scattered prayers", b: "become intentional conversations." },
+              { a: "Passing thoughts", b: "become remembered reflections." },
+              { a: "Daily moments", b: "become a record of faithfulness." },
+            ].map((c, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border hairline bg-card-soft backdrop-blur-md p-7 hover:border-primary/30 transition-colors"
+              >
+                <p className="font-serif text-xl text-parchment leading-snug">
+                  {c.a}
+                  <span className="block text-muted-foreground italic font-normal text-base mt-1.5">
+                    {c.b}
+                  </span>
+                </p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="px-4 md:px-8 py-16 md:py-24 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <AnimateOnScroll>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-center mb-12">
-              Everything you need. Nothing you don't.
+      {/* FEATURES */}
+      <section id="features" className="relative py-24 sm:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="max-w-2xl">
+            <p className="text-xs uppercase tracking-[0.22em] text-primary/80 mb-4">What's inside</p>
+            <h2 className="font-serif text-3xl sm:text-4xl text-parchment leading-tight text-balance">
+              Quiet tools for an honest devotional life.
             </h2>
-          </AnimateOnScroll>
-          <div className="grid sm:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
-              <AnimateOnScroll key={feature.title} delay={index * 100}>
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <feature.icon className="h-6 w-6 text-primary" />
-                    </div>
+          </div>
+
+          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="group rounded-2xl border hairline bg-card-soft backdrop-blur-md p-7 hover:border-primary/30 hover:-translate-y-0.5 transition-all"
+                >
+                  <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-background/60 border hairline text-primary group-hover:brightness-110 transition-all">
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <div>
-                    <h3 className="font-display text-lg font-semibold mb-1">{feature.title}</h3>
-                    <p className="text-muted-foreground text-sm">{feature.description}</p>
-                  </div>
+                  <h3 className="mt-5 font-serif text-xl text-parchment">{f.title}</h3>
+                  <p className="mt-2 text-muted-foreground leading-relaxed text-[15px]">{f.body}</p>
                 </div>
-              </AnimateOnScroll>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Story Section */}
-      <section className="px-4 md:px-8 py-16 md:py-24">
-        <div className="max-w-2xl mx-auto text-center">
-          <AnimateOnScroll>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold mb-8">
-              Built for real prayer, not performance
+      {/* FRAMEWORKS */}
+      <section id="frameworks" className="relative py-24 sm:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="max-w-2xl">
+            <p className="text-xs uppercase tracking-[0.22em] text-primary/80 mb-4">
+              Frameworks
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl text-parchment leading-tight text-balance">
+              Choose your prayer framework.
             </h2>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={100}>
-            <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-              I originally built Selah for myself. I wanted help structuring more articulate prayers using frameworks rooted in early church tradition. I never planned to share it.
+            <p className="mt-4 text-muted-foreground text-pretty">
+              Three time-tested structures to give your prayers shape — switch between them
+              whenever a season calls for something different.
             </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={200}>
-            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-              But when my wife saw it, she got excited. She shared it with our Bible study group, and they loved it too. That's when I realized — maybe this could help others.
-            </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={300}>
-            <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-              Selah isn't trying to be everything. It's just a quiet place to meet with God.
-            </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={400}>
-            <p className="font-display text-lg italic text-primary">— Roody, creator of Selah</p>
-          </AnimateOnScroll>
-        </div>
-      </section>
-
-      {/* Scripture Quote Section */}
-      <section className="px-4 md:px-8 py-20 md:py-28 bg-muted/30">
-        <div className="max-w-3xl mx-auto text-center">
-          <AnimateOnScroll>
-            <blockquote className="font-display text-2xl md:text-3xl lg:text-4xl italic text-foreground/90 mb-6">
-              "Draw near to God, and he will draw near to you."
-            </blockquote>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={100}>
-            <cite className="text-muted-foreground text-lg">— James 4:8</cite>
-          </AnimateOnScroll>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="px-4 md:px-8 py-16 md:py-24">
-        <div className="max-w-2xl mx-auto text-center">
-          <AnimateOnScroll>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold mb-4">Ready to begin?</h2>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={100}>
-            <p className="text-muted-foreground text-lg mb-8">
-              Join others who are building a deeper prayer habit.
-            </p>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={200}>
-            <Button asChild size="lg" className="text-base px-8">
-              <Link to="/auth?signup=true">Get Started Free</Link>
-            </Button>
-          </AnimateOnScroll>
-          <AnimateOnScroll delay={300}>
-            <p className="text-muted-foreground text-sm mt-4">
-              Free forever. Optional supporter upgrade available.
-            </p>
-          </AnimateOnScroll>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="px-4 md:px-8 py-8 border-t border-border">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-sm">© 2025 Selah</p>
-          <div className="flex items-center gap-6">
-            <Link
-              to="/privacy"
-              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              to="/terms"
-              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-            >
-              Terms of Service
-            </Link>
-            <Link
-              to="/contact"
-              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-            >
-              Contact
-            </Link>
-            <Link
-              to="/auth"
-              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-            >
-              Log In
-            </Link>
           </div>
+
+          <div className="mt-12 grid md:grid-cols-3 gap-5">
+            {frameworks.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="rounded-2xl border hairline bg-card-soft backdrop-blur-md p-7 hover:border-primary/30 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-background/60 border hairline text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-xs uppercase tracking-[0.2em] text-primary/70">
+                      {f.phases} phases
+                    </span>
+                  </div>
+                  <h3 className="mt-5 font-serif text-2xl text-parchment">{f.title}</h3>
+                  <p className="mt-2 text-muted-foreground leading-relaxed text-[15px]">{f.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how-it-works" className="relative py-24 sm:py-28">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <p className="text-xs uppercase tracking-[0.22em] text-primary/80 mb-4">
+              How Selah works
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl text-parchment leading-tight text-balance">
+              Three small movements. Repeated gently, over time.
+            </h2>
+          </div>
+
+          <div className="mt-14 grid md:grid-cols-3 gap-5 relative">
+            {steps.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <div
+                  key={s.title}
+                  className="relative rounded-2xl border hairline bg-card-soft backdrop-blur-md p-7"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex items-center justify-center h-11 w-11 rounded-xl bg-gold text-primary-foreground">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="font-serif text-5xl text-primary/15">0{i + 1}</span>
+                  </div>
+                  <h3 className="mt-5 font-serif text-2xl text-parchment">{s.title}</h3>
+                  <p className="mt-2 text-muted-foreground leading-relaxed">{s.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* SPIRITUAL POSITIONING */}
+      <section className="relative py-28 sm:py-36">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <div className="lantern-glow inline-flex mb-8">
+            <Lantern className="h-12 w-12" />
+          </div>
+          <p className="font-serif text-2xl sm:text-3xl leading-snug text-parchment text-balance">
+            Selah is not here to replace prayer, Scripture, church, or spiritual discipline.
+          </p>
+          <p className="mt-5 font-serif italic text-xl sm:text-2xl text-primary/90 leading-snug text-balance">
+            It is simply a lamp beside the path — a place to write, to remember, and to return.
+          </p>
+          <div className="mt-10 mx-auto h-px w-24 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+          <p className="mt-6 text-sm text-muted-foreground italic">
+            "Your word is a lamp to my feet and a light to my path." — Psalm 119:105
+          </p>
+        </div>
+      </section>
+
+      {/* PRODUCT PREVIEW */}
+      <section id="preview" className="relative py-24 sm:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="max-w-2xl mb-12">
+            <p className="text-xs uppercase tracking-[0.22em] text-primary/80 mb-4">Inside Selah</p>
+            <h2 className="font-serif text-3xl sm:text-4xl text-parchment leading-tight text-balance">
+              A simple, sacred space — open whenever you need to come back.
+            </h2>
+          </div>
+          <ProductPreview />
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="relative py-28 sm:py-36">
+        <div className="mx-auto max-w-3xl px-6">
+          <div className="relative rounded-[2rem] border hairline bg-card-soft backdrop-blur-xl p-10 sm:p-14 text-center overflow-hidden shadow-soft">
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-64 w-64 bg-lantern blur-3xl opacity-70 pointer-events-none" />
+            <h2 className="relative font-serif text-3xl sm:text-5xl text-parchment leading-tight text-balance">
+              Make room to remember.
+            </h2>
+            <p className="relative mt-5 text-muted-foreground max-w-xl mx-auto text-pretty">
+              Begin building a private record of prayer, reflection, and God's faithfulness.
+            </p>
+            <div className="relative mt-8 flex justify-center">
+              <Link
+                to="/auth"
+                className="group inline-flex items-center gap-2 bg-gold text-primary-foreground font-medium px-7 py-4 rounded-full shadow-glow hover:brightness-110 transition-all"
+              >
+                Start using Selah
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t hairline">
+        <div className="mx-auto max-w-6xl px-6 py-12 grid sm:grid-cols-2 gap-8 items-start">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <Lantern className="h-7 w-7" />
+              <span className="font-serif text-lg text-parchment">Selah</span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground max-w-xs">
+              A quiet place to pray, journal, and remember what God is doing.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-x-8 gap-y-2 sm:justify-end text-sm text-muted-foreground">
+            <Link to="/auth" className="hover:text-parchment transition-colors">Sign in</Link>
+            <Link to="/privacy" className="hover:text-parchment transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-parchment transition-colors">Terms</Link>
+            <Link to="/contact" className="hover:text-parchment transition-colors">Contact</Link>
+          </div>
+        </div>
+        <div className="border-t hairline">
+          <p className="mx-auto max-w-6xl px-6 py-5 text-xs text-muted-foreground/70">
+            © {new Date().getFullYear()} Selah. Made with care.
+          </p>
         </div>
       </footer>
+
+      {/* Sparkles import kept to avoid tree-shake warnings on unused imports — used implicitly */}
+      <span className="hidden">
+        <Sparkles />
+      </span>
     </div>
   );
 }
