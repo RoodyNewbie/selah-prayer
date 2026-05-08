@@ -15,7 +15,6 @@ import {
   Pause,
   PenLine,
   RotateCcw,
-  Sparkles,
 } from "lucide-react";
 import { Lantern } from "@/components/selah/Lantern";
 import { Nav } from "@/components/selah/Nav";
