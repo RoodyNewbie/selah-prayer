@@ -879,3 +879,120 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* ============================================================
+   Twilight scope — used by the marketing landing page only.
+   Do not apply to authenticated app surfaces.
+   ============================================================ */
+.theme-twilight {
+  --background: 222 32% 8%;
+  --foreground: 38 30% 92%;
+  --card: 222 28% 11%;
+  --card-foreground: 38 30% 92%;
+  --popover: 222 28% 11%;
+  --popover-foreground: 38 30% 92%;
+  --primary: 38 70% 62%;
+  --primary-foreground: 222 40% 10%;
+  --primary-glow: 42 85% 70%;
+  --secondary: 222 22% 16%;
+  --secondary-foreground: 38 25% 88%;
+  --muted: 222 20% 14%;
+  --muted-foreground: 38 14% 68%;
+  --accent: 28 55% 55%;
+  --accent-foreground: 222 40% 10%;
+  --parchment: 38 45% 90%;
+  --ink: 222 35% 12%;
+  --destructive: 0 62% 45%;
+  --destructive-foreground: 38 30% 92%;
+  --border: 222 18% 20%;
+  --input: 222 18% 18%;
+  --ring: 38 70% 62%;
+
+  --gradient-twilight:
+    radial-gradient(ellipse 80% 60% at 50% 0%, hsl(28 55% 28% / 0.55), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 30%, hsl(38 60% 30% / 0.25), transparent 70%),
+    linear-gradient(180deg, hsl(222 35% 9%) 0%, hsl(222 32% 7%) 100%);
+  --gradient-lantern: radial-gradient(
+    circle at 50% 50%,
+    hsl(42 90% 70% / 0.35) 0%,
+    hsl(38 70% 55% / 0.18) 35%,
+    transparent 70%
+  );
+  --gradient-gold: linear-gradient(135deg, hsl(38 70% 62%), hsl(28 65% 52%));
+  --gradient-card: linear-gradient(180deg, hsl(222 26% 13% / 0.9), hsl(222 28% 10% / 0.9));
+
+  --shadow-glow: 0 0 60px -10px hsl(42 90% 65% / 0.45);
+  --shadow-soft: 0 30px 60px -30px hsl(222 60% 2% / 0.7), 0 8px 24px -12px hsl(222 60% 2% / 0.4);
+
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  background-image: var(--gradient-twilight);
+  background-attachment: fixed;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+.theme-twilight h1,
+.theme-twilight h2,
+.theme-twilight h3,
+.theme-twilight h4,
+.theme-twilight .font-serif {
+  font-family: "Fraunces", ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+@layer utilities {
+  .text-parchment { color: hsl(var(--parchment)); }
+  .bg-twilight { background-image: var(--gradient-twilight); }
+  .bg-lantern { background-image: var(--gradient-lantern); }
+  .bg-gold { background-image: var(--gradient-gold); }
+  .bg-card-soft { background-image: var(--gradient-card); }
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  .grain { position: relative; isolation: isolate; }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0.6  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .lantern-glow { position: relative; }
+  .lantern-glow::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: var(--gradient-lantern);
+    filter: blur(20px);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .hairline { border-color: hsl(var(--border) / 0.6); }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .reveal-delay-1 { animation-delay: 120ms; }
+  .reveal-delay-2 { animation-delay: 240ms; }
+  .reveal-delay-3 { animation-delay: 360ms; }
+  .reveal-delay-4 { animation-delay: 480ms; }
+
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .flicker { animation: flicker 6s ease-in-out infinite; }
+  @keyframes flicker {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    45% { opacity: 0.92; filter: brightness(1.05); }
+    52% { opacity: 0.98; filter: brightness(0.96); }
+    70% { opacity: 1; filter: brightness(1.04); }
+  }
+}
