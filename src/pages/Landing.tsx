@@ -400,10 +400,6 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* Sparkles import kept to avoid tree-shake warnings on unused imports — used implicitly */}
-      <span className="hidden">
-        <Sparkles />
-      </span>
     </div>
   );
 }
