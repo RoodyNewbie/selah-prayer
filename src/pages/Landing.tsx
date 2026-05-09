@@ -1,57 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BookHeart, Cross, LayoutGrid, Flame, Compass, ClipboardList, Heart, BookOpen } from 'lucide-react';
+import { BookHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { GlobalAudioButton } from '@/components/GlobalAudioButton';
 import { AnimateOnScroll } from '@/components/landing/AnimateOnScroll';
-import { HeroIllustration } from '@/components/landing/HeroIllustration';
+import { ProductPreview } from '@/components/landing/ProductPreview';
 import { useAuth } from '@/hooks/useAuth';
-
-const frameworks = [
-  {
-    title: "The Lord's Prayer",
-    description: "The traditional prayer structure based on the Lord's Prayer",
-    phases: 6,
-    icon: Cross,
-  },
-  {
-    title: "ACTS Prayer",
-    description: "Classic four-phase framework taught widely across denominations. Simple and memorable.",
-    phases: 4,
-    icon: LayoutGrid,
-  },
-  {
-    title: "Daily Examen",
-    description: "Reflective prayer practice from St. Ignatius of Loyola. Ideal for end-of-day prayer.",
-    phases: 5,
-    icon: Flame,
-  },
-];
-
-const features = [
-  {
-    title: "Guided Prayer Flow",
-    description: "Step through each phase with prompts that help you articulate what's on your heart.",
-    icon: Compass,
-  },
-  {
-    title: "Prayer Requests",
-    description: "Capture what's weighing on you and revisit it in your prayers.",
-    icon: ClipboardList,
-  },
-  {
-    title: "Stones of Remembrance",
-    description: "Mark answered prayers and build a record of God's faithfulness.",
-    icon: Heart,
-  },
-  {
-    title: "Daily Scripture",
-    description: "Start each session grounded in the Word.",
-    icon: BookOpen,
-  },
-];
+import { landingFeatures, landingFrameworks } from '@/lib/marketingContent';
 
 export default function Landing() {
   const { user, loading } = useAuth();
@@ -130,7 +87,7 @@ export default function Landing() {
               </div>
             </AnimateOnScroll>
             <AnimateOnScroll delay={200}>
-              <HeroIllustration className="hidden md:block" />
+              <ProductPreview className="hidden md:block" />
             </AnimateOnScroll>
           </div>
         </div>
@@ -166,7 +123,7 @@ export default function Landing() {
             </h2>
           </AnimateOnScroll>
           <div className="grid md:grid-cols-3 gap-6">
-            {frameworks.map((framework, index) => (
+            {landingFrameworks.map((framework, index) => (
               <AnimateOnScroll key={framework.title} delay={index * 100}>
                 <Card className="p-6 h-full hover:shadow-lifted transition-shadow duration-300 bg-card">
                   <framework.icon className="h-10 w-10 text-primary mb-4" />
@@ -189,7 +146,7 @@ export default function Landing() {
             </h2>
           </AnimateOnScroll>
           <div className="grid sm:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
+            {landingFeatures.map((feature, index) => (
               <AnimateOnScroll key={feature.title} delay={index * 100}>
                 <div className="flex gap-4">
                   <div className="flex-shrink-0">

@@ -75,6 +75,7 @@ export default function Pray() {
   const activePhases: PrayerPhase[] = selectedFormat?.phases || builtInFormats[0].phases;
   const currentPhase = activePhases[currentPhaseIndex];
   const phaseNames = activePhases.map((p) => p.name);
+  const phaseAtmosphereClass = `phase-atmosphere-${currentPhase.id}`;
 
   // Handle format change - reset phase index and content when format changes
   const handleFormatChange = useCallback((format: PrayerFormat | null) => {
@@ -467,7 +468,7 @@ export default function Pray() {
             placeholder="Write your own prayers and reflections..."
             value={personalPrayer}
             onChange={(e) => setPersonalPrayer(e.target.value)}
-            className="min-h-[100px] resize-y"
+            className="min-h-[100px] resize-y journal-textarea"
           />
         </div>
 
@@ -574,12 +575,17 @@ export default function Pray() {
 
   return (
     <div 
-      className="page-background relative"
+      className={cn("page-background relative prayer-phase-atmosphere", phaseAtmosphereClass)}
       onClick={handleUserInteraction}
       onKeyDown={handleUserInteraction}
     >
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute inset-x-0 top-0 h-[44vh] bg-gradient-to-b from-background/55 via-transparent to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[35vh] bg-gradient-to-t from-background/40 via-transparent to-transparent" />
+      </div>
+
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between p-4 border-b border-border/30">
+      <header className="relative z-10 flex items-center justify-between p-4 border-b border-border/10">
         <Button variant="ghost" size="icon" onClick={handleExit}>
           <X className="w-5 h-5" />
         </Button>
@@ -591,7 +597,7 @@ export default function Pray() {
       </header>
 
       {/* Progress */}
-      <div className="relative z-10 py-4">
+      <div className="relative z-10 px-4 pt-4 pb-2">
         <PhaseProgress
           currentPhase={currentPhaseIndex}
           totalPhases={activePhases.length}
@@ -600,11 +606,11 @@ export default function Pray() {
       </div>
 
       {/* Phase Content */}
-      <main className="relative z-10 px-4 py-6 max-w-lg mx-auto">
+      <main className="relative z-10 px-5 md:px-8 py-6 max-w-3xl mx-auto">
         {/* Show recurring requests in the Practical Needs phase */}
         {currentPhase.id === 'needs' && recurringRequests.length > 0 && (
           <div className={cn(
-            "mb-6 p-4 bg-muted/50 rounded-xl border border-border/50",
+            "mb-8 p-4 bg-background/25 rounded-2xl",
             "transition-opacity duration-300",
             prefersReducedMotion ? "duration-0" : "duration-300"
           )}>
@@ -636,7 +642,7 @@ export default function Pray() {
         />
 
         {createSessionMutation.isPending && (
-          <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 mt-6 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="text-sm font-body">Saving your prayer...</span>
           </div>
